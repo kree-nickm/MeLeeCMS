@@ -1,0 +1,41 @@
+CREATE TABLE `pages` (
+`index` MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+`title` VARCHAR( 255 ) NOT NULL ,
+`file` VARCHAR( 255 ) NOT NULL ,
+`theme` VARCHAR( 255 ) NOT NULL ,
+`css` LONGTEXT NOT NULL ,
+`permission` BIGINT UNSIGNED NOT NULL DEFAULT '0',
+`content` LONGBLOB NOT NULL ,
+`token` VARCHAR( 50 ) NOT NULL
+) ENGINE = MYISAM;
+
+CREATE TABLE `pages_special` (
+`index` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+`title` VARCHAR( 255 ) NOT NULL ,
+`theme` VARCHAR( 255 ) NOT NULL ,
+`css` LONGTEXT NOT NULL ,
+`content` LONGBLOB NOT NULL ,
+`token` VARCHAR( 50 ) NOT NULL
+) ENGINE = MYISAM;
+
+CREATE TABLE `settings` (
+`setting` VARCHAR( 31 ) NOT NULL ,
+`value` VARCHAR( 255 ) NOT NULL ,
+`type` ENUM( 'string', 'number', 'boolean' ) NOT NULL ,
+`description` TEXT NOT NULL ,
+UNIQUE (
+`setting`
+)
+) ENGINE = MYISAM;
+
+CREATE TABLE `themes` (
+`index` TINYINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+`name` VARCHAR( 63 ) NOT NULL ,
+`doctype` TEXT NOT NULL ,
+`xsl` LONGTEXT NOT NULL ,
+`css` LONGTEXT NOT NULL ,
+`token` VARCHAR( 50 ) NOT NULL ,
+UNIQUE (
+`name`
+)
+) ENGINE = MYISAM;

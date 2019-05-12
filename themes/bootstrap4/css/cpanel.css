@@ -1,0 +1,34 @@
+.page-content:first-child > .card > .card-header > .move-content-up {
+	display: none;
+}
+
+.page-content:last-child > .card > .card-header > .move-content-down {
+	display: none;
+}
+
+.move-content-up, .move-content-down, .remove-content {
+	cursor: pointer;
+	padding: 0;
+	background-color: transparent;
+	border: 0;
+	-webkit-appearance: none;
+    float: right;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    opacity: .7;
+}
+
+.move-content-up:hover, .move-content-down:hover, .remove-content:hover {
+    opacity: 1;
+}
+
+.CodeMirror {
+	height: auto;
+}
+
+.editor-container {
+	overflow: scroll;
+    width: 100%;
+    height: 100%;
+}
