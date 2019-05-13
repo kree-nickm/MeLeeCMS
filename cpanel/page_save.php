@@ -1,4 +1,4 @@
-<?
+<?php
 require_once("../includes/MeLeeCMS.php");
 $builder = new MeLeeCMS(15);
 $admin_perm = array_search("ADMIN", User::get_permissions($builder));

@@ -1,4 +1,4 @@
-<?
+<?php
 
 class Component extends Container
 {

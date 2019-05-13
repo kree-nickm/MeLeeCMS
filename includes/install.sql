@@ -49,6 +49,11 @@ CREATE TABLE `pages_special` (
   `token` varchar(50) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
+INSERT INTO `pages_special` (`index`, `title`, `subtheme`, `css`, `js`, `xsl`, `content`, `token`) VALUES
+(1, 'Permission Denied', 'default', '[]', '[]', '[]', 0x613a313a7b733a373a22636f6e74656e74223b4f3a393a22436f6e7461696e6572223a333a7b733a353a227469746c65223b733a31373a225065726d697373696f6e2044656e696564223b733a353a226174747273223b613a303a7b7d733a373a22636f6e74656e74223b613a313a7b733a343a2274657874223b4f3a343a2254657874223a323a7b733a343a2274657874223b733a35393a22596f7520646f206e6f74206861766520746865207265717569726564207065726d697373696f6e7320746f2076696577207468697320706167652e223b733a353a226174747273223b613a303a7b7d7d7d7d7d, ''),
+(2, 'Page Not Found', 'default', '[]', '[]', '[]', 0x613a313a7b733a373a22636f6e74656e74223b4f3a393a22436f6e7461696e6572223a333a7b733a353a227469746c65223b733a31343a2250616765204e6f7420466f756e64223b733a353a226174747273223b613a303a7b7d733a373a22636f6e74656e74223b613a313a7b733a343a2274657874223b4f3a343a2254657874223a323a7b733a343a2274657874223b733a34353a22546865207061676520796f7520617265206c6f6f6b696e6720666f722063616e6e6f7420626520666f756e642e223b733a353a226174747273223b613a303a7b7d7d7d7d7d, ''),
+(3, 'Database Error', 'default', '[]', '[]', '[]', 0x613a313a7b733a333a226d7367223b4f3a343a2254657874223a323a7b733a343a2274657874223b733a33333a224572726f7220636f6e6e656374696e6720746f207468652064617461626173652e223b733a353a226174747273223b613a303a7b7d7d7d, '');
+
 CREATE TABLE `page_components` (
   `index` int(10) UNSIGNED NOT NULL,
   `title` varchar(127) NOT NULL,
@@ -65,6 +70,11 @@ CREATE TABLE `settings` (
   `type` enum('string','number','boolean','page','theme','user_system') NOT NULL,
   `description` text NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+INSERT INTO `settings` (`setting`, `value`, `type`, `description`) VALUES
+('site_title', 'MeLeeCMS', 'string', 'Name used on browser tabs for this website. Will appear after the specific page name, ie. <tt>Page Name - Site Title</tt>'),
+('default_theme', 'bootstrap4', 'theme', 'The theme of the website, from which all pages will load their CSS, JS, and XSL. Changing this could break the website if the new theme is not setup to support all of the pages of the site. Does not affect the control panel.'),
+('index_page', '1', 'page', 'Page that will load if someone visits your website but doesn\'t specify another page. For example, if they visit the URL <tt>www.yourdomain.com/</tt>, with nothing after the slash.');
 
 CREATE TABLE `themes` (
   `index` int(10) UNSIGNED NOT NULL,

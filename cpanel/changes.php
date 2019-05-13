@@ -1,4 +1,4 @@
-<?
+<?php
 require_once("load_page.php");
 
 if(is_numeric($_GET['perPage']))

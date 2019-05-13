@@ -1,4 +1,4 @@
-<?
+<?php
 global $mode;
 $mode = "templates";
 require_once("../includes/MellinBuilder.php");

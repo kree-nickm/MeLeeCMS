@@ -1,4 +1,4 @@
-<?
+<?php
 require_once("../includes/MeLeeCMS.php");
 $builder = new MeLeeCMS(15);
 $builder->set_title("Control Panel");

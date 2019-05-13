@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  * A User class that provides basic login features and a permission for the control panel.

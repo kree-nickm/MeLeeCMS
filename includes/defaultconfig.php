@@ -1,4 +1,4 @@
-<?
+<?php
 /****************************************************************
  * This file provides descriptions of various configuration options
  * that you can use to setup and modify the way MeLeeCMS works. This

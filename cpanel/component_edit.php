@@ -1,4 +1,4 @@
-<?
+<?php
 require_once("load_page.php");
 
 if(isset($_GET['confirmdelete']) && is_numeric($_GET['compId']))

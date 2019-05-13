@@ -1,4 +1,4 @@
-<?
+<?php
 require_once("../includes/MeLeeCMS.php");
 
 if($_REQUEST['ContentClass'] != "")

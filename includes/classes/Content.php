@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  * Superclass of all classes that can be added to a page as content.

@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  * Superclass of all classes that can be used to hold user properties.

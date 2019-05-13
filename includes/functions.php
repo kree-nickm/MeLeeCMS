@@ -1,4 +1,4 @@
-<?
+<?php
 
 function prevent_html_decode($str)
 {
