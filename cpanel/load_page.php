@@ -8,7 +8,7 @@ $admin_perm = array_search("ADMIN", User::get_permissions($builder));
 if($admin_perm)
 	if(!$builder->require_permission($admin_perm))
 	{
-		$builder->render($_GET['output']=="xml"?"__xml":"cpanel");
+		$builder->render((!empty($_GET['output']) && $_GET['output']=="xml") ? "__xml" : "default");
 		exit;
 	}
 
@@ -21,7 +21,7 @@ $nav->add_content(new Text(['url'=>"data.php", 'text'=>"Data"], ['type'=>"link",
 $nav->add_content(new Text(['url'=>"changes.php", 'text'=>"Changes"], ['type'=>"link",'active'=>stripos($_SERVER['PHP_SELF'],"changes.php")!==false]));
 
 $builder->attach_js("modal-extras.js", "", true);
-if($_SESSION['onload_notification'])
+if(!empty($_SESSION['onload_notification']))
 {
 	$builder->add_content(new Text($_SESSION['onload_notification'], ['notification'=>"onload"]));
 	//$_GET['output'] = "xml";

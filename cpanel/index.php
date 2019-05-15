@@ -38,4 +38,4 @@ foreach($settings as $sett)
 }
 
 $builder->attach_xsl("cpanel-settings-table.xsl", "", true);
-$builder->render($_GET['output']=="xml"?"__xml":"cpanel");
+$builder->render((!empty($_GET['output']) && $_GET['output']=="xml") ? "__xml" : "default");

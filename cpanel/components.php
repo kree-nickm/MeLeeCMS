@@ -38,4 +38,4 @@ foreach($components as $comp)
 }
 
 $builder->attach_xsl("cpanel-component-list.xsl", "", true);
-$builder->render($_GET['output']=="xml"?"__xml":"cpanel");
+$builder->render((!empty($_GET['output']) && $_GET['output']=="xml") ? "__xml" : "default");

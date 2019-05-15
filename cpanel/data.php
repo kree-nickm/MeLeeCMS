@@ -1,11 +1,11 @@
 <?php
 require_once("load_page.php");
 
-if(is_numeric($_GET['perPage']))
+if(!empty($_GET['perPage']) && is_numeric($_GET['perPage']))
 	$perpage = (int)$_GET['perPage'];
 else
 	$perpage = 10;
-if(is_numeric($_GET['p']))
+if(!empty($_GET['p']) && is_numeric($_GET['p']))
 	$page = (int)$_GET['p'];
 else
 	$page = 0;
@@ -38,4 +38,4 @@ foreach($builder->database->metadata as $table=>$meta)
 
 $builder->attach_xsl("cpanel-data-list.xsl", "", true);
 $builder->attach_css("cpanel.css", "", true);
-$builder->render($_GET['output']=="xml"?"__xml":"cpanel");
+$builder->render((!empty($_GET['output']) && $_GET['output']=="xml") ? "__xml" : "default");

@@ -1,4 +1,4 @@
 <?php
-require_once("includes/MeLeeCMS.php");
+require_once("includes". DIRECTORY_SEPARATOR ."MeLeeCMS.php");
 $builder = new MeLeeCMS();
-$builder->render($_GET['output']=="xml"?"__xml":"default");
+$builder->render((!empty($_GET['output']) && $_GET['output']=="xml") ? "__xml" : "default");

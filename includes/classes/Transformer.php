@@ -236,9 +236,9 @@ class Transformer
 				$attrs = "";
 				for($i=1; $i<count($parts); $i++)
 				{
-					list($name, $value) = explode("=", $parts[$i], 2);
-					if($name != "")
-						$attrs .= " ". $name ."=\"". htmlentities($value, ENT_QUOTES|ENT_XML1|ENT_DISALLOWED, "UTF-8") ."\"";
+					$subparts = explode("=", $parts[$i], 2);
+					if($subparts[0] != "")
+						$attrs .= " ". $subparts[0] ."=\"". (empty($subparts[1]) ? "" : htmlentities($subparts[1], ENT_QUOTES|ENT_XML1|ENT_DISALLOWED, "UTF-8")) ."\"";
 				}
 				if(is_numeric($subtag) || $parts[0] == "")
 				{

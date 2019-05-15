@@ -8,4 +8,4 @@ foreach($builder->themes as $name=>$props)
 }
 
 $builder->attach_xsl("cpanel-themes-list.xsl", "", true);
-$builder->render($_GET['output']=="xml"?"__xml":"cpanel");
+$builder->render((!empty($_GET['output']) && $_GET['output']=="xml") ? "__xml" : "default");

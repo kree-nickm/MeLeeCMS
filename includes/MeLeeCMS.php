@@ -77,7 +77,7 @@ class MeLeeCMS
 			array_unshift($this->class_paths, $GlobalConfig['server_path'] ."includes". DIRECTORY_SEPARATOR ."classes". DIRECTORY_SEPARATOR);
 		spl_autoload_register(array($this, "load_class"), true);
 		// Setup the rest of MeLeeCMS based on the $mode.
-		$this->path_info = substr(isset($_SERVER['ORIG_PATH_INFO']) ? $_SERVER['ORIG_PATH_INFO'] : $_SERVER['PATH_INFO'], 1);
+		$this->path_info = substr(isset($_SERVER['ORIG_PATH_INFO']) ? $_SERVER['ORIG_PATH_INFO'] : (isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : ""), 1);
 		if(($mode &  1) ==  1) $this->setup_database();
 		if(($mode &  2) ==  2) $this->setup_settings();
 		if(($mode &  4) ==  4) $this->setup_themes();
@@ -92,7 +92,7 @@ class MeLeeCMS
 	
 	public function get_page($key)
 	{
-		return $this->page[$key];
+		return empty($this->page[$key]) ? "" : $this->page[$key];
 	}
 
 	public function load_class($class)
@@ -238,7 +238,7 @@ class MeLeeCMS
 			$query  = "SELECT * FROM `pages` ";
 			if($this->path_info != "")
 				$query .= "WHERE `url`=". $this->database->quote($this->path_info) ." ";
-			else if(is_numeric($_GET['specialPage']))
+			else if(!empty($_GET['specialPage']) && is_numeric($_GET['specialPage']))
 				$query = "SELECT * FROM `pages_special` WHERE `index`=". (int)$_GET['specialPage'] ." ";
 			else
 				$query .= "WHERE `index`=". (int)$this->get_setting('index_page') ." ";

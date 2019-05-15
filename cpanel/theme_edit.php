@@ -23,4 +23,4 @@ $builder->attach_css("cpanel.css", "", true);
 $builder->attach_js("../../../addons/codemirror.js", "", true);
 $builder->attach_js("cpanel-theme-content.js", "", true);
 $builder->attach_xsl("cpanel-theme-edit.xsl", "", true);
-$builder->render($_GET['output']=="xml"?"__xml":"cpanel");
+$builder->render((!empty($_GET['output']) && $_GET['output']=="xml") ? "__xml" : "default");

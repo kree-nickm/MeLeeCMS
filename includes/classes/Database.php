@@ -34,9 +34,9 @@ class Database
 		$columns = $this->query("SELECT TABLE_NAME,COLUMN_NAME,COLUMN_DEFAULT,DATA_TYPE,COLUMN_TYPE,COLUMN_KEY,EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=". $this->quote($this->database) ." ORDER BY TABLE_NAME");
 		foreach($columns as $row)
 		{
-			if(!is_array($this->metadata[$row['TABLE_NAME']]))
+			if(empty($this->metadata[$row['TABLE_NAME']]))
 				$this->metadata[$row['TABLE_NAME']] = array();
-			if(!is_array($this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]))
+			if(empty($this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]))
 				$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']] = array();
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['default'] = $row['COLUMN_DEFAULT'];
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type'] = $row['DATA_TYPE'];
@@ -50,9 +50,9 @@ class Database
 			$indexes = $this->query("SHOW INDEX FROM ". $table ." WHERE Non_unique=0");
 			foreach($indexes as $row)
 			{
-				if(!is_array($this->metadata[$table]['index '][$row['Key_name']]))
+				if(empty($this->metadata[$table]['index '][$row['Key_name']]))
 					$this->metadata[$table]['index '][$row['Key_name']] = array();
-				if(!is_array($this->metadata[$table]['index '][$row['Key_name']][$row['Seq_in_index']]))
+				if(empty($this->metadata[$table]['index '][$row['Key_name']][$row['Seq_in_index']]))
 					$this->metadata[$table]['index '][$row['Key_name']][$row['Seq_in_index']] = array();
 				$this->metadata[$table]['index '][$row['Key_name']][$row['Seq_in_index']]['column'] = $row['Column_name'];
 				$this->metadata[$table]['index '][$row['Key_name']][$row['Seq_in_index']]['substr'] = $row['Sub_part'];

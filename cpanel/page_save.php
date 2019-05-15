@@ -5,7 +5,7 @@ $admin_perm = array_search("ADMIN", User::get_permissions($builder));
 if($admin_perm)
 	if(!$builder->require_permission($admin_perm))
 	{
-		$builder->render($_GET['output']=="xml"?"__xml":"cpanel");
+		$builder->render((!empty($_GET['output']) && $_GET['output']=="xml") ? "__xml" : "default");
 		exit;
 	}
 
