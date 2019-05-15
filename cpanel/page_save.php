@@ -13,9 +13,9 @@ header("Content-type: text/plain");
 print_r($_REQUEST);
 
 // ---------- Validate input. ----------
-if(is_numeric($_POST['page_index']))
+if(!empty($_POST['page_index']) && is_numeric($_POST['page_index']))
 	$existing = $builder->database->query("SELECT * FROM `pages` WHERE `index`=". (int)$_POST['page_index'] ." LIMIT 0,1", Database::RETURN_ROW);
-else if(is_numeric($_POST['page_special_index']))
+else if(!empty($_POST['page_special_index']) && is_numeric($_POST['page_special_index']))
 {
 	$special = true;
 	$existing = $builder->database->query("SELECT * FROM `pages_special` WHERE `index`=". (int)$_POST['page_special_index'] ." LIMIT 0,1", Database::RETURN_ROW);
@@ -28,9 +28,9 @@ if($existing['index'])
 else if($special)
 	$errors[] = ['__attr:type'=>"danger", "Invalid special page index."];
 // title
-if($_POST['page_title'] != "" || $existing['title'] != "")
+if(!empty($_POST['page_title']) || $existing['title'] != "")
 {
-	if(($_POST['page_title'] != "" && $_POST['page_title'] != $existing['title']) || $_POST['save'] == 2)
+	if((!empty($_POST['page_title']) && $_POST['page_title'] != $existing['title']) || $_POST['save'] == 2)
 		$mysql_data['title'] = $_POST['page_title'];
 }
 else
@@ -42,21 +42,21 @@ if(!$special)
 {
 	if($_POST['page_url'] == urlencode($_POST['page_url']) && ($_POST['page_url'] != "" || $existing['url'] != ""))
 	{
-		if(($_POST['page_url'] != "" && $_POST['page_url'] != $existing['url']) || $_POST['save'] == 2)
+		if((!empty($_POST['page_url']) && $_POST['page_url'] != $existing['url']) || $_POST['save'] == 2)
 			$mysql_data['url'] = $_POST['page_url'];
 	}
 	else
 	{
-		if($_POST['page_url'] == "")
+		if(empty($_POST['page_url']))
 			$errors[] = ['__attr:type'=>"danger", "Page must have a URL."];
 		else
 			$errors[] = ['__attr:type'=>"danger", "Invalid page URL '". $_POST['page_url'] ."'."];
 	}
 }
 // subtheme
-if($_POST['subtheme'] != "" || $existing['subtheme'] != "")
+if(!empty($_POST['subtheme']) || $existing['subtheme'] != "")
 {
-	if(($_POST['subtheme'] != "" && $_POST['subtheme'] != $existing['subtheme']) || $_POST['save'] == 2)
+	if((!empty($_POST['subtheme']) && $_POST['subtheme'] != $existing['subtheme']) || $_POST['save'] == 2)
 		$mysql_data['subtheme'] = $_POST['subtheme'];
 }
 else
@@ -64,7 +64,7 @@ else
 	$mysql_data['subtheme'] = "default";
 }
 // permissions
-if(!$special && is_array($_POST['permissions']))
+if(!$special && !empty($_POST['permissions']) && is_array($_POST['permissions']))
 {
 	$permission = 0;
 	$all_perms = User::get_permissions($builder);
@@ -79,7 +79,7 @@ if(!$special && is_array($_POST['permissions']))
 		$mysql_data['permission'] = $permission;
 }
 // css
-if(is_array($_POST['page_css']))
+if(!empty($_POST['page_css']) && is_array($_POST['page_css']))
 {
 	$stylesheets = array();
 	foreach($_POST['page_css'] as $css)
@@ -93,7 +93,7 @@ if(is_array($stylesheets))
 		$mysql_data['css'] = $stylesheets;
 }
 // js
-if(is_array($_POST['page_js']))
+if(!empty($_POST['page_js']) && is_array($_POST['page_js']))
 {
 	$javascripts = array();
 	foreach($_POST['page_js'] as $js)
@@ -107,7 +107,7 @@ if(is_array($javascripts))
 		$mysql_data['js'] = $javascripts;
 }
 // xsl
-if(is_array($_POST['page_xsl']))
+if(!empty($_POST['page_xsl']) && is_array($_POST['page_xsl']))
 {
 	$templates = array();
 	foreach($_POST['page_xsl'] as $xsl)
@@ -118,11 +118,11 @@ if(is_array($_POST['page_xsl']))
 		$mysql_data['xsl'] = $templates;
 }
 
-if(is_array($_POST['content']))
+if(!empty($_POST['content']) && is_array($_POST['content']))
 {
 	$errors[] = ['__attr:type'=>"warning", "Page contents can only be updated with JavaScript."];
 }
-if(is_array($_POST['page_content']))
+if(!empty($_POST['page_content']) && is_array($_POST['page_content']))
 {
 	function contentsToArray($contents)
 	{

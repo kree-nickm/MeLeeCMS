@@ -1,7 +1,7 @@
 <?php
 require_once("load_page.php");
 
-if(isset($_GET['confirmdelete']) && is_numeric($_GET['compId']))
+if(isset($_GET['confirmdelete']) && !empty($_GET['compId']) && is_numeric($_GET['compId']))
 {
 	if($builder->database->delete("page_components", ['index'=>(int)$_GET['compId']], true))
 		$_SESSION['onload_notification'] = [['__attr:type'=>"primary", "Component was deleted successfully."], '__attr:title'=>"Component Deleted"];
@@ -11,17 +11,17 @@ if(isset($_GET['confirmdelete']) && is_numeric($_GET['compId']))
 	exit;
 }
 
-if(is_numeric($_GET['compId']))
+if(!empty($_GET['compId']) && is_numeric($_GET['compId']))
 	$component = $builder->database->query("SELECT * FROM `page_components` WHERE `index`=". (int)$_GET['compId'] ." LIMIT 0,1", 2);
 
-if(is_array($component) || $_GET['compId'] == "new")
+if(!empty($component) && is_array($component) || !empty($_GET['compId']) && $_GET['compId'] == "new")
 {
-	$builder->add_content(new Text(['component'=>$builder->database->query("SELECT `index`,`title` FROM `page_components` WHERE `index`!=". (int)$component['index'] ." ORDER BY `title`", Database::RETURN_ALL)], ['hidden'=>"1"]), "component-list");
+	$builder->add_content(new Text(['component'=>empty($component['index']) ? [] : $builder->database->query("SELECT `index`,`title` FROM `page_components` WHERE `index`!=". (int)$component['index'] ." ORDER BY `title`", Database::RETURN_ALL)], ['hidden'=>"1"]), "component-list");
 	$builder->add_content(new Text(['class'=>Content::get_subclasses($builder)], ['hidden'=>"1"]), "content-classes");
 	$form = $builder->add_content(new Container("", []), "component_edit");
 	$data = [
-		'index' => $component['index'],
-		'title' => $component['title'],
+		'index' => empty($component['index'])?"":$component['index'],
+		'title' => empty($component['title'])?"":$component['title'],
 		'select@id=page_css@multiple' => ['value'=>[],'option'=>[]],
 		'select@id=page_js@multiple' => ['value'=>[],'option'=>[]],
 		'select@id=page_xsl@multiple' => ['value'=>[],'option'=>[]],
@@ -38,7 +38,7 @@ if(is_array($component) || $_GET['compId'] == "new")
 				$data['select@id=page_css@multiple']['option'][] = [$entry];
 			}
 	}
-	$page_css = json_decode($component['css'], true);
+	$page_css = empty($component['css'])?"":json_decode($component['css'], true);
 	if(is_array($page_css)) foreach($page_css as $css)
 	{
 		$data['select@id=page_css@multiple']['value'][] = $css['file'];
@@ -54,7 +54,7 @@ if(is_array($component) || $_GET['compId'] == "new")
 				$data['select@id=page_js@multiple']['option'][] = [$entry];
 			}
 	}
-	$page_js = json_decode($component['js'], true);
+	$page_js = empty($component['js'])?"":json_decode($component['js'], true);
 	if(is_array($page_js)) foreach($page_js as $js)
 	{
 		$data['select@id=page_js@multiple']['value'][] = $js['file'];
@@ -70,7 +70,7 @@ if(is_array($component) || $_GET['compId'] == "new")
 				$data['select@id=page_xsl@multiple']['option'][] = [$entry];
 			}
 	}
-	$page_xsl = json_decode($component['xsl'], true);
+	$page_xsl = empty($component['xsl'])?"":json_decode($component['xsl'], true);
 	if(is_array($page_xsl)) foreach($page_xsl as $xsl)
 	{
 		$data['select@id=page_xsl@multiple']['value'][] = $xsl;
@@ -113,7 +113,7 @@ if(is_array($component) || $_GET['compId'] == "new")
 		}
 		return ['content'=>$result];
 	}
-	$page_contents = $form->add_content(new Text(getContentData(unserialize($component['content']))), "page_content");
+	$page_contents = $form->add_content(new Text(empty($component['content'])?"":getContentData(unserialize($component['content']))), "page_content");
 
 	$builder->attach_xsl("cpanel-component-edit.xsl", "", true);
 	$builder->attach_xsl("cpanel-content.xsl", "", true);

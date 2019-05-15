@@ -1,7 +1,7 @@
 <?php
 require_once("../includes/MeLeeCMS.php");
 
-if($_REQUEST['ContentClass'] != "")
+if(!empty($_REQUEST['ContentClass']))
 {
 	$builder = new MeLeeCMS(1);
 	$classes = Content::get_subclasses($builder);
@@ -16,7 +16,7 @@ if($_REQUEST['ContentClass'] != "")
 		];
 		foreach($object->get_properties() as $prop=>$parr)
 		{
-			$content_data['property'][] = ['value'=>$object->$prop, 'name'=>$prop, 'desc'=>$parr['desc'], '__attr:type'=>$parr['type']];
+			$content_data['property'][] = ['value'=>$object->$prop, 'name'=>$prop, 'desc'=>empty($parr['desc'])?"":$parr['desc'], '__attr:type'=>empty($parr['type'])?"":$parr['type']];
 		}
 		$class_text = new Text($content_data);
 		$classlist_text = new Text([
@@ -25,7 +25,7 @@ if($_REQUEST['ContentClass'] != "")
 		]);
 		$componentlist_text = new Text([
 			'__attr:id' => "component-list",
-			'component' => $builder->database->query("SELECT `index`,`title` FROM `page_components` WHERE `index`!=". (int)$component['index'] ." ORDER BY `title`", Database::RETURN_ALL),
+			'component' => empty($component['index']) ? [] : $builder->database->query("SELECT `index`,`title` FROM `page_components` WHERE `index`!=". (int)$component['index'] ." ORDER BY `title`", Database::RETURN_ALL),
 		]);
 		$dbtables = [];
 		foreach($builder->database->metadata as $table=>$cols)
@@ -54,7 +54,7 @@ if($_REQUEST['ContentClass'] != "")
 		$xmlRaw = '<?xml version="1.0"?><MeLeeCMS><error>Invalid Content subclass.</error></MeLeeCMS>';
 	
 	// The theme folder used for the include below should be the same as defined in load_page.php
-	$xslRaw = '<?xml version="1.0"?><xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:output method="html"/><xsl:template match="/MeLeeCMS"><xsl:apply-templates select="content[@page_content]" mode="page-content"><xsl:with-param name="id" select="content[@page_content]/random"/>'. ($_REQUEST['idPrefix'] ? '<xsl:with-param name="id_prefix">'. $_REQUEST['idPrefix'] .'</xsl:with-param>' : '') . ($_REQUEST['namePrefix'] ? '<xsl:with-param name="name_prefix">'. $_REQUEST['namePrefix'] .'</xsl:with-param>' : '') . '</xsl:apply-templates></xsl:template><xsl:include href="'. $builder->get_setting('server_path') .'themes/'. $GlobalConfig['default_theme'] .'/templates/cpanel-content.xsl"/></xsl:stylesheet>';
+	$xslRaw = '<?xml version="1.0"?><xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:output method="html"/><xsl:template match="/MeLeeCMS"><xsl:apply-templates select="content[@page_content]" mode="page-content"><xsl:with-param name="id" select="content[@page_content]/random"/>'. (!empty($_REQUEST['idPrefix']) ? '<xsl:with-param name="id_prefix">'. $_REQUEST['idPrefix'] .'</xsl:with-param>' : '') . (!empty($_REQUEST['namePrefix']) ? '<xsl:with-param name="name_prefix">'. $_REQUEST['namePrefix'] .'</xsl:with-param>' : '') . '</xsl:apply-templates></xsl:template><xsl:include href="'. str_replace("\\","/",$builder->get_setting('server_path')) .'themes/'. $GlobalConfig['default_theme'] .'/templates/cpanel-content.xsl"/></xsl:stylesheet>';
 	
 	header("Content-type: text/html");
 	$xml = new DOMDocument();
@@ -68,7 +68,7 @@ if($_REQUEST['ContentClass'] != "")
 	exit;
 }
 
-if($_REQUEST['theme'] != "" && $_REQUEST['file'] != "")
+if(!empty($_REQUEST['theme']) && !empty($_REQUEST['file']))
 {
 	header("Content-type: text/plain");
 	$builder = new MeLeeCMS(7);
@@ -89,7 +89,7 @@ if($_REQUEST['theme'] != "" && $_REQUEST['file'] != "")
 	exit;
 }
 
-if($_REQUEST['XSL'] != "" && $_REQUEST['XML'] != "")
+if(!empty($_REQUEST['XSL']) && !empty($_REQUEST['XML']))
 {
 	$xml = new DOMDocument();
 	$xml->loadXML($_REQUEST['XML']);

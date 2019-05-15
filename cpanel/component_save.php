@@ -13,7 +13,7 @@ header("Content-type: text/plain");
 print_r($_REQUEST);
 
 // ---------- Validate input. ----------
-if(is_numeric($_POST['component_index']))
+if(!empty($_POST['component_index']) && is_numeric($_POST['component_index']))
 	$existing = $builder->database->query("SELECT * FROM `page_components` WHERE `index`=". (int)$_POST['component_index'] ." LIMIT 0,1", Database::RETURN_ROW);
 $mysql_data = array();
 $errors = array();
@@ -21,7 +21,7 @@ $errors = array();
 if($existing['index'])
 	$mysql_data['index'] = $existing['index'];
 // title
-if($_POST['component_title'] != "" || $existing['title'] != "")
+if(!empty($_POST['component_title']) || $existing['title'] != "")
 {
 	if($_POST['component_title'] != "" && $_POST['component_title'] != $existing['title'])
 		$mysql_data['title'] = $_POST['component_title'];
@@ -31,7 +31,7 @@ else
 	$errors[] = ['__attr:type'=>"warning", "Component does not have a title."];
 }
 // css
-if(is_array($_POST['page_css']))
+if(!empty($_POST['page_css']) && is_array($_POST['page_css']))
 {
 	$stylesheets = array();
 	foreach($_POST['page_css'] as $css)
@@ -45,7 +45,7 @@ if(is_array($stylesheets))
 		$mysql_data['css'] = $stylesheets;
 }
 // js
-if(is_array($_POST['page_js']))
+if(!empty($_POST['page_js']) && is_array($_POST['page_js']))
 {
 	$javascripts = array();
 	foreach($_POST['page_js'] as $js)
@@ -59,7 +59,7 @@ if(is_array($javascripts))
 		$mysql_data['js'] = $javascripts;
 }
 // xsl
-if(is_array($_POST['page_xsl']))
+if(!empty($_POST['page_xsl']) && is_array($_POST['page_xsl']))
 {
 	$templates = array();
 	foreach($_POST['page_xsl'] as $xsl)
@@ -70,11 +70,11 @@ if(is_array($_POST['page_xsl']))
 		$mysql_data['xsl'] = $templates;
 }
 
-if(is_array($_POST['content']))
+if(!empty($_POST['content']) && is_array($_POST['content']))
 {
 	$errors[] = ['__attr:type'=>"warning", "Page contents can only be updated with JavaScript."];
 }
-if(is_array($_POST['page_content']))
+if(!empty($_POST['page_content']) && is_array($_POST['page_content']))
 {
 	function contentsToArray($contents)
 	{
