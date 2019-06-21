@@ -22,8 +22,8 @@ class MeLeeSessionHandler implements SessionHandlerInterface
 	
 	public function read($session_id)
 	{
-		$session = $this->cms->database->query("SELECT * FROM sessions WHERE `session_id`=". $this->cms->database->quote($session_id) ." ORDER BY `time` DESC", Database::RETURN_ROW);
-		return $session['session_data'];
+		$session_data = $this->cms->database->query("SELECT `session_data` FROM sessions WHERE `session_id`=". $this->cms->database->quote($session_id) ." ORDER BY `time` DESC LIMIT 0,1", Database::RETURN_FIELD);
+		return empty($session_data) ? "" : $session_data;
 	}
 	
 	public function write($session_id, $session_data)

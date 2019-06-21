@@ -94,6 +94,16 @@ CREATE TABLE `users` (
   `custom_data` longblob NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
+CREATE TABLE `sessions` (
+  `session_id` varchar(255) NOT NULL,
+  `session_data` longblob NOT NULL,
+  `session_indefinite` tinyint(1) NOT NULL,
+  `user` int(10) UNSIGNED NOT NULL,
+  `time` bigint(20) UNSIGNED NOT NULL,
+  `ip` varchar(15) NOT NULL,
+  `user_agent` varchar(255) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
 
 ALTER TABLE `changelog`
   ADD PRIMARY KEY (`index`);
@@ -119,6 +129,9 @@ ALTER TABLE `themes`
 ALTER TABLE `users`
   ADD PRIMARY KEY (`index`),
   ADD UNIQUE KEY `username` (`username`);
+
+ALTER TABLE `sessions`
+  ADD UNIQUE KEY `session_id` (`session_id`);
 
 
 ALTER TABLE `changelog`

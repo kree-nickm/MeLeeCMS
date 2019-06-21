@@ -3,13 +3,13 @@ $password = "";
 
 if(empty($password))
 {
-	echo("Before you can begin the installation, you must set a password to prevent unauthorized installations. Open <tt>install.php</tt> in a text editor and change the line at the very top that says <tt>\$password = \"\";</tt> and enter your desired password between the quotes, so that it looks like <tt>\$password = \"mypassword\";</tt><br/>Then, reload this page and enter that password to begin installation. The password does not need to be very secure, as it is one-time-use for this installation. It should just be letters and/or numbers, as any symbols might not work.");
+	echo("Before you can begin the installation, you must set a password to prevent unauthorized installations. Open <tt>install.php</tt> in a text editor and change the line at the very top that says <tt>\$password = \"\";</tt> and enter your desired password between the quotes, so that it looks like <tt>\$password = \"mypassword\";</tt><br/>Then, reload this page and enter that password to begin installation. The password does not need to be very secure, as it is one-time-use for this installation. It should just be letters and/or numbers, as any symbols might not work. ");
 }
 else if(empty($_POST['password']) || $_POST['password'] != $password)
 {
 	echo("Enter your password below to begin the installation.<form method='post'><input type='text' name='password'/><button type='submit'>Enter</button></form>");
 	if(isset($_POST['password']))
-		echo("Password incorrect. You can literally just copy what you entered from between the quotes in <tt>install.php</tt>.");
+		echo("Password incorrect. You can literally just copy what you entered from between the quotes in <tt>install.php</tt>. ");
 }
 else
 {
@@ -18,7 +18,7 @@ else
 		if(is_file("config.php"))
 		{
 			rename("config.php", "config.php.old");
-			echo("<tt>config.php</tt> already exists. Renaming the existing one to <tt>config.php.old</tt> and creating a new one with your new settings.");
+			echo("<tt>config.php</tt> already exists. Renaming the existing one to <tt>config.php.old</tt> and creating a new one with your new settings. ");
 		}
 		$fp = fopen("config.php", "w");
 		fwrite($fp, "<?php". PHP_EOL);
@@ -40,6 +40,83 @@ else
 	
 	if(!is_file("config.php"))
 	{
+		$show_config = true;
+	}
+	else
+	{
+		require_once("includes/MeLeeCMS.php");
+		$builder = new MeLeeCMS(0);
+		ini_set("display_errors", 1);
+
+		if($builder->setup_database() && is_array($builder->database->metadata))
+		{
+			if(!empty($builder->database->metadata['users']) && !empty($_POST['reg_submit']))
+			{
+				if($builder->setup_user())
+				{
+					if($builder->user->register($_POST['reg_username'], $_POST['reg_password'], $_POST['reg_password2'], MeLeeCMSUser::PERM_VIEW|MeLeeCMSUser::PERM_ADMIN))
+					{
+						echo("Your admin account has been registered. You should now delete <tt>install.php</tt>. ");
+					}
+					else
+					{
+						echo("Errors occurred during your registration: ". implode(" ", $builder->user->error));
+						$show_register = true;
+					}
+				}
+				else
+				{
+					echo("An error occurred trying to access the user database.");
+					$show_register = true;
+				}
+			}
+			else if(count($builder->database->metadata))
+			{
+				if(!empty($builder->database->metadata['changelog']) && !empty($builder->database->metadata['pages']) && !empty($builder->database->metadata['page_components']) && !empty($builder->database->metadata['settings']) && !empty($builder->database->metadata['users']))
+				{
+					// This is where we can check for updates, or check to see if this is a MeLeeCMS database or something else, and display an appropriate message.
+					echo("MeLeeCMS appears to have been installed to this database already. ");
+					$admins = $builder->database->query("SELECT `index` FROM users WHERE `permission`&". (int)MeLeeCMSUser::PERM_ADMIN ."=". (int)MeLeeCMSUser::PERM_ADMIN, Database::RETURN_FIELD);
+					if(!empty($admins))
+					{
+						echo("Additionally, at least one admin account appears to have been already set up. You should delete <tt>install.php</tt>. However, if you need to create another admin account, you can do so below. ");
+					}
+					else
+					{
+						echo("However, there is no admin account. Use the form below to create one. ");
+					}
+					$show_register = true;
+				}
+				else
+				{
+					echo("The database specifed in <tt>config.php</tt> already has data in it. MeleeCMS must be installed to an empty database. ");
+				}
+			}
+			else
+			{
+				$sql = file_get_contents("includes/install.sql");
+				$builder->database->query($sql);
+				$builder->database->refresh_metadata();
+				if(count($builder->database->metadata))
+				{
+					echo("The database has been setup. MeleeCMS should now be fully installed. However, you should now create an admin account for yourself. ");
+					$show_register = true;
+				}
+				else
+				{
+					echo("The database failed to create. Check <tt>config.php</tt> to make sure the database information is correct. ");
+				}
+			}
+		}
+		else
+		{
+			echo("Error connecting to the database. Check <tt>config.php</tt> to make sure the database information is correct. ");
+		}
+	}
+}
+
+if(!empty($show_config))
+{
 ?><!DOCTYPE html><html><body>
 <tt>config.php</tt> has not been set up. Use this form to set it up now.
 <form method="post">
@@ -149,38 +226,31 @@ else
 	<button type="submit" name="config_submit" value="1">Save config.php</button>
 </form>
 </body></html><?php
-	}
-	else
-	{
-		require_once("includes/MeLeeCMS.php");
-		$builder = new MeLeeCMS(0);
-		ini_set("display_errors", 1);
+}
 
-		if($builder->setup_database() && is_array($builder->database->metadata))
-		{
-			if(count($builder->database->metadata))
-			{
-				// This is where we can check for updates, or check to see if this is a MeLeeCMS database or something else, and display an appropriate message.
-				echo("The database specifed in <tt>config.php</tt> already has data in it. MeleeCMS must be installed to an empty database. If you've already successfully installed MeLeeCMS, you can delete this file.");
-			}
-			else
-			{
-				$sql = file_get_contents("includes/install.sql");
-				$builder->database->query($sql);
-				$builder->database->refresh_metadata();
-				if(count($builder->database->metadata))
-				{
-					echo("The database has been setup. MeleeCMS should now be fully installed. You can delete this file.");
-				}
-				else
-				{
-					echo("The database failed to create. Check <tt>config.php</tt> to make sure the database information is correct.");
-				}
-			}
-		}
-		else
-		{
-			echo("Error connecting to the database. Check <tt>config.php</tt> to make sure the database information is correct.");
-		}
-	}
+if(!empty($show_register))
+{
+?><!DOCTYPE html><html><body>
+Use this form to create your admin account.
+<form method="post">
+	<input type="hidden" name="password" value="<?=$_POST['password']?>"/>
+	<table>
+		<tbody>
+			<tr>
+				<th>Username:</th>
+				<td><input type="text" name="reg_username"/></td>
+			</tr>
+			<tr>
+				<th>Password:</th>
+				<td><input type="password" name="reg_password"/></td>
+			</tr>
+			<tr>
+				<th>Password Again:</th>
+				<td><input type="password" name="reg_password2"/></td>
+			</tr>
+		</tbody>
+	</table>
+	<button type="submit" name="reg_submit" value="1">Register Your Account</button>
+</form>
+</body></html><?php
 }

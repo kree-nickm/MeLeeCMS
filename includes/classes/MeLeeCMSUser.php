@@ -23,17 +23,15 @@ class MeLeeCMSUser extends User
 		}
 		else
 		{
-			$username = stripslashes($_POST['username']);
-			$password = stripslashes($_POST['password']);
-			if($username != "")
-				$_SESSION['username'] = $username;
-			if($_SESSION['username'] != "")
+			if(!empty($_POST['username']))
+				$_SESSION['username'] = stripslashes($_POST['username']);
+			if(!empty($_SESSION['username']))
 			{
 				$user = $cms->database->query("SELECT * FROM users WHERE `username`=". $cms->database->quote($_SESSION['username']) ." LIMIT 0,1", Database::RETURN_ROW);
 				if($user['index'])
 				{
-					if($password != "")
-						$_SESSION['password'] = crypt($password, $user['password']);
+					if(!empty($_POST['password']))
+						$_SESSION['password'] = crypt(stripslashes($_POST['password']), $user['password']);
 					if(hash_equals($user['password'], $_SESSION['password']))
 					{
 						$this->logged_in = true;
@@ -49,7 +47,7 @@ class MeLeeCMSUser extends User
 									$this->user_info[$key] = $val;
 								}
 						// Load a new page if the login was just submitted in order to clear the POST data.
-						if($username != "" || $password != "")
+						if(isset($_POST['username']) || isset($_POST['password']))
 							$this->cms->requestRefresh();
 					}
 				}
@@ -104,7 +102,7 @@ class MeLeeCMSUser extends User
 	public function register($username, $password1, $password2, $permission=MeLeeCMSUser::PERM_VIEW, $custom_data=[])
 	{
 		$this->error = [];
-		if($username == "")
+		if(empty($username))
 			$this->error[] = "Username cannot be blank.";
 		else
 		{
@@ -112,7 +110,7 @@ class MeLeeCMSUser extends User
 			if($existing)
 				$this->error[] = "Username is taken.";
 		}
-		if($password1 == "")
+		if(empty($password1))
 			$this->error[] = "Password cannot be blank.";
 		else if($password1 != $password2)
 			$this->error[] = "Passwords do not match.";
