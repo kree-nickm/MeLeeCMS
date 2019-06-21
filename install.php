@@ -1,5 +1,5 @@
 <?php
-$password = "hello";
+$password = "";
 
 if(empty($password))
 {
