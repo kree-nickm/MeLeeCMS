@@ -68,7 +68,7 @@ class User
 	 * @param MeLeeCMS $cms A reference to the MeLeeCMS object.
 	 * @return string[] A list of all includeable classes that extend User, and thus can be selected as user systems via the control panel.
 	 */
-	public static function get_subclasses($cms)
+	public static function get_subclasses($cms=null)
 	{
 		if(is_array(self::$subclasses))
 			return self::$subclasses;

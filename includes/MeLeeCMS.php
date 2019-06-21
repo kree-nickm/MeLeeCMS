@@ -62,12 +62,20 @@ class MeLeeCMS
 		// Load and validate $GlobalConfig settings.
 		global $GlobalConfig;
 		require_once(__DIR__ . DIRECTORY_SEPARATOR ."defaultconfig.php");
-		include_once("config.php");
-		$GlobalConfig['server_path'] = realpath($GlobalConfig['server_path']) . DIRECTORY_SEPARATOR;
-		if(substr($GlobalConfig['url_path'], 0, 1) != "/")
-			$GlobalConfig['url_path'] = "/". $GlobalConfig['url_path'];
-		if(substr($GlobalConfig['url_path'], -1) != "/")
-			$GlobalConfig['url_path'] = $GlobalConfig['url_path'] ."/";
+		if(is_file("config.php"))
+		{
+			include_once("config.php");
+			$GlobalConfig['server_path'] = realpath($GlobalConfig['server_path']) . DIRECTORY_SEPARATOR;
+			if(substr($GlobalConfig['url_path'], 0, 1) != "/")
+				$GlobalConfig['url_path'] = "/". $GlobalConfig['url_path'];
+			if(substr($GlobalConfig['url_path'], -1) != "/")
+				$GlobalConfig['url_path'] = $GlobalConfig['url_path'] ."/";
+			$this->mode = $mode;
+		}
+		else
+		{
+			$this->mode = $mode & 4;
+		}
 		$this->settings['server_path'] = $GlobalConfig['server_path'];
 		$this->settings['url_path'] = $GlobalConfig['url_path'];
 		$this->settings['user_system'] = $GlobalConfig['user_system'];
@@ -75,18 +83,17 @@ class MeLeeCMS
 		$this->settings['default_theme'] = $GlobalConfig['default_theme'];
 		$this->settings['cpanel_theme'] = $GlobalConfig['cpanel_theme'];
 		// Setup the initial object properties.
-		$this->mode = $mode;
 		array_unshift($this->class_paths, __DIR__ . DIRECTORY_SEPARATOR ."classes". DIRECTORY_SEPARATOR);
 		if(substr(__DIR__, 0, strlen($GlobalConfig['server_path'])) != $GlobalConfig['server_path'])
 			array_unshift($this->class_paths, $GlobalConfig['server_path'] ."includes". DIRECTORY_SEPARATOR ."classes". DIRECTORY_SEPARATOR);
 		spl_autoload_register(array($this, "load_class"), true);
 		// Setup the rest of MeLeeCMS based on the $mode.
 		$this->path_info = substr(isset($_SERVER['ORIG_PATH_INFO']) ? $_SERVER['ORIG_PATH_INFO'] : (isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : ""), 1);
-		if(($mode &  1) ==  1) $this->setup_database();
-		if(($mode &  2) ==  2) $this->setup_settings();
-		if(($mode &  4) ==  4) $this->setup_themes();
-		if(($mode &  8) ==  8) $this->setup_user();
-		if(($mode & 16) == 16) $this->setup_page();
+		if(($this->mode &  1) ==  1) $this->setup_database();
+		if(($this->mode &  2) ==  2) $this->setup_settings();
+		if(($this->mode &  4) ==  4) $this->setup_themes();
+		if(($this->mode &  8) ==  8) $this->setup_user();
+		if(($this->mode & 16) == 16) $this->setup_page();
 		if(isset($this->refresh_requested['url']))
 			$this->refreshPage();
 	}
@@ -470,7 +477,8 @@ class MeLeeCMS
 			$subtheme = "default";
 		$this->current_theme = $this->verify_theme($this->cpanel ? $this->get_setting('cpanel_theme') : $this->current_theme);
 		$params = array();
-		$params['user'] = $this->user->myInfo();
+		if(!empty($this->user))
+			$params['user'] = $this->user->myInfo();
 		if(!empty($this->temp_data['form_response']))
 			$params['form_response'] = $this->temp_data['form_response'];
 		if($subtheme == "__xml") // also check if xml output is allowed
@@ -500,7 +508,13 @@ class MeLeeCMS
 			echo(Transformer::array_to_xml("MeLeeCMS", $params));
 		}
 		else
-			echo($this->parse_template($params, "MeLeeCMS", $subtheme));
+		{
+			$html = $this->parse_template($params, "MeLeeCMS", $subtheme);
+			if(is_array($html))
+				echo("No theme was loaded. There may be an error in the MeLeeCMS setup for this page.");
+			else
+				echo($html);
+		}
 		return true;
 	}
 }

@@ -61,7 +61,7 @@ class Database
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['default'] = $row['COLUMN_DEFAULT'];
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type'] = $row['DATA_TYPE'];
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type_full'] = $row['COLUMN_TYPE'];
-			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type_basic'] = Database::$basic_types[$row['DATA_TYPE']] ? Database::$basic_types[$row['DATA_TYPE']] : "text";
+			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type_basic'] = !empty(Database::$basic_types[$row['DATA_TYPE']]) ? Database::$basic_types[$row['DATA_TYPE']] : "text";
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['key'] = $row['COLUMN_KEY'];
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['extra'] = $row['EXTRA'];
 		}
