@@ -25,14 +25,17 @@ $GlobalConfig['dbname'] = "";
 /****************************************************************
  * These help MeLeeCMS find and link to various files. These default settings will take care of the vast majority of cases. However, you would need to manually specify the paths if you have PHP files inside of subdirectories on your website that also need to use MeLeeCMS. For example, if MeLeeCMS.php is in "anydirectory/includes/", and your index.php is in "anydirectory/site/" and includes that copy of MeLeeCMS, then you would need to manually specify these settings to point to the "anydirectory/site/" directory in order for MeLeeCMS to function. However, if your index.php is in "anydirectory/" and MeLeeCMS.php is in "anydirectory/includes/", then these defaults will work just fine.
  ***************************************************************/
+// This is the directory that contains the control panel files. If you change this, also make sure to change the actual directory name. This might be necessary if your site also uses the actual CPanel software, as the URLs will conflict. If you are only changing this to try to make the control panel URL harder to find, don't bother. You should make sure the directory is protected whether its URL is public knowledge or not. Note: That should already be taken care of if you use any user_system other than User.
+$GlobalConfig['cpanel_dir'] = "cpanel";
+
 // The path to your wesite's root directory within the server. This is usually something like "/home/user/public_html/".
-$GlobalConfig['server_path'] = dirname($_SERVER['SCRIPT_FILENAME']) . DIRECTORY_SEPARATOR;
+$GlobalConfig['server_path'] = dirname(__FILE__, 2) . DIRECTORY_SEPARATOR;
 
 // The URL path to your website from the domain name. If your website loads right from "yourdomain.com", this should be "/". If it loads from "yourdomain.com/yoursite", this should be "/yoursite/". Etc.
-$GlobalConfig['url_path'] = dirname($_SERVER['SCRIPT_NAME']) ."/";
+$GlobalConfig['url_path'] = dirname(str_replace("/". $GlobalConfig['cpanel_dir'] ."/", "/", $_SERVER['SCRIPT_NAME'])) ."/";
 
 // This will redirect any page request from HTTP to HTTPS automatically, making sure no one accidentally uses the non-secure URL. Make sure your website has an SSL certificate and HTTPS works before setting this to true.
-// TODO: Currently only works with pages that use the base URL. Not cpanel.
+// TODO: Currently only works with pages that use the url_path index.php. Not cpanel.
 $GlobalConfig['force_https'] = false;
 
 /***************************************************************/
@@ -50,6 +53,3 @@ $GlobalConfig['default_theme'] = "default";
 
 // This is the theme that will be used by the control panel. DO NOT CHANGE THIS, without first making absolutely sure that the new theme fully support all control panel features, because most themes will not.
 $GlobalConfig['cpanel_theme'] = "bootstrap4";
-
-// This is the directory that contains the control panel files. If you change this, also make sure to change the actual directory name. This might be necessary if your site also uses the actual CPanel software, as the URLs will conflict. If you are only changing this to try to make the control panel URL harder to find, don't bother. You should make sure the directory is protected whether its URL is public knowledge or not. Note: That should already be taken care of if you use any user_system other than User.
-$GlobalConfig['cpanel_dir'] = "cpanel";
