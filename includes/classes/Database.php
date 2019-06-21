@@ -7,6 +7,26 @@ class Database
 	const RETURN_ROW = 2;
 	const RETURN_ALL = 3;
 	const RETURN_COLUMN = 4;
+	protected static $basic_types = [
+		'tinyint' => "integer",
+		'smallint' => "integer",
+		'mediumint' => "integer",
+		'int' => "integer",
+		'integer' => "integer",
+		'bigint' => "integer",
+		'bit' => "integer",
+		'year' => "integer",
+		'decimal' => "decimal",
+		'numeric' => "decimal",
+		'float' => "decimal",
+		'double' => "decimal",
+		'binary' => "binary",
+		'varbinary' => "binary",
+		'tinyblob' => "binary",
+		'blob' => "binary",
+		'mediumblob' => "binary",
+		'longblob' => "binary",
+	];
 	
 	protected $database;
 	protected $pdo;
@@ -41,6 +61,7 @@ class Database
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['default'] = $row['COLUMN_DEFAULT'];
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type'] = $row['DATA_TYPE'];
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type_full'] = $row['COLUMN_TYPE'];
+			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type_basic'] = Database::$basic_types[$row['DATA_TYPE']] ? Database::$basic_types[$row['DATA_TYPE']] : "text";
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['key'] = $row['COLUMN_KEY'];
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['extra'] = $row['EXTRA'];
 		}
@@ -314,28 +335,13 @@ class Database
 	{
 		if(!is_array($this->metadata[$table][$k]))
 			return null;
-		switch($this->metadata[$table][$k]['type'])
+		switch($this->metadata[$table][$k]['type_basic'])
 		{
-			case "tinyint":
-			case "smallint":
-			case "mediumint":
-			case "int":
 			case "integer":
-			case "bigint":
-			case "bit":
-			case "year":
 				return (int)$v;
 			case "decimal":
-			case "numeric":
-			case "float":
-			case "double":
 				return (real)$v;
 			case "binary":
-			case "varbinary":
-			case "tinyblob":
-			case "blob":
-			case "mediumblob":
-			case "longblob":
 				if($v == "" || ctype_print($v))
 					return $this->quote($v);
 				else

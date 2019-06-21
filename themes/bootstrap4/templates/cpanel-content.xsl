@@ -258,8 +258,8 @@ The "mode" attribute must not be changed without updating both the XSL above and
 <xsl:param name="name_prefix">content</xsl:param>
 <xsl:param name="id"/>
 <xsl:param name="table"/>
-<xsl:variable name="columns_selected" select="../property[name='config']/value/columns"/>
-<div class="modal fade" id="{$id_prefix}{$id}_dbconfig" tabindex="-1" role="dialog" aria-labelledby="{$id_prefix}{$id}_dbconfig_label" aria-hidden="true">
+<xsl:variable name="config" select="../property[name='config']/value"/>
+<div class="modal fade db-config" id="{$id_prefix}{$id}_dbconfig" tabindex="-1" role="dialog" aria-labelledby="{$id_prefix}{$id}_dbconfig_label" aria-hidden="true">
 	<div class="modal-dialog modal-lg" role="document">
 		<div class="modal-content border-dark">
 			<div class="modal-header text-white bg-dark">
@@ -269,28 +269,116 @@ The "mode" attribute must not be changed without updating both the XSL above and
 				</button>
 			</div>
 			<div class="modal-body row">
-				<div class="form-group col-md-7 col-lg-6">
-					<xsl:element name="select">
-						<xsl:attribute name="class">form-control selectpicker show-tick</xsl:attribute>
-						<xsl:attribute name="id"><xsl:value-of select="$id_prefix"/><xsl:value-of select="$id"/>_dbconfig_cols</xsl:attribute>
-						<xsl:attribute name="name"><xsl:value-of select="$name_prefix"/>[][<xsl:value-of select="name"/>_cols][]</xsl:attribute>
-						<xsl:attribute name="title">Choose columns to fetch...</xsl:attribute>
-						<xsl:attribute name="data-header">Choose columns to fetch...</xsl:attribute>
-						<xsl:attribute name="multiple"/>
-						<xsl:for-each select="/MeLeeCMS/content[@id='dbtable-list']/table[name=$table]/column">
-							<xsl:variable name="column_name" select="name"/>
+				<xsl:for-each select="/MeLeeCMS/content[@id='dbtable-list']/table[name=$table]/column">
+					<xsl:variable name="namestr"><xsl:value-of select="name"/></xsl:variable>
+					<div class="input-group col-12">
+						<div class="input-group-prepend">
+							<input class="form-control" value="{name}" readonly="true"/>
+						</div>
+						<select id="{$id_prefix}{$id}_dbconfig_filter{name}_output" name="{$name_prefix}[][{name}_output]" class="form-control" style="flex:none;width:initial;">
 							<xsl:element name="option">
-								<xsl:attribute name="value"><xsl:value-of select="name"/></xsl:attribute>
-								<xsl:for-each select="$columns_selected">
-									<xsl:if test=".=$column_name"><xsl:attribute name="selected"/></xsl:if>
-								</xsl:for-each>
-								<xsl:value-of select="name"/>
+								<xsl:attribute name="value"></xsl:attribute>
+								<xsl:if test="not($config/columns[name=$namestr])"><xsl:attribute name="selected"/></xsl:if>
+								Don't Include
 							</xsl:element>
+							<xsl:element name="option">
+								<xsl:attribute name="value">raw</xsl:attribute>
+								<xsl:if test="$config/columns[name=$namestr]/output='raw'"><xsl:attribute name="selected"/></xsl:if>
+								Include Normally 
+							</xsl:element>
+							<xsl:element name="option">
+								<xsl:attribute name="value">json</xsl:attribute>
+								<xsl:if test="$config/columns[name=$namestr]/output='json'"><xsl:attribute name="selected"/></xsl:if>
+								Decode JSON
+							</xsl:element>
+						</select>
+					</div>
+				</xsl:for-each>
+				<div class="table-responsive">
+					<table class="table table-hover">
+						<thead class="thead-light">
+							<tr>
+								<th scope="col">Column</th>
+								<th scope="col"></th>
+								<th scope="col">Value</th>
+								<th scope="col">Type</th>
+							</tr>
+						</thead>
+						<tbody>
+						<xsl:for-each select="/MeLeeCMS/content[@id='dbtable-list']/table[name=$table]/column">
+							<xsl:variable name="namestr"><xsl:value-of select="name"/></xsl:variable>
+							<tr>
+								<td scope="row"><input class="form-control" value="{name}" readonly="true"/></td>
+								<td><select id="{$id_prefix}{$id}_dbconfig_filter{name}_comp" name="{$name_prefix}[][{name}_comp]" class="form-control" style="flex:none;width:initial;">
+									<option value=''>N/A</option>
+									<xsl:choose>
+										<xsl:when test="type='tinyint' or type='smallint' or type='mediumint' or type='int' or type='integer' or type='bigint' or type='bit' or type='year' or type='decimal' or type='numeric' or type='float' or type='double'">
+											<xsl:element name="option">
+												<xsl:attribute name="value">=</xsl:attribute>
+												<xsl:if test="$config/filters[column=$namestr]/comparator='='"><xsl:attribute name="selected"/></xsl:if>
+												=
+											</xsl:element>
+											<xsl:element name="option">
+												<xsl:attribute name="value">&gt;</xsl:attribute>
+												<xsl:if test="$config/filters[column=$namestr]/comparator='&gt;'"><xsl:attribute name="selected"/></xsl:if>
+												&gt;
+											</xsl:element>
+											<xsl:element name="option">
+												<xsl:attribute name="value">&lt;</xsl:attribute>
+												<xsl:if test="$config/filters[column=$namestr]/comparator='&lt;'"><xsl:attribute name="selected"/></xsl:if>
+												&lt;
+											</xsl:element>
+											<xsl:element name="option">
+												<xsl:attribute name="value">&gt;=</xsl:attribute>
+												<xsl:if test="$config/filters[column=$namestr]/comparator='&gt;='"><xsl:attribute name="selected"/></xsl:if>
+												&gt;=
+											</xsl:element>
+											<xsl:element name="option">
+												<xsl:attribute name="value">&lt;=</xsl:attribute>
+												<xsl:if test="$config/filters[column=$namestr]/comparator='&lt;='"><xsl:attribute name="selected"/></xsl:if>
+												&lt;=
+											</xsl:element>
+										</xsl:when>
+										<xsl:otherwise>
+											<xsl:element name="option">
+												<xsl:attribute name="value">=</xsl:attribute>
+												<xsl:if test="$config/filters[column=$namestr]/comparator='='"><xsl:attribute name="selected"/></xsl:if>
+												=
+											</xsl:element>
+										</xsl:otherwise>
+									</xsl:choose>
+								</select></td>
+								<td><input id="{$id_prefix}{$id}_dbconfig_filter{name}_value" name="{$name_prefix}[][{name}_value]" class="form-control" value="{$config/filters[column=$namestr]/value}"/></td>
+								<td><select id="{$id_prefix}{$id}_dbconfig_filter{name}_type" name="{$name_prefix}[][{name}_type]" class="form-control" style="flex:none;width:initial;">
+									<xsl:element name="option">
+										<xsl:attribute name="value">raw</xsl:attribute>
+										<xsl:if test="$config/filters[column=$namestr]/type='raw'"><xsl:attribute name="selected"/></xsl:if>
+										Raw
+									</xsl:element>
+									<xsl:element name="option">
+										<xsl:attribute name="value">post</xsl:attribute>
+										<xsl:if test="$config/filters[column=$namestr]/type='post'"><xsl:attribute name="selected"/></xsl:if>
+										$_POST
+									</xsl:element>
+									<xsl:element name="option">
+										<xsl:attribute name="value">get</xsl:attribute>
+										<xsl:if test="$config/filters[column=$namestr]/type='get'"><xsl:attribute name="selected"/></xsl:if>
+										$_GET
+									</xsl:element>
+									<xsl:element name="option">
+										<xsl:attribute name="value">request</xsl:attribute>
+										<xsl:if test="$config/filters[column=$namestr]/type='request'"><xsl:attribute name="selected"/></xsl:if>
+										$_REQUEST
+									</xsl:element>
+								</select></td>
+							</tr>
 						</xsl:for-each>
-					</xsl:element>
+						</tbody>
+					</table>
 				</div>
 			</div>
 			<div class="modal-footer">
+				<i style="float:left;">Changes will be saved when you save the page.</i>
 				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 			</div>
 		</div>

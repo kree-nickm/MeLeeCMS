@@ -12,8 +12,9 @@ jQuery(function(){
 	jQuery(".remove-dict").click(removeFromDictionary);
 	jQuery("#form_edit_page").on("submit", submitSavePage);
 	
-	jQuery(".modal.db-config").on("show.bs.modal", function (event) {
-	});
+	/*jQuery(".modal.db-config").on("show.bs.modal", function (event) {
+	});*/
+	jQuery("div.modal.db-config").appendTo("#form_edit_page");
 	
 	
 	function addContent(clickEvent)

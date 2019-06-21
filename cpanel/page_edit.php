@@ -10,7 +10,7 @@ if(isset($_GET['confirmdelete']) && !empty($_GET['pageId']) && is_numeric($_GET[
 	header("Location: pages.php");
 	exit;
 }
-
+// TODO: Drafts can't be loaded yet.
 if(!empty($_GET['pageId']) && is_numeric($_GET['pageId']))
 	$page = $builder->database->query("SELECT * FROM `pages` WHERE `index`=". (int)$_GET['pageId'] ." LIMIT 0,1", 2);
 else if(!empty($_GET['specialPageId']) && is_numeric($_GET['specialPageId']))

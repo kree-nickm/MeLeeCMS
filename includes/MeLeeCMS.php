@@ -1,5 +1,5 @@
 <?php
-ini_set("display_errors", 1);
+ini_set("display_errors", 0);
 ini_set("log_errors", 1);
 ini_set("error_log", __DIR__ . DIRECTORY_SEPARATOR ."builder_php_errors.log");
 
@@ -28,7 +28,7 @@ function print_load_statistics()
 	else
 		$peak = $peak ." B";
 	
-	echo("<!-- Time: ". $time .", Memory: ". $mem ." (Peak: ". $peak .") -->");
+	echo("<!-- MeLeeCMS Load Statistics; Time: ". $time .", Memory: ". $mem ." (Peak: ". $peak .") -->");
 }
 
 require_once(__DIR__ . DIRECTORY_SEPARATOR ."functions.php");
@@ -47,12 +47,15 @@ class MeLeeCMS
 	protected $page_js = array();
 	protected $page_xsl = array();
 	protected $page_content = array();
+	protected $cpanel = false;
 	
 	public $class_paths = array();
 	public $database;
 	public $themes = array();
 	public $user;
 	public $path_info;
+	public $refresh_requested = ['strip'=>[]];
+	public $temp_data = [];
 
 	public function __construct($mode=31)
 	{
@@ -70,6 +73,7 @@ class MeLeeCMS
 		$this->settings['user_system'] = $GlobalConfig['user_system'];
 		$this->settings['site_title'] = $GlobalConfig['site_title'];
 		$this->settings['default_theme'] = $GlobalConfig['default_theme'];
+		$this->settings['cpanel_theme'] = $GlobalConfig['cpanel_theme'];
 		// Setup the initial object properties.
 		$this->mode = $mode;
 		array_unshift($this->class_paths, __DIR__ . DIRECTORY_SEPARATOR ."classes". DIRECTORY_SEPARATOR);
@@ -83,6 +87,35 @@ class MeLeeCMS
 		if(($mode &  4) ==  4) $this->setup_themes();
 		if(($mode &  8) ==  8) $this->setup_user();
 		if(($mode & 16) == 16) $this->setup_page();
+		if(isset($this->refresh_requested['url']))
+			$this->refreshPage();
+	}
+	
+	public function requestRefresh($destination=null, $strip_query=[])
+	{
+		if($destination === null)
+			$destination = $_SERVER['REQUEST_URI'];
+		if(empty($this->refresh_requested['url']) || $destination !== $_SERVER['REQUEST_URI'] && ($destination !== $_SERVER['HTTP_REFERER'] || $this->refresh_requested['url'] === $_SERVER['REQUEST_URI']))
+			$this->refresh_requested['url'] = $destination;
+		if(is_array($strip_query))
+			$this->refresh_requested['strip'] = array_merge($this->refresh_requested['strip'], $strip_query);
+		else if(!empty($strip_query))
+			$this->refresh_requested['strip'][] = $strip_query;
+		//register_shutdown_function([$this, "refreshPage"]);
+	}
+	
+	public function refreshPage()
+	{
+		if(isset($this->refresh_requested['url']))
+		{
+			$url = $this->refresh_requested['url'];
+			foreach($this->refresh_requested['strip'] as $param)
+			{
+				$url = str_replace("?".$param."&", "?", $url);
+				$url = preg_replace("/[?&]". $param ."\\b/i", "", $url);
+			}
+			header("Location: ". $url);
+		}
 	}
 	
 	public function get_setting($key)
@@ -211,8 +244,14 @@ class MeLeeCMS
 	public function setup_user()
 	{
 		global $GlobalConfig;
+		session_set_save_handler(new MeLeeSessionHandler($this), true);
 		session_name($GlobalConfig['cookie_prefix'] ."sessid");
 		session_start();
+		if(isset($_SESSION['form_response']))
+		{
+			$this->temp_data['form_response'] = $_SESSION['form_response'];
+			unset($_SESSION['form_response']);
+		}
 		if($this->get_setting('user_system') == "")
 			$user_class = "User";
 		else
@@ -232,7 +271,6 @@ class MeLeeCMS
 	
 	public function setup_page()
 	{
-		register_shutdown_function("print_load_statistics");
 		if(is_object($this->database))
 		{
 			$query  = "SELECT * FROM `pages` ";
@@ -303,6 +341,11 @@ class MeLeeCMS
 			return true;
 		$this->setup_special_page(1, "Permission Denied");
 		return false;
+	}
+
+	public function set_cpanel($cp)
+	{
+		return $this->cpanel = (bool)$cp;
 	}
 
 	public function set_theme($theme)
@@ -414,13 +457,22 @@ class MeLeeCMS
 
 	public function render($subtheme="")
 	{
-		$this->page['theme'] = $this->verify_theme($this->get_page('theme'));
+		if(isset($this->refresh_requested['url']))
+		{
+			$this->refreshPage();
+			return false;
+		}
+		register_shutdown_function("print_load_statistics");
+		$this->page['theme'] = $this->verify_theme($this->cpanel ? $this->get_setting('cpanel_theme') : $this->get_page('theme'));
 		if($subtheme == "")
 			$subtheme = $this->get_page("subtheme");
 		if($subtheme == "")
 			$subtheme = "default";
-		$this->current_theme = $this->verify_theme($this->current_theme);
+		$this->current_theme = $this->verify_theme($this->cpanel ? $this->get_setting('cpanel_theme') : $this->current_theme);
 		$params = array();
+		$params['user'] = $this->user->myInfo();
+		if(!empty($this->temp_data['form_response']))
+			$params['form_response'] = $this->temp_data['form_response'];
 		if($subtheme == "__xml") // also check if xml output is allowed
 			foreach($this->page_content as $tag=>$content)
 				$params['content@class='.get_class($content).($tag?'@id='.$tag:'')][] = $content->build_params();

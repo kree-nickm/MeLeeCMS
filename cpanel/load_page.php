@@ -3,6 +3,7 @@ require_once("../includes/MeLeeCMS.php");
 $builder = new MeLeeCMS(15);
 $builder->set_title("Control Panel");
 $builder->add_content(new Text("<span class='fas fa-cogs'></span> Control Panel"), "branding");
+$builder->set_cpanel(true);
 
 $admin_perm = array_search("ADMIN", User::get_permissions($builder));
 if($admin_perm)
@@ -27,6 +28,3 @@ if(!empty($_SESSION['onload_notification']))
 	//$_GET['output'] = "xml";
 }
 unset($_SESSION['onload_notification']);
-
-// If this is changed, also need to change references to the theme in ajax.php
-$builder->set_theme($GlobalConfig['default_theme']);

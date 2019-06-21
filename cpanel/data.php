@@ -1,7 +1,7 @@
 <?php
 require_once("load_page.php");
 
-if(!empty($_GET['perPage']) && is_numeric($_GET['perPage']))
+/*if(!empty($_GET['perPage']) && is_numeric($_GET['perPage']))
 	$perpage = (int)$_GET['perPage'];
 else
 	$perpage = 10;
@@ -36,6 +36,9 @@ foreach($builder->database->metadata as $table=>$meta)
 	$row->add_content(new Text($builder->database->query("SELECT COUNT(*) FROM ". $table, Database::RETURN_FIELD)), "rows");
 }
 
-$builder->attach_xsl("cpanel-data-list.xsl", "", true);
+$builder->attach_xsl("cpanel-data-list.xsl", "", true);*/
+$data = $builder->add_content(new Container("Database Metadata"));
+$data->add_content(new Text("<pre>". print_r($builder->database->metadata, true) ."</pre>"));
+
 $builder->attach_css("cpanel.css", "", true);
 $builder->render((!empty($_GET['output']) && $_GET['output']=="xml") ? "__xml" : "default");

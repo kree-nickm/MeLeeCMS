@@ -26,7 +26,7 @@ CREATE TABLE `pages` (
 
 CREATE TABLE `pages_drafts` (
   `user` int(10) UNSIGNED NOT NULL,
-  `index` int(10) UNSIGNED NOT NULL,
+  `page` int(10) UNSIGNED NOT NULL,
   `timestamp` bigint(20) UNSIGNED NOT NULL,
   `title` varchar(127) NOT NULL,
   `url` varchar(127) NOT NULL,
@@ -90,7 +90,8 @@ CREATE TABLE `users` (
   `username` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
   `jointime` bigint(20) UNSIGNED NOT NULL,
-  `permission` bigint(20) UNSIGNED NOT NULL
+  `permission` bigint(20) UNSIGNED NOT NULL,
+  `custom_data` longblob NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 
@@ -101,7 +102,7 @@ ALTER TABLE `pages`
   ADD PRIMARY KEY (`index`);
 
 ALTER TABLE `pages_drafts`
-  ADD UNIQUE KEY `unique` (`user`,`index`);
+  ADD UNIQUE KEY `unique` (`user`,`page`);
 
 ALTER TABLE `pages_special`
   ADD PRIMARY KEY (`index`);

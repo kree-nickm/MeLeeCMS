@@ -9,8 +9,8 @@ if($admin_perm)
 		exit;
 	}
 
-header("Content-type: text/plain");
-print_r($_REQUEST);
+//header("Content-type: text/plain");
+//print_r($_REQUEST);
 
 // ---------- Validate input. ----------
 if(!empty($_POST['page_index']) && is_numeric($_POST['page_index']))
@@ -133,34 +133,51 @@ if(!empty($_POST['page_content']) && is_array($_POST['page_content']))
 			if(is_numeric($i))
 				$i = "__".$i;
 			$object = new $content['content_class']();
-			$props = $object->set_cms($builder)->get_properties();
-			foreach($props as $k=>$v)
+			// DatabaseView classes are handled specially, so do that separately here.
+			if($content['content_class'] == "DatabaseView")
 			{
-				if(($v['type'] == "string" || $v['type'] == "paragraph") && isset($content[$k]))
+				$object->config['columns'] = [];
+				$object->config['format'] = [];
+				foreach($content as $key=>$val)
 				{
-					$object->$k = $content[$k];
+					if($key == "table")
+						$object->table = $val;
+					else if($key == "limit" && (int)$val > 0)
+						$object->config['limit'] = (int)$val;
+					else if($key == "sort" && !empty($val))
+						$object->config['sort'] = $val;
+					else if(substr($key, -7) == "_output" && !empty($val))
+						$object->config['columns'][] = ['name'=>substr($key, 0, -7), 'output'=>$val];
+					else if(substr($key, -5) == "_comp" && !empty($val))
+						$object->config['filters'][] = ['column'=>substr($key,0,-5), 'comparator'=>$val, 'type'=>$content[substr($key,0,-5)."_type"], 'value'=>$content[substr($key,0,-5)."_value"]];
 				}
-				else if(($v['type'] == "component") && is_numeric($content[$k]))
+			}
+			// Other content classes are handled mostly the same way as one another, using the property types.
+			else
+			{
+				$props = $object->set_cms($builder)->get_properties();
+				foreach($props as $k=>$v)
 				{
-					$object->$k = (int)$content[$k];
-				}
-				else if(($v['type'] == "dictionary") && is_array($content[$k]))
-				{
-					$object->$k = $content[$k];
-				}
-				else if(($v['type'] == "container") && is_array($content[$k]))
-				{
-					$object->$k = contentsToArray($content[$k]);
-				}
-				else if($v['type'] == "database_table" && isset($content[$k]))
-				{
-					$object->$k = $content[$k];
-					if(is_array($content[$k.'_cols']))
-						$object->config['columns'] = $content[$k.'_cols'];
-				}
-				else if(isset($content[$k]))
-				{
-					$errors[] = ['__attr:type'=>"warning", "Invalid property '". $v['type'] ."' in content type '". $content['content_class'] ."' can't be saved."];
+					if(($v['type'] == "string" || $v['type'] == "paragraph") && isset($content[$k]))
+					{
+						$object->$k = $content[$k];
+					}
+					else if(($v['type'] == "component") && is_numeric($content[$k]))
+					{
+						$object->$k = (int)$content[$k];
+					}
+					else if(($v['type'] == "dictionary") && is_array($content[$k]))
+					{
+						$object->$k = $content[$k];
+					}
+					else if(($v['type'] == "container") && is_array($content[$k]))
+					{
+						$object->$k = contentsToArray($content[$k]);
+					}
+					else if(isset($content[$k]))
+					{
+						$errors[] = ['__attr:type'=>"warning", "Invalid property '". $v['type'] ."' in content type '". $content['content_class'] ."' can't be saved."];
+					}
 				}
 			}
 			$contents_result[$i] = $object;
@@ -174,7 +191,7 @@ if(!empty($_POST['page_content']) && is_array($_POST['page_content']))
 		$mysql_data['content'] = $page_contents;
 }
 
-print_r($mysql_data);
+//print_r($mysql_data);
 $_SESSION['onload_notification'] = $errors;
 foreach($errors as $err)
 {
@@ -208,6 +225,8 @@ if($special)
 else if($_POST['save'] == 2)
 {
 	$_SESSION['onload_notification']['__attr:title'] = "Page Draft Saved";
+	$mysql_data['page'] = $mysql_data['index'];
+	unset($mysql_data['index']);
 	$mysql_data['user'] = $builder->user->get_property('index');
 	$mysql_data['timestamp'] = time();
 	$builder->database->insert("pages_drafts", $mysql_data, true, [], false);
@@ -221,5 +240,5 @@ else
 	$savedpage = $builder->database->query("SELECT `index`,`title`,`url` FROM pages WHERE `index`=". (int)$mysql_data['index'], Database::RETURN_ROW);
 	$_SESSION['onload_notification'][] = ['__attr:type'=>"primary", "Changes to #". $savedpage['index'] ." ". $savedpage['title'] ." (/". $savedpage['url'] .") have been saved."];
 }
-print_r($_SESSION['onload_notification']);
+//print_r($_SESSION['onload_notification']);
 header("Location: pages.php");
