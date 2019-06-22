@@ -20,6 +20,10 @@ else if(!empty($_POST['page_special_index']) && is_numeric($_POST['page_special_
 	$special = true;
 	$existing = $builder->database->query("SELECT * FROM `pages_special` WHERE `index`=". (int)$_POST['page_special_index'] ." LIMIT 0,1", Database::RETURN_ROW);
 }
+$is_file = false;
+if(isset($_POST['page_file']) || !empty($existing['file']))
+	$is_file = true;
+
 $mysql_data = array();
 $errors = array();
 // index
@@ -33,7 +37,7 @@ if(!empty($_POST['page_title']) || $existing['title'] != "")
 	if((!empty($_POST['page_title']) && $_POST['page_title'] != $existing['title']) || $_POST['save'] == 2)
 		$mysql_data['title'] = $_POST['page_title'];
 }
-else
+else if(!$is_file)
 {
 	$errors[] = ['__attr:type'=>"danger", "Page must have a title."];
 }
@@ -51,6 +55,44 @@ if(!$special)
 			$errors[] = ['__attr:type'=>"danger", "Page must have a URL."];
 		else
 			$errors[] = ['__attr:type'=>"danger", "Invalid page URL '". $_POST['page_url'] ."'."];
+	}
+}
+// file
+if($is_file)
+{
+	if($_POST['page_file'] != "" || $existing['file'] != "")
+	{
+		if(!empty($_POST['page_file']) && $_POST['page_file'] != $existing['file'])
+		{
+			$already = $builder->database->query("SELECT `index` FROM pages WHERE `file`=". $builder->database->quote($_POST['page_file']) ." AND `index`!=". (int)$_POST['page_index'], Database::RETURN_FIELD);
+			if(!empty($already))
+			{
+				$errors[] = ['__attr:type'=>"danger", "PHP file '". $_POST['page_file'] ."' already exists."];
+			}
+			else
+			{
+				$path = $builder->get_setting('server_path') ."includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR;
+				if(!empty($existing['file']) && is_file($path . $existing['file']))
+					rename($path . $existing['file'], $path . $_POST['page_file']);
+				else
+				{
+					mkdir($path);
+					if(!empty($existing['file']) && !is_file($path . $existing['file']))
+						$errors[] = ['__attr:type'=>"warning", "This page referred to '". $existing['file'] ."' but it doesn't exist. Creating new '". $_POST['page_file'] ."' instead of renaming file."];
+					$fp = fopen($path . $_POST['page_file'], "w");
+					fwrite($fp, "<?php\n");
+					fclose($fp);
+				}
+				$mysql_data['file'] = $_POST['page_file'];
+			}
+		}
+	}
+	else
+	{
+		if(empty($_POST['page_file']))
+			$errors[] = ['__attr:type'=>"danger", "Page must have a PHP file."];
+		else
+			$errors[] = ['__attr:type'=>"danger", "Invalid PHP file '". $_POST['page_file'] ."'."];
 	}
 }
 // subtheme
@@ -193,14 +235,19 @@ if(!empty($_POST['page_content']) && is_array($_POST['page_content']))
 
 //print_r($mysql_data);
 $_SESSION['onload_notification'] = $errors;
+$exit_after = false;
 foreach($errors as $err)
 {
 	if($err['__attr:type'] == "danger")
 	{
 		$_SESSION['onload_notification']['__attr:title'] = "Page Update Failed";
-		header("Location: page_edit.php?pageId=". $_POST['page_index']);
-		exit;
+		$exit_after = true;
 	}
+}
+if($exit_after)
+{
+	header("Location: page_edit.php?pageId=". (empty($_POST['page_index']) ? ($is_file ? "file" : "new") : $_POST['page_index']));
+	exit;
 }
 if(count($mysql_data) <= 1)
 {

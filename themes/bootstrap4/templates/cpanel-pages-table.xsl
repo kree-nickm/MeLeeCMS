@@ -8,7 +8,8 @@
 	<noscript><div class="alert alert-danger" role="alert">The page editor requires JavaScript in order to function.</div></noscript>
 	<div class="card border-dark">
 		<div class="card-header text-white bg-dark">
-			<a class="float-right btn btn-primary" href="page_edit.php?pageId=new">Create Page</a>
+			<a class="float-right btn btn-primary ml-2" href="page_edit.php?pageId=new">Create Page</a>
+			<a class="float-right btn btn-primary ml-2" href="page_edit.php?pageId=file">Add PHP File</a>
 			<h4 class="card-title">Normal Pages</h4>
 			<h6 class="card-subtitle text-muted">User-defined pages that are normally accessible on your site.</h6>
 		</div>
@@ -35,7 +36,10 @@
 							<xsl:attribute name="class"><xsl:if test="subtheme[@invalid]">text-warning</xsl:if> <xsl:if test="subtheme[@default]">font-italic</xsl:if></xsl:attribute>
 							<xsl:value-of select="subtheme"/>
 						</xsl:element></td>
-						<td class="py-1"><xsl:for-each select="css | js | xsl"><small style="display:block;"><xsl:value-of select="."/></small></xsl:for-each></td>
+						<td class="py-1">
+							<xsl:for-each select="css | js | xsl"><small style="display:block;"><xsl:value-of select="."/></small></xsl:for-each>
+							<xsl:if test="file"><small style="display:block;"><xsl:value-of select="file"/></small></xsl:if>
+						</td>
 						<td><xsl:for-each select="permission">
 							<xsl:value-of select="."/>
 							<xsl:if test="last()!=position()">,</xsl:if>

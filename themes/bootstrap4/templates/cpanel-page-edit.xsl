@@ -16,18 +16,20 @@
 				<h6 class="card-subtitle text-muted">Make changes to the properties and content of this page.</h6>
 			</div>
 			<div class="card-body row">
-				<div class="input-group form-group col-md-6 col-lg-4">
-					<input type="text" class="form-control" name="page_title" value="{content[@id='props']/title}" placeholder="Page Title" title="The title of the page that will appear in the browser tab."/>
+			<xsl:if test="not(content[@id='props']/file)">
+				<div class="input-group form-group col-md-6 col-lg-4" title="The title of the page that will appear in the browser tab.">
+					<input type="text" class="form-control" name="page_title" value="{content[@id='props']/title}" placeholder="Page Title"/>
 					<div class="input-group-append">
 						<span class="input-group-text"> - <xsl:value-of select="content[@id='props']/site_title"/></span>
 					</div>
 				</div>
+			</xsl:if>
 			<xsl:if test="content[@id='props']/url_path">
-				<div class="input-group form-group col-md-6 col-lg-4">
+				<div class="input-group form-group col-md-6 col-lg-4" title="The URL to access the page.">
 					<div class="input-group-prepend">
 						<span class="input-group-text"><xsl:value-of select="content[@id='props']/url_path"/></span>
 					</div>
-					<input type="text" class="form-control" name="page_url" value="{content[@id='props']/url}" placeholder="page-url" title="The URL to access the page."/>
+					<input type="text" class="form-control" name="page_url" value="{content[@id='props']/url}" placeholder="page-url"/>
 				</div>
 			</xsl:if>
 				<div class="form-group col-md-5 col-lg-4">
@@ -36,12 +38,14 @@
 					</xsl:apply-templates>
 				</div>
 			<xsl:if test="content[@id='props']/select[@id='permissions']">
-				<div class="form-group col-md-7 col-lg-6">
+				<xsl:element name="div">
+					<xsl:attribute name="class">form-group col-md-7 col-lg-6</xsl:attribute>
 					<xsl:apply-templates select="content[@id='props']/select[@id='permissions']" mode="page-select">
 						<xsl:with-param name="placeholder">Required permissions to view page...</xsl:with-param>
 					</xsl:apply-templates>
-				</div>
+				</xsl:element>
 			</xsl:if>
+			<xsl:if test="not(content[@id='props']/file)">
 				<div class="form-group col-lg-6">
 					<xsl:apply-templates select="content[@id='props']/select[@id='page_css']" mode="page-select">
 						<xsl:with-param name="placeholder">CSS files to include...</xsl:with-param>
@@ -57,10 +61,20 @@
 						<xsl:with-param name="placeholder">XSL templates to include...</xsl:with-param>
 					</xsl:apply-templates>
 				</div>
+			</xsl:if>
+			<xsl:if test="content[@id='props']/file">
+				<div class="input-group form-group col-md-6 col-lg-4" title="The file with the PHP code for this page.">
+					<div class="input-group-prepend">
+						<span class="input-group-text">/includes/pages/</span>
+					</div>
+					<input type="text" class="form-control" name="page_file" value="{content[@id='props']/file}" placeholder="file.php"/>
+				</div>
+			</xsl:if>
 			</div>
 		</div>
 	</div>
 	
+	<xsl:if test="not(content[@id='props']/file)">
 	<div class="container my-2 form-inline">
 		<div class="input-group mx-auto add-page-content">
 			<select class="form-control" aria-label="Add page content">
@@ -79,10 +93,11 @@
 			<xsl:apply-templates select="content[@id='page_content']/content[@page_content]" mode="page-content"/>
 		</div>
 	</div>
+	</xsl:if>
 	
 	<div class="container my-2 form-inline">
 		<div class="mx-auto">
-			<button class="btn btn-success mx-1" type="submit" name="save" value="2">Save Draft</button>
+			<xsl:if test="not(content[@id='props']/file)"><button class="btn btn-success mx-1" type="submit" name="save" value="2">Save Draft</button></xsl:if>
 			<button class="btn btn-success mx-1" type="submit" name="save" value="1">Save Page</button>
 		</div>
 	</div>

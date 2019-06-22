@@ -57,6 +57,7 @@ class MeLeeCMS
 	public $path_info;
 	public $refresh_requested = ['strip'=>[]];
 	public $temp_data = [];
+	public $include_later = [];
 
 	public function __construct($mode=31)
 	{
@@ -330,14 +331,12 @@ class MeLeeCMS
 	{
 		if(is_object($this->database))
 		{
-			$query  = "SELECT * FROM `pages` ";
 			if($this->path_info != "")
-				$query .= "WHERE `url`=". $this->database->quote($this->path_info) ." ";
+				$query = "SELECT * FROM `pages` WHERE `url`=". $this->database->quote($this->path_info) ." LIMIT 0,1";
 			else if(!empty($_GET['specialPage']) && is_numeric($_GET['specialPage']))
-				$query = "SELECT * FROM `pages_special` WHERE `index`=". (int)$_GET['specialPage'] ." ";
+				$query = "SELECT * FROM `pages_special` WHERE `index`=". (int)$_GET['specialPage'] ." LIMIT 0,1";
 			else
-				$query .= "WHERE `index`=". (int)$this->get_setting('index_page') ." ";
-			$query .= "LIMIT 0,1";
+				$query = "SELECT * FROM `pages` WHERE `index`=". (int)$this->get_setting('index_page') ." LIMIT 0,1";
 			$this->page = $this->database->query($query, Database::RETURN_ROW);
 			// Note: build_page() only needs to be called if everything is good. require_permission() calls setup_special_page() on a failure, which calls build_page() for itself.
 			if(is_array($this->page))
@@ -374,22 +373,32 @@ class MeLeeCMS
 	
 	protected function build_page()
 	{
-		$this->set_title($this->get_page('title'));
-		$content = unserialize($this->get_page('content'));
-		if(is_array($content))
-			foreach($content as $x=>$object)
-				$this->add_content($object, $x);
-		// Note: The above may be similar to unserializing content directly into $page_content, but the key difference is add_content() sets the $cms reference and makes sure $x is not an integer.
-		$page_js = json_decode($this->get_page('js'), true);
-		if(is_array($page_js)) foreach($page_js as $js)
-			$this->attach_js($js['file'], "", $js['fromtheme']);
-		$page_css = json_decode($this->get_page('css'), true);
-		if(is_array($page_css)) foreach($page_css as $css)
-			$this->attach_css($css['file'], "", $css['fromtheme']);
-		$page_xsl = json_decode($this->get_page('xsl'), true);
-		if(is_array($page_xsl)) foreach($page_xsl as $xsl)
-			$this->attach_xsl($xsl);
-		// TODO: Return, maybe?
+		if($this->get_page('file'))
+		{
+			$file = $this->get_setting("server_path") ."includes/pages/". $this->get_page('file');
+			if(is_file($file))
+				$this->include_later[] = $file;
+			else
+				trigger_error("Page index ". $this->get_page('index') ." refers to file ". $this->get_page('file') .", but it does not exist.", E_USER_WARNING);
+		}
+		else
+		{
+			$this->set_title($this->get_page('title'));
+			$content = unserialize($this->get_page('content'));
+			if(is_array($content))
+				foreach($content as $x=>$object)
+					$this->add_content($object, $x);
+			$page_js = json_decode($this->get_page('js'), true);
+			if(is_array($page_js)) foreach($page_js as $js)
+				$this->attach_js($js['file'], "", $js['fromtheme']);
+			$page_css = json_decode($this->get_page('css'), true);
+			if(is_array($page_css)) foreach($page_css as $css)
+				$this->attach_css($css['file'], "", $css['fromtheme']);
+			$page_xsl = json_decode($this->get_page('xsl'), true);
+			if(is_array($page_xsl)) foreach($page_xsl as $xsl)
+				$this->attach_xsl($xsl);
+			// TODO: Return, maybe?
+		}
 	}
 
 	public function require_permission($level=0)

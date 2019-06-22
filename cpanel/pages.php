@@ -15,6 +15,8 @@ foreach($pages as $page)
 		'xsl' => [],
 		'permission' => $page['permission'] ? [] : "N/A",
 	];
+	if(!empty($page['file']))
+		$children['file'] = $page['file'];
 	if($page['subtheme'] == "")
 		$children['subtheme@default'] = "default";
 	else

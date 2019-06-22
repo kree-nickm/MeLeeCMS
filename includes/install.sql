@@ -17,6 +17,7 @@ CREATE TABLE `pages` (
   `title` varchar(127) NOT NULL,
   `url` varchar(127) NOT NULL,
   `subtheme` varchar(63) NOT NULL,
+  `file` varchar(50) NOT NULL,
   `css` longtext NOT NULL,
   `js` longtext NOT NULL,
   `xsl` longtext NOT NULL,

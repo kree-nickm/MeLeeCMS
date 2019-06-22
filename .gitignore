@@ -1,4 +1,5 @@
 /config.php*
 /includes/builder_php_errors.log
 /includes/logs/*
+/includes/pages/*
 /documentation/
