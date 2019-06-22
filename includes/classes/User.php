@@ -35,7 +35,7 @@ class User
 
 	public function get_property($property)
 	{
-		return $this->user_info[$property];
+		return empty($this->user_info[$property]) ? null : $this->user_info[$property];
 	}
 	
 	public function myInfo()
@@ -77,7 +77,7 @@ class User
 		else
 		{
 			$dirs = array(__DIR__);
-			error_log("User has been loaded without MeLeeCMS.");
+			trigger_error("User has been loaded without MeLeeCMS.", E_USER_NOTICE);
 		}
 		$ignore_classes = array();
 		self::$subclasses = array();
@@ -132,7 +132,7 @@ class User
 		else
 		{
 			$class = self::class;
-			error_log("User has been loaded without MeLeeCMS.");
+			trigger_error("User has been loaded without MeLeeCMS.", E_USER_NOTICE);
 		}
 		self::$permissions = array();
 		foreach((new ReflectionClass($class))->getConstants() as $con=>$val)

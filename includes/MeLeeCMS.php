@@ -1,7 +1,10 @@
 <?php
 ini_set("display_errors", 0);
 ini_set("log_errors", 1);
-ini_set("error_log", __DIR__ . DIRECTORY_SEPARATOR ."builder_php_errors.log");
+$error_dir = __DIR__ . DIRECTORY_SEPARATOR ."logs". DIRECTORY_SEPARATOR ."errors-". date("Y-m");
+if(!is_dir($error_dir))
+	mkdir($error_dir, 0777, true);
+ini_set("error_log", $error_dir . DIRECTORY_SEPARATOR . date("Y-m-d") .".log");
 
 /** The current memory usage at the time the page starts loading. */
 define("START_MEMORY", memory_get_usage());
@@ -59,6 +62,7 @@ class MeLeeCMS
 
 	public function __construct($mode=31)
 	{
+		set_error_handler([$this, "errorHandler"]);
 		// Load and validate $GlobalConfig settings.
 		global $GlobalConfig;
 		require_once(__DIR__ . DIRECTORY_SEPARATOR ."defaultconfig.php");
@@ -125,6 +129,54 @@ class MeLeeCMS
 		}
 	}
 	
+	public function errorHandler($level, $message, $file, $line, $context)
+	{
+		switch($level)
+		{
+			case E_ERROR: $type = 'E_ERROR'; break;
+			case E_WARNING: $type = 'E_WARNING'; break;
+			case E_PARSE: $type = 'E_PARSE'; break;
+			case E_NOTICE: $type = 'E_NOTICE'; break;
+			case E_CORE_ERROR: $type = 'E_CORE_ERROR'; break;
+			case E_CORE_WARNING: $type = 'E_CORE_WARNING'; break;
+			case E_COMPILE_ERROR: $type = 'E_COMPILE_ERROR'; break;
+			case E_COMPILE_WARNING: $type = 'E_COMPILE_WARNING'; break;
+			case E_USER_ERROR: $type = 'E_USER_ERROR'; break;
+			case E_USER_WARNING: $type = 'E_USER_WARNING'; break;
+			case E_USER_NOTICE: $type = 'E_USER_NOTICE'; break;
+			case E_STRICT: $type = 'E_STRICT'; break;
+			case E_RECOVERABLE_ERROR: $type = 'E_RECOVERABLE_ERROR'; break;
+			case E_DEPRECATED: $type = 'E_DEPRECATED'; break;
+			case E_USER_DEPRECATED: $type = 'E_USER_DEPRECATED'; break;
+			default: $type = 'unknown';
+		}
+		error_log($type .": ". $message ." in ". $file ." on line ". $line);
+		if(empty($this->temp_data['errors']))
+			$this->temp_data['errors'] = [];
+		$this->temp_data['errors'][] = [
+			'type' => $type,
+			'message' => $message,
+			'file' => $file,
+			'line' => $line,
+		];
+		if(is_object($this->database) && !empty($this->database->metadata['error_log']) && ($level & (E_NOTICE|E_USER_NOTICE|E_STRICT)) == 0)
+		{
+			$mysql_data = [
+				'time' => time(),
+				'user' => 0,
+				'level' => $level,
+				'type' => $type,
+				'message' => $message,
+				'file' => $file,
+				'line' => $line,
+			];
+			if(is_object($this->user))
+				$mysql_data['user'] = $this->user->get_property('index');
+			$this->database->insert("error_log", $mysql_data, false);
+		}
+		return true;
+	}
+	
 	public function get_setting($key)
 	{
 		return $this->settings[$key];
@@ -158,7 +210,7 @@ class MeLeeCMS
 		}
 		catch(PDOException $x)
 		{
-			error_log($x);
+			trigger_error($x, E_USER_WARNING);
 			return false;
 		}
 	}
@@ -176,7 +228,7 @@ class MeLeeCMS
 		}
 		else
 		{
-			error_log("Unable to load settings table". (is_object($this->database) ? "; SQLSTATE=". $this->database->error[0] .", \"". $this->database->error[2] ."\"" : "") .".");
+			trigger_error("Unable to load settings table". (is_object($this->database) ? "; SQLSTATE=". $this->database->error[0] .", \"". $this->database->error[2] ."\"" : "") .".", E_USER_WARNING);
 			return false;
 		}
 	}
@@ -270,7 +322,7 @@ class MeLeeCMS
 		}
 		catch(Exception $x)
 		{
-			error_log("Unable to create user object using the '". $this->get_setting('user_system') ."' user system.");
+			trigger_error("Unable to create user object using the '". $this->get_setting('user_system') ."' user system.", E_USER_WARNING);
 			$this->user = new User($this);
 			return false;
 		}
@@ -315,7 +367,7 @@ class MeLeeCMS
 			$this->page = ""; // Makes sure the below check will generate the necessary error.
 		if(!is_array($this->page))
 		{
-			error_log("No '". $title ."' page data (". $id .") found.");
+			trigger_error("No '". $title ."' page data (". $id .") found.", E_USER_WARNING);
 			$this->page = array('title' => $title);
 		}
 		$this->build_page();
@@ -422,7 +474,7 @@ class MeLeeCMS
 		}
 		else
 		{
-			error_log("'". $content ."' is not a subclass of Content, cannot add it as content (". $x .").");
+			trigger_error("'". $content ."' is not a subclass of Content, cannot add it as content (". $x .").", E_USER_WARNING);
 			return null;
 		}
 	}
@@ -454,10 +506,8 @@ class MeLeeCMS
 		else if(is_file($file = ($path . $class."-default.xsl")))
 			$trans->set_stylesheet("", $file);
 		else
-		{
-			error_log("No stylesheet found for ". $class ." (". $subtheme ."), returning raw data instead.");
 			return $data;
-		}
+		// TODO: Should this even look for XLS files for each element? Basic elements can be in the main XSL file, they don't need their own.
 		//echo("<!-- ". $class ."-". $subtheme ." => ". $file .": ". print_r($data, true) ." -->");
 		return $trans->transform($data, $class, $this->page_xsl);
 	}
@@ -476,11 +526,17 @@ class MeLeeCMS
 		if($subtheme == "")
 			$subtheme = "default";
 		$this->current_theme = $this->verify_theme($this->cpanel ? $this->get_setting('cpanel_theme') : $this->current_theme);
+		
 		$params = array();
 		if(!empty($this->user))
 			$params['user'] = $this->user->myInfo();
+		if(count($_POST))
+			$params['post'] = $_POST;
+		if(count($_GET))
+			$params['get'] = $_GET;
 		if(!empty($this->temp_data['form_response']))
 			$params['form_response'] = $this->temp_data['form_response'];
+		
 		if($subtheme == "__xml") // also check if xml output is allowed
 			foreach($this->page_content as $tag=>$content)
 				$params['content@class='.get_class($content).($tag?'@id='.$tag:'')][] = $content->build_params();
@@ -501,6 +557,9 @@ class MeLeeCMS
 				'code' => $js['code'],
 			);
 		$params['content'] = array();
+		// TODO: This won't include errors during XSLT conversion. Don't know how to fix that.
+		if(!empty($this->temp_data['errors']) && is_object($this->user) && $this->user->has_permission($this->user::PERM_ADMIN))
+			$params['errors'] = $this->temp_data['errors'];
 		if($subtheme == "__xml") // also check if xml output is allowed
 		{
 			header("Content-type: text/xml");

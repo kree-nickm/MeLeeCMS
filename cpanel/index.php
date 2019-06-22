@@ -30,7 +30,10 @@ foreach($settings as $sett)
 		$textattrs['type'] = "select";
 	}
 	else
+	{
+		$textprops['size'] = "50";
 		$textattrs['type'] = "input-text";
+	}
 	$row = $table->add_content(new Container("", []));
 	$row->add_content(new Text($sett['setting'], []), "setting");
 	$row->add_content(new Text($textprops, $textattrs), "value");

@@ -166,7 +166,7 @@ class Database
 		else
 		{
 			$this->error = $this->pdo->errorInfo();
-			error_log("PDO query() failed, error info as follows: SQLSTATE=". $this->error[0] . ($this->error[1]!=null ? "; (". $this->error[1] .") Message: ". $this->error[2] : "; No driver-specific info.") ."\n\tQuery: ". $string);
+			trigger_error("PDO query() failed, error info as follows: SQLSTATE=". $this->error[0] . ($this->error[1]!=null ? "; (". $this->error[1] .") Message: ". $this->error[2] : "; No driver-specific info.") ."\n\tQuery: ". $string, E_USER_WARNING);
 			return false;
 		}
 	}
@@ -189,12 +189,12 @@ class Database
 		$log = $log && is_array($this->metadata["changelog"]);
 		if(!is_array($this->metadata[$table]))
 		{
-			error_log("Failed to insert/update database: `". $table ."` is not a valid table.");
+			trigger_error("Failed to insert/update database: `". $table ."` is not a valid table.", E_USER_WARNING);
 			return false;
 		}
 		if(!is_array($mysql_data))
 		{
-			error_log("Failed to insert/update database: No data array specified.");
+			trigger_error("Failed to insert/update database: No data array specified.", E_USER_WARNING);
 			return false;
 		}
 		$uni = "";
@@ -225,7 +225,7 @@ class Database
 			}
 		}
 		if(count($badcols))
-			error_log("The following invalid columns were sent to Database->insert(): ". implode(", ", $badcols));
+			trigger_error("The following invalid columns were sent to Database->insert(): ". implode(", ", $badcols), E_USER_WARNING);
 		
 		if($log && $uni != "")
 		{
@@ -262,12 +262,12 @@ class Database
 		$log = $log && is_array($this->metadata["changelog"]);
 		if(!is_array($this->metadata[$table]))
 		{
-			error_log("Failed to delete from database: `". $table ."` is not a valid table.");
+			trigger_error("Failed to delete from database: `". $table ."` is not a valid table.", E_USER_WARNING);
 			return false;
 		}
 		if(!is_array($mysql_data))
 		{
-			error_log("Failed to delete from database: No identifiable row data specified.");
+			trigger_error("Failed to delete from database: No identifiable row data specified.", E_USER_WARNING);
 			return false;
 		}
 		$uni = "";
@@ -288,7 +288,7 @@ class Database
 			}
 		}
 		if(count($badcols))
-			error_log("The following invalid columns were sent to Database->delete(): ". implode(", ", $badcols));
+			trigger_error("The following invalid columns were sent to Database->delete(): ". implode(", ", $badcols), E_USER_WARNING);
 		
 		if($uni != "")
 		{

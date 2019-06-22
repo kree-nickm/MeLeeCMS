@@ -150,6 +150,7 @@
 	<xsl:attribute name="id"><xsl:value-of select="$id"/></xsl:attribute>
 	<xsl:attribute name="type">text</xsl:attribute>
 	<xsl:attribute name="value"><xsl:value-of select="value"/></xsl:attribute>
+	<xsl:if test="size"><xsl:attribute name="size"><xsl:value-of select="size"/></xsl:attribute></xsl:if>
 </xsl:element>
 </xsl:template>
 

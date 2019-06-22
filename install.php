@@ -99,6 +99,8 @@ else
 				$builder->database->refresh_metadata();
 				if(count($builder->database->metadata))
 				{
+					$builder->database->insert("settings", ['setting'=>"site_title", 'value'=>$GlobalConfig['site_title']], true, ["setting"]);
+					$builder->database->insert("settings", ['setting'=>"default_theme", 'value'=>$GlobalConfig['default_theme']], true, ["setting"]);
 					echo("The database has been setup. MeleeCMS should now be fully installed. However, you should now create an admin account for yourself. ");
 					$show_register = true;
 				}

@@ -73,7 +73,7 @@ abstract class Content
 		else
 		{
 			$dirs = array(__DIR__);
-			error_log("Content has been loaded without MeLeeCMS.");
+			trigger_error("Content has been loaded without MeLeeCMS.", E_USER_NOTICE);
 		}
 		$ignore_classes = array();
 		self::$subclasses = array();

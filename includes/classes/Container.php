@@ -78,7 +78,7 @@ class Container extends Content
 		}
 		else
 		{
-			error_log("'". get_class($content) ."' is not a subclass of Content, cannot add it as content (". get_class($this) .": ". $this->title .", ". $x .").");
+			trigger_error("'". get_class($content) ."' is not a subclass of Content, cannot add it as content (". get_class($this) .": ". $this->title .", ". $x .").", E_USER_WARNING);
 			return null;
 		}
 	}

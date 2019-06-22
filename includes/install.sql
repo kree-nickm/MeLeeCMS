@@ -73,7 +73,7 @@ CREATE TABLE `settings` (
 
 INSERT INTO `settings` (`setting`, `value`, `type`, `description`) VALUES
 ('site_title', 'MeLeeCMS', 'string', 'Name used on browser tabs for this website. Will appear after the specific page name, ie. <tt>Page Name - Site Title</tt>'),
-('default_theme', 'bootstrap4', 'theme', 'The theme of the website, from which all pages will load their CSS, JS, and XSL. Changing this could break the website if the new theme is not setup to support all of the pages of the site. Does not affect the control panel.'),
+('default_theme', 'default', 'theme', 'The theme of the website, from which all pages will load their CSS, JS, and XSL. Changing this could break the website if the new theme is not setup to support all of the pages of the site. Does not affect the control panel.'),
 ('index_page', '1', 'page', 'Page that will load if someone visits your website but doesn\'t specify another page. For example, if they visit the URL <tt>www.yourdomain.com/</tt>, with nothing after the slash.');
 
 CREATE TABLE `themes` (
@@ -102,6 +102,17 @@ CREATE TABLE `sessions` (
   `time` bigint(20) UNSIGNED NOT NULL,
   `ip` varchar(15) NOT NULL,
   `user_agent` varchar(255) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+CREATE TABLE `error_log` (
+  `index` bigint(20) UNSIGNED NOT NULL,
+  `time` bigint(20) UNSIGNED NOT NULL,
+  `user` int(10) UNSIGNED NOT NULL,
+  `level` int(10) UNSIGNED NOT NULL,
+  `type` varchar(20) NOT NULL,
+  `message` text NOT NULL,
+  `file` varchar(255) NOT NULL,
+  `line` int(11) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 
@@ -133,6 +144,9 @@ ALTER TABLE `users`
 ALTER TABLE `sessions`
   ADD UNIQUE KEY `session_id` (`session_id`);
 
+ALTER TABLE `error_log`
+  ADD PRIMARY KEY (`index`);
+
 
 ALTER TABLE `changelog`
   MODIFY `index` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
@@ -151,4 +165,7 @@ ALTER TABLE `themes`
 
 ALTER TABLE `users`
   MODIFY `index` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `error_log`
+  MODIFY `index` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 COMMIT;
