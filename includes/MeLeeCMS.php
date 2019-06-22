@@ -34,8 +34,6 @@ function print_load_statistics()
 	echo("<!-- MeLeeCMS Load Statistics; Time: ". $time .", Memory: ". $mem ." (Peak: ". $peak .") -->");
 }
 
-require_once(__DIR__ . DIRECTORY_SEPARATOR ."functions.php");
-
 /**
  * The core class of MeLeeCMS, containing all of the code that sets up the back-end and handles the displaying of pages.
  */
