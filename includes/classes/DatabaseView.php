@@ -160,12 +160,16 @@ class DatabaseView extends Content
 								$outputs[$col]->parent_data = $this->data[$i];
 								$child_data[$col][$val] = $outputs[$col]->set_cms($this->cms)->build_params();
 							}
-							$this->data[$i][$col] = $child_data[$col][$val];
+							$this->data[$i][$col] = ['__attr:original'=>$val, $child_data[$col][$val]];
 						}
 						else if($outputs[$col] == "json")
+						{
 							$this->data[$i][$col] = json_decode($val, true);
+						}
 						else if(substr($outputs[$col], 0, 5) == "date:")
-							$this->data[$i][$col] = date(substr($outputs[$col], 5), $val);
+						{
+							$this->data[$i][$col] = ['__attr:original'=>$val, date(substr($outputs[$col], 5), $val)];
+						}
 					}
 				}
 				//$this->data['query '] = $query;
