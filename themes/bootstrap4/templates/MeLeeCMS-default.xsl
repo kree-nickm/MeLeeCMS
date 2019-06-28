@@ -85,8 +85,8 @@
 <xsl:for-each select="js">
 	<xsl:element name="script">
 		<xsl:attribute name="type">text/javascript</xsl:attribute>
-		<xsl:if test="src"><xsl:attribute name="src"><xsl:value-of select="src"/></xsl:attribute></xsl:if>
-		<xsl:if test="code"><xsl:value-of select="code"/></xsl:if>
+		<xsl:if test="src and src!=''"><xsl:attribute name="src"><xsl:value-of select="src"/></xsl:attribute></xsl:if>
+		<xsl:value-of select="code"/>
 	</xsl:element>
 </xsl:for-each>
 </body>

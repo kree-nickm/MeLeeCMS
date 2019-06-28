@@ -557,7 +557,9 @@ class MeLeeCMS
 				'href' => ($css['fromtheme'] ? $this->get_setting('url_path') ."themes/". $this->current_theme ."/css/". $css['href'] : $css['href']),
 				'code' => $css['code'],
 			);
-		$params['js'] = array();
+		$params['js'] = [[
+			'code' => "(function(){function MeLeeCMS(){this.url_path=\"". addslashes($this->get_setting('url_path')) ."\";this.theme=\"". addslashes($this->current_theme) ."\";}window.MeLeeCMS=new MeLeeCMS();}());",
+		]];
 		foreach($this->page_js as $js)
 			$params['js'][] = array(
 				'src' => ($js['fromtheme'] ? $this->get_setting('url_path') ."themes/". $this->current_theme ."/js/". $js['src'] : $js['src']),

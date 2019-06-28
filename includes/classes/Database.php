@@ -7,6 +7,7 @@ class Database
 	const RETURN_ROW = 2;
 	const RETURN_ALL = 3;
 	const RETURN_COLUMN = 4;
+	const RETURN_COUNT = 5;
 	protected static $basic_types = [
 		'tinyint' => "integer",
 		'smallint' => "integer",
@@ -109,6 +110,7 @@ class Database
 	 * + `Database::RETURN_ROW` Indicates that you only want a single row, as in a SELECT statement with a WHERE or LIMIT clause ensuring only one row is found by the database.
 	 * + `Database::RETURN_COLUMN` Indicates that you only want a single column but multiple rows, as in a SELECT statement with only one column selected.
 	 * + `Database::RETURN_ALL` Indicates that you want every result that the database returns, as in a typical SELECT statement.
+	 * + `Database::RETURN_COUNT` Indicates that you want a count of rows affected by the last query. Note that this uses the `PDOStatement::rowCount()` method, which has stipulations about when it will actually work. Notably, it is only meant to work on DELETE, INSERT, or UPDATE statements, but even then, might not return correctly depending on the database type.
 	 * 
 	 * If you do not specify one of those values, the function will attempt to guess which one you want.
 	 * @return boolean|string|string[]|array[] Either a boolean indicating the success of the query, or some part of the result returned from the database after the query. See above for details.
@@ -122,7 +124,10 @@ class Database
 			switch($result)
 			{
 				case self::RETURN_NONE:
-					$return = true;
+					$return = !is_array($this->error) || $this->error[0] == "00000";
+					break;
+				case self::RETURN_COUNT:
+					$return = $sta->rowCount();
 					break;
 				case self::RETURN_FIELD:
 					$return = $sta->fetch(PDO::FETCH_NUM);
@@ -243,7 +248,7 @@ class Database
 				}
 			}
 		}
-		$success = $this->query("INSERT". (!$update ? " IGNORE" : "") ." INTO ". $table ." (`". implode("`,`",array_keys($mysql_data)) ."`) VALUES (". implode(",", $mysql_data) .")". ($upd!="" ? " ON DUPLICATE KEY UPDATE ".$upd : ""), self::RETURN_NONE);
+		$success = $this->query("INSERT". (!$update ? " IGNORE" : "") ." INTO ". $table ." (`". implode("`,`",array_keys($mysql_data)) ."`) VALUES (". implode(",", $mysql_data) .")". ($upd!="" ? " ON DUPLICATE KEY UPDATE ".$upd : ""), self::RETURN_COUNT);
 		if($log && $success)
 		{
 			$this->insert("changelog", array(
@@ -308,7 +313,7 @@ class Database
 		}
 		else
 			return false;
-		$success = $this->query("DELETE FROM ". $table ." WHERE ". $uni, self::RETURN_NONE);
+		$success = $this->query("DELETE FROM ". $table ." WHERE ". $uni, self::RETURN_COUNT);
 		if($log && $success)
 		{
 			$this->insert("changelog", array(

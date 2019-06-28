@@ -10,7 +10,7 @@ CREATE TABLE `changelog` (
   `data` longblob NOT NULL,
   `previous` longblob NOT NULL,
   `blame` varchar(255) NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `pages` (
   `index` int(10) UNSIGNED NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE `pages` (
   `xsl` longtext NOT NULL,
   `permission` bigint(20) UNSIGNED NOT NULL DEFAULT '0',
   `content` longblob NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `pages_drafts` (
   `user` int(10) UNSIGNED NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE `pages_drafts` (
   `xsl` longtext NOT NULL,
   `permission` bigint(20) UNSIGNED NOT NULL DEFAULT '0',
   `content` longblob NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `pages_special` (
   `index` int(10) UNSIGNED NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE `pages_special` (
   `xsl` longtext NOT NULL,
   `content` longblob NOT NULL,
   `token` varchar(50) NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO `pages_special` (`index`, `title`, `subtheme`, `css`, `js`, `xsl`, `content`, `token`) VALUES
 (1, 'Permission Denied', 'default', '[]', '[]', '[]', 0x613a313a7b733a373a22636f6e74656e74223b4f3a393a22436f6e7461696e6572223a333a7b733a353a227469746c65223b733a31373a225065726d697373696f6e2044656e696564223b733a353a226174747273223b613a303a7b7d733a373a22636f6e74656e74223b613a313a7b733a343a2274657874223b4f3a343a2254657874223a323a7b733a343a2274657874223b733a35393a22596f7520646f206e6f74206861766520746865207265717569726564207065726d697373696f6e7320746f2076696577207468697320706167652e223b733a353a226174747273223b613a303a7b7d7d7d7d7d, ''),
@@ -63,14 +63,14 @@ CREATE TABLE `page_components` (
   `xsl` longtext NOT NULL,
   `content` longblob NOT NULL,
   `token` varchar(50) NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `settings` (
   `setting` varchar(30) NOT NULL,
   `value` varchar(127) NOT NULL,
   `type` enum('string','number','boolean','page','theme','user_system') NOT NULL,
   `description` text NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO `settings` (`setting`, `value`, `type`, `description`) VALUES
 ('site_title', 'MeLeeCMS', 'string', 'Name used on browser tabs for this website. Will appear after the specific page name, ie. <tt>Page Name - Site Title</tt>'),
@@ -84,7 +84,7 @@ CREATE TABLE `themes` (
   `xsl` longtext NOT NULL,
   `css` longtext NOT NULL,
   `token` varchar(50) NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `users` (
   `index` int(10) UNSIGNED NOT NULL,
@@ -93,7 +93,7 @@ CREATE TABLE `users` (
   `jointime` bigint(20) UNSIGNED NOT NULL,
   `permission` bigint(20) UNSIGNED NOT NULL,
   `custom_data` longblob NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `sessions` (
   `session_id` varchar(255) NOT NULL,
@@ -103,7 +103,7 @@ CREATE TABLE `sessions` (
   `time` bigint(20) UNSIGNED NOT NULL,
   `ip` varchar(15) NOT NULL,
   `user_agent` varchar(255) NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `error_log` (
   `index` bigint(20) UNSIGNED NOT NULL,
@@ -114,7 +114,7 @@ CREATE TABLE `error_log` (
   `message` text NOT NULL,
   `file` varchar(255) NOT NULL,
   `line` int(11) NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 
 ALTER TABLE `changelog`
