@@ -102,9 +102,13 @@
 			<h4 class="card-title"><xsl:value-of select="title"/></h4>
 			<xsl:if test="content[@id='subtitle']"><h6 class="card-subtitle text-muted"><xsl:value-of select="content[@id='subtitle']"/></h6></xsl:if>
 		</div>
-		<div class="card-body">
+		<xsl:element name="div">
+			<xsl:attribute name="class">
+				card-body
+				<xsl:if test="@nopadding">p-0</xsl:if>
+			</xsl:attribute>
 			<xsl:apply-templates select="content[@id!='subtitle']"/>
-		</div>
+		</xsl:element>
 	</div>
 </div>
 </xsl:template>
@@ -120,6 +124,10 @@
 		<xsl:if test="position()!=last()"><br/></xsl:if>
 	</xsl:for-each></p>
 </xsl:if>
+</xsl:template>
+
+<xsl:template match="content[@class='Text' and @raw]">
+<xsl:value-of select="."/>
 </xsl:template>
 
 <xsl:template match="content[@class='Text' and @type='select']">
@@ -168,6 +176,36 @@
 	<xsl:attribute name="href"><xsl:value-of select="url"/></xsl:attribute>
 	<xsl:value-of select="text"/>
 </xsl:element>
+</xsl:template>
+
+<xsl:template match="content[@class='DatabaseView']">
+<div class="table-responsive">
+	<xsl:element name="table">
+		<xsl:attribute name="class">
+			table table-striped
+			<xsl:if test="@nomargin">m-0</xsl:if>
+			<xsl:if test="@small">table-sm</xsl:if>
+			<xsl:if test="@hover">table-hover</xsl:if>
+		</xsl:attribute>
+		<caption><xsl:value-of select="table"/> (<xsl:value-of select="count"/> rows)</caption>
+		<thead class="thead-light">
+			<tr>
+			<xsl:for-each select="row[1]/*">
+				<th><xsl:value-of select="name()"/></th>
+			</xsl:for-each>
+			</tr>
+		</thead>
+		<tbody>
+		<xsl:for-each select="row">
+			<tr>
+			<xsl:for-each select="*">
+				<td><xsl:value-of select="."/></td>
+			</xsl:for-each>
+			</tr>
+		</xsl:for-each>
+		</tbody>
+	</xsl:element>
+</div>
 </xsl:template>
 
 <xsl:template match="content[@notification]">

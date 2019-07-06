@@ -14,7 +14,7 @@ $change_count = $builder->database->query("SELECT COUNT(*) FROM `changelog`", Da
 $page_count = ceil($change_count/$perpage);
 $pages = ['page'=>[]];
 $pages['page'][] = ["&larr;", '__attr:number'=>$page-1];
-if($page == 0)
+if($page <= 0)
 	$pages['page'][0]['__attr:disabled'] = "1";
 for($i = 0; $i < $page_count; $i++)
 {
@@ -23,10 +23,10 @@ for($i = 0; $i < $page_count; $i++)
 		$pages['page'][count($pages['page'])-1]['__attr:current'] = "1";
 }
 $pages['page'][] = ["&rarr;", '__attr:number'=>$page+1];
-if($page == $page_count-1)
+if($page >= $page_count-1)
 	$pages['page'][count($pages['page'])-1]['__attr:disabled'] = "1";
 
-$changelog = $builder->database->query("SELECT * FROM `changelog` ORDER BY `timestamp` DESC LIMIT ". $page*$perpage .",". $perpage, Database::RETURN_ALL);
+$changelog = $builder->database->query("SELECT * FROM `changelog` ORDER BY `timestamp` DESC, `index` DESC LIMIT ". $page*$perpage .",". $perpage, Database::RETURN_ALL);
 $table = $builder->add_content(new Container("", []), "change_log");
 $table->add_content(new Text($pages), "pages");
 foreach($changelog as $change)
@@ -42,8 +42,16 @@ foreach($changelog as $change)
 	$row->add_content(new Text(date("j M Y @ g:ia T", $change['timestamp'])), "timestamp");
 	$row->add_content(new Text($change['table']), "table");
 	$row->add_content(new Text($blame), "blame");
-	$row->add_content(new Text(json_decode($change['data'], true)), "data");
-	$row->add_content(new Text(json_decode($change['previous'], true)), "previous");
+	$current = [];
+	if(is_array($changeData = json_decode($change['data'],true)))
+		foreach($changeData as $index=>$data)
+			$current[] = array_merge($data, ['__attr:index'=>$index]);
+	$previous = [];
+	if(is_array($changePrev = json_decode($change['previous'],true)))
+		foreach($changePrev as $index=>$data)
+			$previous[] = array_merge($data, ['__attr:index'=>$index]);
+	$row->add_content(new Text(['row'=>$current]), "data");
+	$row->add_content(new Text(['row'=>$previous]), "previous");
 }
 
 $builder->attach_js("https://kree-nickm.github.io/element-list-controller/elc.js", "", false);

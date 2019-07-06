@@ -8,6 +8,8 @@ class Database
 	const RETURN_ALL = 3;
 	const RETURN_COLUMN = 4;
 	const RETURN_COUNT = 5;
+	// This will be used in the metadata array to designate where the table indexes will be stored. Cannot match an existing column in any table of the database. The default is based on the assumption that MySQL columns cannot have spaces in them, but array indexes can.
+	const INDEX_KEY = "index ";
 	protected static $basic_types = [
 		'tinyint' => "integer",
 		'smallint' => "integer",
@@ -51,6 +53,7 @@ class Database
 	 */
 	public function refresh_metadata()
 	{
+		// TODO generate errors for tables with no PRIMARY key that is also AUTO_INCREMENT
 		$this->metadata = array();
 		$columns = $this->query("SELECT TABLE_NAME,COLUMN_NAME,COLUMN_DEFAULT,DATA_TYPE,COLUMN_TYPE,COLUMN_KEY,EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=". $this->quote($this->database) ." ORDER BY TABLE_NAME");
 		foreach($columns as $row)
@@ -62,25 +65,25 @@ class Database
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['default'] = $row['COLUMN_DEFAULT'];
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type'] = $row['DATA_TYPE'];
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type_full'] = $row['COLUMN_TYPE'];
-			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type_basic'] = !empty(Database::$basic_types[$row['DATA_TYPE']]) ? Database::$basic_types[$row['DATA_TYPE']] : "text";
+			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type_basic'] = !empty(self::$basic_types[$row['DATA_TYPE']]) ? self::$basic_types[$row['DATA_TYPE']] : "text";
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['key'] = $row['COLUMN_KEY'];
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['extra'] = $row['EXTRA'];
 		}
 		foreach(array_keys($this->metadata) as $table)
 		{
-			$this->metadata[$table]['index '] = array();
+			$this->metadata[$table][self::INDEX_KEY] = array();
 			$indexes = $this->query("SHOW INDEX FROM ". $table ." WHERE Non_unique=0");
 			foreach($indexes as $row)
 			{
-				if(empty($this->metadata[$table]['index '][$row['Key_name']]))
-					$this->metadata[$table]['index '][$row['Key_name']] = array();
-				if(empty($this->metadata[$table]['index '][$row['Key_name']][$row['Seq_in_index']]))
-					$this->metadata[$table]['index '][$row['Key_name']][$row['Seq_in_index']] = array();
-				$this->metadata[$table]['index '][$row['Key_name']][$row['Seq_in_index']]['column'] = $row['Column_name'];
-				$this->metadata[$table]['index '][$row['Key_name']][$row['Seq_in_index']]['substr'] = $row['Sub_part'];
+				if(empty($this->metadata[$table][self::INDEX_KEY][$row['Key_name']]))
+					$this->metadata[$table][self::INDEX_KEY][$row['Key_name']] = array();
+				if(empty($this->metadata[$table][self::INDEX_KEY][$row['Key_name']][$row['Seq_in_index']]))
+					$this->metadata[$table][self::INDEX_KEY][$row['Key_name']][$row['Seq_in_index']] = array();
+				$this->metadata[$table][self::INDEX_KEY][$row['Key_name']][$row['Seq_in_index']]['column'] = $row['Column_name'];
+				$this->metadata[$table][self::INDEX_KEY][$row['Key_name']][$row['Seq_in_index']]['substr'] = $row['Sub_part'];
 			}
-			foreach(array_keys($this->metadata[$table]['index ']) as $key)
-				ksort($this->metadata[$table]['index '][$key]);
+			foreach(array_keys($this->metadata[$table][self::INDEX_KEY]) as $key)
+				ksort($this->metadata[$table][self::INDEX_KEY][$key]);
 		}
 	}
 	
@@ -176,6 +179,179 @@ class Database
 		}
 	}
 	
+	public function isRowSet($table, $mysql_data)
+	{
+		return is_array(current($mysql_data));
+		reset($mysql_data);
+		if(key($mysql_data) !== 0)
+			return false;
+		else
+			return is_array($mysql_data[0]);
+	}
+	
+	/**
+	 * Build valid MySQL clauses from the given parameters.
+	 * 
+	 * Returns part of a WHERE clause built from the input array that consists only of complete table indexes. For example, an auto_increment column would be in this clause. Also if there's a unique index involving two columns, then there would be a clause in here with those two columns if they are both in the input array.
+	 */
+	public function buildWhereUnique($table, $mysql_data)
+	{
+		if(!$this->isRowSet($table, $mysql_data))
+			$mysql_data = [$mysql_data];
+		$or_clause = [];
+		foreach($mysql_data as $row)
+		{
+			foreach($this->metadata[$table][self::INDEX_KEY] as $index=>$columns)
+			{
+				$and_clause = []; // This will build the union of all columns that are part of a multi-column index.
+				foreach($columns as $seq=>$options)
+				{
+					if(is_array($this->metadata[$table][$options['column']]))
+					{
+						if(isset($row[$options['column']]))
+						{
+							if(!empty($options['substr']))
+								$and_clause[] = "LEFT(`". $options['column'] ."`,". (int)$options['substr'] .")=LEFT(". $this->smart_quote($table, $options['column'], $row[$options['column']]) .",". (int)$options['substr'] .")";
+							else
+								$and_clause[] = "`". $options['column'] ."`=". $this->smart_quote($table, $options['column'], $row[$options['column']]);
+						}
+						else
+						{
+							// TODO use default values, but not if there's another unique index, in which case we need to get that row and use its values instead. Also have to factor in whether the column has a valid default value (for example, AUTO_INCREMENT columns will not).
+							$and_clause = null;
+							break;
+						}
+					}
+					else
+					{
+						trigger_error("Invalid column '". $options['column'] ."' is part of a column index in MySQL for table '". $table ."'.", E_USER_WARNING);
+					}
+				}
+				if(is_array($and_clause))
+					$or_clause[] = "(". implode(" AND ", $and_clause) .")";
+			}
+		}
+		if(count($or_clause))
+			return "(". implode(" OR ", $or_clause) .")";
+		else
+			return "";
+	}
+	
+	/**
+	 * Removes invalid columns from the input data set, and returns an array of the invalid column names.
+	 */
+	public function validateColumns($table, &$mysql_data)
+	{
+		$result = [];
+		if($this->isRowSet($table, $mysql_data))
+		{
+			foreach($mysql_data as $i=>$row)
+			{
+				foreach($row as $column=>$value)
+				{
+					if(!is_array($this->metadata[$table][$column]))
+					{
+						$result[] = $column;
+						unset($mysql_data[$i][$column]);
+					}
+				}
+			}
+		}
+		else
+		{
+			foreach($mysql_data as $column=>$value)
+			{
+				if(!is_array($this->metadata[$table][$column]))
+				{
+					$result[] = $column;
+					unset($mysql_data[$column]);
+				}
+			}
+		}
+		return $result;
+	}
+	
+	/**
+	 * Builds the part of the MySQL INSERT query string that comes after ON DUPLICATE KEY UPDATE.
+	 */
+	public function buildODKUpdate($table, $mysql_data, $leave_cols)
+	{
+		if($this->isRowSet($table, $mysql_data))
+			$columns = array_keys($mysql_data[0]);
+		else
+			$columns = array_keys($mysql_data);
+		$update_clause = [];
+		foreach($columns as $column)
+			if(is_array($this->metadata[$table][$column]) && !in_array($column, $leave_cols))
+				$update_clause[] = "`". $column ."`=VALUES(`". $column ."`)";
+		return implode(",", $update_clause);
+	}
+	
+	/**
+	 * Builds the part of the MySQL INSERT query string that comes after the table name.
+	 * 
+	 * Takes the given data array for the given table, and builds the parinthized list of columns, followed by the word VALUES, then the parinthized list of values to insert. Supports multiple-row inserts. The elements of the data array must have identical keys, or MySQL will generate an error.
+	 */
+	public function buildInsertClause($table, $mysql_data)
+	{
+		if(!$this->isRowSet($table, $mysql_data))
+			$mysql_data = [$mysql_data];
+		$rows = [];
+		foreach($mysql_data as $row)
+		{
+			$fields = [];
+			foreach($row as $column=>$value)
+			{
+				$fields[] = $this->smart_quote($table, $column, $value);
+			}
+			if(count($fields))
+				$rows[] = "(". implode(",", $fields) .")";
+		}
+		if(count($rows))
+			return "(`". implode("`,`",array_keys($mysql_data[0])) ."`) VALUES". implode(",", $rows);
+		else
+			return "() VALUES()";
+	}
+	
+	/**
+	 * Takes two rows of the given table and removes all columns in which they share an equal value. The PRIMARY KEY column is also kept in order to allow the rows to still be identified.
+	 */
+	public function identifyChanges($table, &$current, &$previous)
+	{
+		$newCurrent = [];
+		$newPrevious = [];
+		foreach($current as $currentRow)
+		{
+			$foundPrevious = false;
+			foreach($previous as $previousRow)
+			{
+				if($currentRow[$this->metadata[$table][self::INDEX_KEY]['PRIMARY'][1]['column']] == $previousRow[$this->metadata[$table][self::INDEX_KEY]['PRIMARY'][1]['column']])
+				{
+					$foundPrevious = true;
+					$newCurrentRow = [];
+					$newPreviousRow = [];
+					foreach($currentRow as $column=>$value)
+					{
+						if($value != $previousRow[$column])
+						{
+							$newCurrentRow[$column] = $value;
+							$newPreviousRow[$column] = $previousRow[$column];
+						}
+					}
+					if(count($newCurrentRow))
+						$newCurrent[$currentRow[$this->metadata[$table][self::INDEX_KEY]['PRIMARY'][1]['column']]] = $newCurrentRow;
+					if(count($newPreviousRow))
+						$newPrevious[$previousRow[$this->metadata[$table][self::INDEX_KEY]['PRIMARY'][1]['column']]] = $newPreviousRow;
+					break;
+				}
+			}
+			if(!$foundPrevious)
+				$newCurrent[$currentRow[$this->metadata[$table][self::INDEX_KEY]['PRIMARY'][1]['column']]] = $currentRow;
+		}
+		$current = $newCurrent;
+		$previous = $newPrevious;
+	}
+	
 	/**
 	 * Runs an insert statement that can also update with the provided data. Can also be used to add an entry to the changelog for queries that should be tracked.
 	 * 
@@ -189,9 +365,8 @@ class Database
 	 * 
 	 * @return boolean A boolean indicating the success of the query.
 	 */
-	public function insert($table, $mysql_data, $update=true, $leave_cols=array(), $log=false)
+	public function insert($table, $mysql_data, $update=true, $leave_cols=[], $log=false)
 	{
-		$log = $log && is_array($this->metadata["changelog"]);
 		if(!is_array($this->metadata[$table]))
 		{
 			trigger_error("Failed to insert/update database: `". $table ."` is not a valid table.", E_USER_WARNING);
@@ -202,69 +377,55 @@ class Database
 			trigger_error("Failed to insert/update database: No data array specified.", E_USER_WARNING);
 			return false;
 		}
-		$uni = "";
-		$upd = "";
-		$badcols = array();
-		foreach($mysql_data as $k=>$v)
-		{
-			if(is_array($this->metadata[$table][$k]))
-			{
-				$mysql_data[$k] = $this->smart_quote($table, $k, $v);
-				if($log && ($this->metadata[$table][$k]['key'] == "PRI" || $this->metadata[$table][$k]['key'] == "UNI"))
-				{
-					if($uni != "")
-						$uni .= " OR ";
-					$uni .= "`". $k ."`=". $mysql_data[$k];
-				}
-				if($update && !in_array($k, $leave_cols))
-				{
-					if($upd != "")
-						$upd .= ",";
-					$upd .= "`". $k ."`=VALUES(`". $k ."`)";
-				}
-			}
-			else
-			{
-				$badcols[] = $k;
-				unset($mysql_data[$k]);
-			}
-		}
-		if(count($badcols))
-			trigger_error("The following invalid columns were sent to Database->insert(): ". implode(", ", $badcols), E_USER_WARNING);
+		$log = $log
+			&& is_array($this->metadata["changelog"])
+			&& count($this->metadata[$table][self::INDEX_KEY]['PRIMARY']) == 1
+			&& $this->metadata[$table][$this->metadata[$table][self::INDEX_KEY]['PRIMARY'][1]['column']]['extra'] == "auto_increment";
 		
-		if($log && $uni != "")
-		{
-			$previous = $this->query("SELECT `". implode("`,`",array_keys($mysql_data)) ."` FROM ". $table ." WHERE ". $uni, self::RETURN_ALL);
-			if(!count($previous))
-				$previous = null;
-			else
-			{
-				foreach($previous as $i=>$row)
-				{
-					foreach($row as $k=>$v)
-					{
-						$previous[$i][$k] = $this->smart_quote($table, $k, $v);
-					}
-				}
-			}
-		}
-		$success = $this->query("INSERT". (!$update ? " IGNORE" : "") ." INTO ". $table ." (`". implode("`,`",array_keys($mysql_data)) ."`) VALUES (". implode(",", $mysql_data) .")". ($upd!="" ? " ON DUPLICATE KEY UPDATE ".$upd : ""), self::RETURN_COUNT);
+		$invalid_cols = $this->validateColumns($table, $mysql_data);
+		if(count($invalid_cols))
+			trigger_error("The following invalid columns were sent to Database->insert(): ". implode(", ", $invalid_cols), E_USER_WARNING);
+		if($log)
+			$unique_where = $this->buildWhereUnique($table, $mysql_data);
+		if($update)
+			$update_clause = $this->buildODKUpdate($table, $mysql_data, $leave_cols);
+		
+		// TODO if there are multiple indexes, and this insert causes a single row to combine two separate existing ones, weird stuff happens. MySQL strongly suggests that people not attempt that.
+		if(!empty($unique_where))
+			$previous = $this->query("SELECT * FROM ". $table ." WHERE ". $unique_where, self::RETURN_ALL);
+		$insert_clause = $this->buildInsertClause($table, $mysql_data);
+		// Note: ON DUPLICATE KEY UPDATE causes this to not return an actual count. For each row, it returns 1 for an insert or 2 for an update. For multiple rows, it returns the sum of those numbers.
+		$success = $this->query("INSERT". (!$update ? " IGNORE" : "") ." INTO ". $table ." ". $insert_clause . (!empty($update_clause) ? " ON DUPLICATE KEY UPDATE ".$update_clause : ""), self::RETURN_COUNT);
 		if($log && $success)
 		{
-			$this->insert("changelog", array(
+			$last_id = $this->query("SELECT LAST_INSERT_ID()", self::RETURN_FIELD);
+			$affected_ids = [];
+			if(!empty($previous) && count($previous))
+				foreach($previous as $row)
+					$affected_ids[] = (int)$row[$this->metadata[$table][self::INDEX_KEY]['PRIMARY'][1]['column']];
+			if(!empty($last_id))
+			{
+				$num = ($this->isRowSet($table, $mysql_data)?count($mysql_data):1) - count($affected_ids);
+				for($i=0; $i<$num; $i++)
+					$affected_ids[] = $i + (int)$last_id;
+			}
+			$current = $this->query("SELECT * FROM ". $table ." WHERE `". $this->metadata[$table][self::INDEX_KEY]['PRIMARY'][1]['column'] ."` IN (". implode(",",$affected_ids) .")", self::RETURN_ALL);
+			if(!empty($previous) && count($previous))
+				$this->identifyChanges($table, $current, $previous);
+			$this->insert("changelog", [
 				'table' => $table,
 				'timestamp' => time(),
-				'data' => json_encode($mysql_data),
+				'data' => json_encode($current),
 				'previous'=> is_array($previous) ? json_encode($previous) : "",
-				'blame'=> is_object($this->cms) && is_object($this->cms->user) && $this->cms->user->get_property('index')>0 ? $this->cms->user->get_property('index') : $_SERVER['REMOTE_ADDR'],
-			), false, null, false);
+				'blame'=> is_object($this->cms) && is_object($this->cms->user) && !empty($this->cms->user->get_property('index')) ? $this->cms->user->get_property('index') : $_SERVER['REMOTE_ADDR'],
+			], false, null, false);
 		}
 		return $success;
 	}
 	
+	//TODO Remake this in the image of the new SELECT (which is currently in DatabaseView)
 	public function delete($table, $mysql_data, $log=false)
 	{
-		$log = $log && is_array($this->metadata["changelog"]);
 		if(!is_array($this->metadata[$table]))
 		{
 			trigger_error("Failed to delete from database: `". $table ."` is not a valid table.", E_USER_WARNING);
@@ -275,40 +436,26 @@ class Database
 			trigger_error("Failed to delete from database: No identifiable row data specified.", E_USER_WARNING);
 			return false;
 		}
+		$log = $log && is_array($this->metadata["changelog"]);
+		
+		$invalid_cols = $this->validateColumns($table, $mysql_data);
+		if(count($invalid_cols))
+			trigger_error("The following invalid columns were sent to Database->delete(): ". implode(", ", $invalid_cols), E_USER_WARNING);
+		
 		$uni = "";
-		$badcols = array();
 		foreach($mysql_data as $k=>$v)
 		{
 			if(is_array($this->metadata[$table][$k]))
 			{
-				$mysql_data[$k] = $this->smart_quote($table, $k, $v);
 				if($uni != "")
 					$uni .= " AND ";
-				$uni .= "`". $k ."`=". $mysql_data[$k];
-			}
-			else
-			{
-				$badcols[] = $k;
-				unset($mysql_data[$k]);
+				$uni .= "`". $k ."`=". $this->smart_quote($table, $k, $v);
 			}
 		}
-		if(count($badcols))
-			trigger_error("The following invalid columns were sent to Database->delete(): ". implode(", ", $badcols), E_USER_WARNING);
-		
-		if($uni != "")
+		if(!empty($uni))
 		{
 			$previous = $this->query("SELECT * FROM ". $table ." WHERE ". $uni, self::RETURN_ALL);
-			if(count($previous))
-			{
-				foreach($previous as $i=>$row)
-				{
-					foreach($row as $k=>$v)
-					{
-						$previous[$i][$k] = $this->smart_quote($table, $k, $v);
-					}
-				}
-			}
-			else
+			if(empty($previous) || !count($previous))
 				return false;
 		}
 		else

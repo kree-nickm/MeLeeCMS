@@ -28,15 +28,22 @@
 						<td scope="row"><xsl:value-of select="content[@id='timestamp']"/></td>
 						<td><xsl:value-of select="content[@id='table']"/></td>
 						<td>
-							<xsl:if test="content[@id='data']">
-								<xsl:for-each select="content[@id='data']/*">
-									<xsl:value-of select="name(.)"/>
-									<xsl:if test="position()!=last()">, </xsl:if>
-								</xsl:for-each>
-							</xsl:if>
-							<xsl:if test="not(content[@id='data'])"><i class="text-muted">row deleted</i></xsl:if>
+						<xsl:choose>
+							<xsl:when test="not(content[@id='data']/row)">
+								<i class="text-muted">row(s) deleted</i>
+							</xsl:when>
+							<xsl:when test="count(content[@id='data']/row) &gt; 1">
+								<i>multiple rows</i>
+							</xsl:when>
+							<xsl:otherwise>
+							<xsl:for-each select="content[@id='data']/*[1]/*">
+								<xsl:value-of select="name(.)"/>
+								<xsl:if test="position()!=last()">, </xsl:if>
+							</xsl:for-each>
+							</xsl:otherwise>
+						</xsl:choose>
 						</td>
-						<td><xsl:if test="not(content[@id='previous'])"><span class="fas fa-check"></span></xsl:if></td>
+						<td><xsl:if test="count(content[@id='previous']/row) &lt; count(content[@id='data']/row)"><span class="fas fa-check"></span></xsl:if></td>
 						<td><xsl:value-of select="content[@id='blame']"/></td>
 						<td>
 							<button type="button" class="btn btn-secondary fas fa-info" data-toggle="modal" data-target="#modal{@id}" aria-label="Details"></button>
@@ -69,7 +76,93 @@
 				</button>
 			</div>
 			<div class="modal-body">
-			<xsl:if test="content[@id='data']">
+			<xsl:for-each select="content[@id='data']/row">
+			<xsl:variable name="index" select="@index"></xsl:variable>
+			<xsl:choose>
+			<xsl:when test="../../content[@id='previous']/row[@index=$index]">
+				<div class="card mb-2">
+					<h4 class="card-header text-white bg-secondary">
+						Updated Row (Index: <xsl:value-of select="@index"/>)
+					</h4>
+					<div class="card-body p-0">
+						<div class="table-responsive"><table class="table table-hover m-0">
+							<thead class="thead-light">
+								<tr>
+									<th scope="col">Column</th>
+									<th scope="col">Data</th>
+									<th scope="col">Old</th>
+								</tr>
+							</thead>
+							<tbody>
+								<xsl:for-each select="*">
+								<xsl:variable name="name" select="name()"></xsl:variable>
+								<tr>
+									<td class="h6" scope="row"><xsl:value-of select="$name"/></td>
+									<td><xsl:value-of select="."/></td>
+									<td><xsl:value-of select="../../../content[@id='previous']/row[@index=$index]/*[name()=$name]"/></td>
+								</tr>
+								</xsl:for-each>
+							</tbody>
+						</table></div>
+					</div>
+				</div>
+			</xsl:when>
+			<xsl:otherwise>
+				<div class="card mb-2">
+					<h4 class="card-header text-white bg-secondary">
+						Inserted Row (Index: <xsl:value-of select="@index"/>)
+					</h4>
+					<div class="card-body p-0">
+						<div class="table-responsive"><table class="table table-hover m-0">
+							<thead class="thead-light">
+								<tr>
+									<th scope="col">Column</th>
+									<th scope="col">Data</th>
+								</tr>
+							</thead>
+							<tbody>
+								<xsl:for-each select="*">
+								<tr>
+									<td class="h6" scope="row"><xsl:value-of select="name()"/></td>
+									<td><xsl:value-of select="."/></td>
+								</tr>
+								</xsl:for-each>
+							</tbody>
+						</table></div>
+					</div>
+				</div>
+			</xsl:otherwise>
+			</xsl:choose>
+			</xsl:for-each>
+			<xsl:for-each select="content[@id='previous']/row">
+			<xsl:variable name="index" select="@index"></xsl:variable>
+			<xsl:if test="not(../../content[@id='data']/row[@index=$index])">
+				<div class="card mb-2">
+					<h4 class="card-header text-white bg-secondary">
+						Deleted Row
+					</h4>
+					<div class="card-body p-0">
+						<div class="table-responsive"><table class="table table-hover m-0">
+							<thead class="thead-light">
+								<tr>
+									<th scope="col">Column</th>
+									<th scope="col">Data</th>
+								</tr>
+							</thead>
+							<tbody>
+								<xsl:for-each select="*">
+								<tr>
+									<td class="h6" scope="row"><xsl:value-of select="name()"/></td>
+									<td><xsl:value-of select="."/></td>
+								</tr>
+								</xsl:for-each>
+							</tbody>
+						</table></div>
+					</div>
+				</div>
+			</xsl:if>
+			</xsl:for-each>
+			<!--<xsl:if test="content[@id='data']">
 				<div class="card mb-2">
 					<h4 class="card-header text-white bg-secondary">
 						New Data For This Change
@@ -120,7 +213,7 @@
 						</xsl:for-each>
 					</div>
 				</div>
-			</xsl:if>
+			</xsl:if>-->
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
