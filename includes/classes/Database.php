@@ -8,8 +8,10 @@ class Database
 	const RETURN_ALL = 3;
 	const RETURN_COLUMN = 4;
 	const RETURN_COUNT = 5;
-	// This will be used in the metadata array to designate where the table indexes will be stored. Cannot match an existing column in any table of the database. The default is based on the assumption that MySQL columns cannot have spaces in them, but array indexes can.
+
+	/** This will be used in the metadata array to designate where the table indexes will be stored. Cannot match an existing column in any table of the database. The default is based on the assumption that MySQL columns cannot have spaces in them, but array indexes can. */
 	const INDEX_KEY = "index ";
+
 	protected static $basic_types = [
 		'tinyint' => "integer",
 		'smallint' => "integer",
@@ -403,7 +405,7 @@ class Database
 		$conj = " AND ";
 		foreach($filters as $i=>$filter)
 		{
-			if((string)$i == "subgroup")
+			if($i === "subgroup")
 			{
 				if($filter == "or")
 					$conj = " OR ";
@@ -636,7 +638,7 @@ class Database
 		return $success;
 	}
 	
-	//TODO Remake this in the image of the new SELECT (which is currently in DatabaseView)
+	//TODO Remake this in the image of the new SELECT
 	public function delete($table, $mysql_data, $log=false)
 	{
 		if(empty($this->metadata[$table]))

@@ -5,7 +5,7 @@
  * 
  * Any subclass of `Content` must be declared in a file with the same name as the class and end in `.php`, ie. `Text.php` for the `Text` class. Additionally, the class declaration within that file must match the following regex: `/\bclass\s+ClassName\s+extends\s+Content\b/i`.
  * In addition to implementing the abstract functions of Content, the subclass should have a constructor that can be called with no parameters. In other words, make sure every parameter of the constructor has a default value specified.
- * Immediately after any object that extends Content is created, you should call `set_cms()` on it with a reference to the active MeLeeCMS object, so that the `render()` function will work.
+ * Immediately after any object that extends Content is created, you should call `set_cms()` on it with a reference to the active MeLeeCMS object, so that the `render()` function will work, among other reasons. Adding such an object to MeLeeCMS with add_content will do this automatically.
  */
 abstract class Content
 {

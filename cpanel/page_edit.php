@@ -22,7 +22,7 @@ else if(!empty($_GET['specialPageId']) && is_numeric($_GET['specialPageId']))
 
 if(!empty($page) && is_array($page) || !empty($_GET['pageId']) && ($_GET['pageId'] == "new" || $_GET['pageId'] == "file"))
 {
-	$is_file = $_GET['pageId'] == "file" || !empty($page['file']);
+	$is_file = !empty($_GET['pageId']) && $_GET['pageId'] == "file" || !empty($page['file']);
 	if(!$is_file)
 	{
 		$builder->add_content(new Text(['component'=>$builder->database->query("SELECT `index`,`title` FROM `page_components` ORDER BY `title`", Database::RETURN_ALL)], ['hidden'=>"1"]), "component-list");
@@ -158,14 +158,14 @@ if(!empty($page) && is_array($page) || !empty($_GET['pageId']) && ($_GET['pageId
 				$content_data['id'] = $x;
 			foreach($object->get_properties() as $prop=>$parr)
 			{
-				$temp = ['name'=>$prop, 'desc'=>$parr['desc'], '__attr:type'=>$parr['type']];
-				if($parr['type'] == "dictionary")
+				$temp = ['name'=>$prop, 'desc'=>empty($parr['desc'])?"":$parr['desc'], '__attr:type'=>empty($parr['type'])?"":$parr['type']];
+				if(!empty($parr['type']) && $parr['type'] == "dictionary")
 				{
 					$temp['value'] = [];
 					if(is_array($object->$prop)) foreach($object->$prop as $k=>$v)
 						$temp['value'][] = ['__attr:key'=>$k, $v];
 				}
-				else if($parr['type'] == "container")
+				else if(!empty($parr['type']) && $parr['type'] == "container")
 				{
 					$temp = array_merge($temp, getContentData($object->$prop));
 				}
