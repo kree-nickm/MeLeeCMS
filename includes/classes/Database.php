@@ -118,7 +118,7 @@ class Database
 	 * If you do not specify one of those values, the function will attempt to guess which one you want.
 	 * @return boolean|string|string[]|array[] Either a boolean indicating the success of the query, or some part of the result returned from the database after the query. See above for details.
 	 */
-	public function query($string, $result=-1, $col=0) // 0 = return boolean ... 1 = single field ... 2 = one whole row ... 3 = entire result set
+	public function query($string, $result=-1, $col=0)
 	{
 		$sta = $this->pdo->query($string);
 		if($sta)
@@ -181,12 +181,57 @@ class Database
 	
 	public function isRowSet($table, $mysql_data)
 	{
+		// This is find as long as we enforce that $mysql_data is either an array of scalar values (for one row), or a two-dimensional array of scalar values (for multiple rows).
 		return is_array(current($mysql_data));
-		reset($mysql_data);
+		/*reset($mysql_data);
 		if(key($mysql_data) !== 0)
 			return false;
 		else
-			return is_array($mysql_data[0]);
+			return is_array($mysql_data[0]);*/
+	}
+	
+	/*
+	 * Returns a column identifier based on the tables given in the statement and the desired column, or null if it's invalid. If the column appears in multiple of the given tables, the last one takes precidence. A specific table can also be specified, and the function will return null if it doesn't match anything passed in the first argument.
+	 */
+	public function getValidColumn($table, $column, $returnArray=false)
+	{
+		$return = null;
+		if(is_array($column))
+		{
+			if(is_array($table) && in_array($column[0], $table) && $column[1] != self::INDEX_KEY && !empty($this->metadata[$column[0]][$column[1]]))
+			{
+				if($returnArray)
+					$return = [$column[0], $column[1]];
+				else
+					$return = "`". $column[0] ."`.". ($column[1]=="*" ? "*" : "`".$column[1]."`");
+			}
+			else if(!is_array($table) && $column[0] == $table && $column[1] != self::INDEX_KEY && !empty($this->metadata[$column[0]][$column[1]]))
+			{
+				if($returnArray)
+					$return = [$column[0], $column[1]];
+				else
+					$return = ($column[1]=="*" ? "*" : "`".$column[1]."`");
+			}
+		}
+		else if(is_array($table))
+		{
+			foreach($table as $t)
+				if($column != self::INDEX_KEY && !empty($this->metadata[$t][$column]))
+				{
+					if($returnArray)
+						$return = [$t, $column];
+					else
+						$return = "`". $t ."`.". ($column=="*" ? "*" : "`".$column."`");
+				}
+		}
+		else if($column != self::INDEX_KEY && !empty($this->metadata[$table][$column]))
+		{
+			if($returnArray)
+				$return = [$table, $column];
+			else
+				$return = ($column=="*" ? "*" : "`".$column."`");
+		}
+		return $return;
 	}
 	
 	/**
@@ -206,7 +251,7 @@ class Database
 				$and_clause = []; // This will build the union of all columns that are part of a multi-column index.
 				foreach($columns as $seq=>$options)
 				{
-					if(is_array($this->metadata[$table][$options['column']]))
+					if(!empty($this->metadata[$table][$options['column']]))
 					{
 						if(isset($row[$options['column']]))
 						{
@@ -249,7 +294,7 @@ class Database
 			{
 				foreach($row as $column=>$value)
 				{
-					if(!is_array($this->metadata[$table][$column]))
+					if(empty($this->metadata[$table][$column]))
 					{
 						$result[] = $column;
 						unset($mysql_data[$i][$column]);
@@ -261,7 +306,7 @@ class Database
 		{
 			foreach($mysql_data as $column=>$value)
 			{
-				if(!is_array($this->metadata[$table][$column]))
+				if(empty($this->metadata[$table][$column]))
 				{
 					$result[] = $column;
 					unset($mysql_data[$column]);
@@ -282,7 +327,7 @@ class Database
 			$columns = array_keys($mysql_data);
 		$update_clause = [];
 		foreach($columns as $column)
-			if(is_array($this->metadata[$table][$column]) && !in_array($column, $leave_cols))
+			if(!empty($this->metadata[$table][$column]) && !in_array($column, $leave_cols))
 				$update_clause[] = "`". $column ."`=VALUES(`". $column ."`)";
 		return implode(",", $update_clause);
 	}
@@ -352,6 +397,174 @@ class Database
 		$previous = $newPrevious;
 	}
 	
+	public function processFilters($table, $filters)
+	{
+		$where = [];
+		$conj = " AND ";
+		foreach($filters as $i=>$filter)
+		{
+			if((string)$i == "subgroup")
+			{
+				if($filter == "or")
+					$conj = " OR ";
+			}
+			else if(is_array($filter) && isset($filter['value']) && ($tableColumn = $this->getValidColumn($table, $filter['column'])) !== null)
+			{
+				//$type = $this->metadata[$table][$filter['column']]['type_basic'];
+				if(in_array($filter['comparator'], ["=","!=",">","<",">=","<=","IN","LIKE","BETWEEN"]))
+				{
+					if($filter['type'] == "get")
+						$value = $_GET[$filter['value']];
+					else if($filter['type'] == "post")
+						$value = $_POST[$filter['value']];
+					else if($filter['type'] == "request")
+						$value = $_REQUEST[$filter['value']];
+					else if($filter['type'] == "column")
+						$value = $this->getValidColumn($table, $filter['value']);
+					else
+						$value = $filter['value'];
+					
+					if($filter['comparator'] == "LIKE")
+						$filter['comparator'] = "LIKE ";
+					
+					if($filter['comparator'] == "BETWEEN" && is_array($value))
+					{
+						$where[] = $tableColumn ." BETWEEN ". $this->smart_quote($table, $filter['column'], $value[0]) ." AND ". $this->smart_quote($table, $filter['column'], $value[1]);
+					}
+					else
+					{
+						if(is_array($value))
+						{
+							array_walk($value, function(&$v,$k,$obj)use($filter){ $v=$obj->smart_quote($obj->table, $filter['column'], $v); }, $this);
+							$value = "(". implode(",",$value) .")";
+						}
+						else if($filter['type'] == "column")
+						{
+							// $value is already fine.
+						}
+						else
+							$value = $this->smart_quote($table, $filter['column'], $value);
+						
+						$where[] = $tableColumn . $filter['comparator'] . $value;
+					}
+					
+				}
+			}
+			else if(is_array($filter) && !empty($filter['subgroup']))
+			{
+				if(!empty($processed = $this->processFilters($table, $filter)))
+					$where[] = $processed;
+			}
+			else
+			{
+			}
+		}
+		return count($where) ? "(". implode($conj, $where) .")" : "";
+	}
+	
+	/**
+	 * Execute a SELECT statement based on the provided arguments.
+	 *
+	 * @param string|string[] $table The name of a table(, or an array of table names that will be used in the SELECT statement).
+	 * @param array $options An array of options from which the statement will be built. The array structure is as follows (every key is optional):
+	 * + `$options['columns']` An array of column names. The array can include `*` to select all columns. You can provide an alias by using an array instead, with the column name as element 0 and the alias specified with the 'alias' key. In place of a column name in either case, you can use a two-element array `[table,column]`. Omitting `$options['column']` will also select all columns.
+	 * + `$options['filters']` ... Adds the WHERE clause.
+	 * + `$options['order']` An array of two elements, where the first is the column name, and the second is the order (ASC/DESC or similar). Alternatively, this can be a multi-dimensional array where each element follows that aformentioned format. Adds the ORDER BY clause.
+	 * + `$options['limit']` An array of two integers, with the format: `[offset, row_count]`. Adds the LIMIT clause.
+	 */
+	public function select($table, $options, $result=Database::RETURN_ALL)
+	{
+		if(!is_array($table))
+			$table = [$table];
+		foreach($table as $t)
+			if(empty($this->metadata[$t]))
+			{
+				trigger_error("Failed to select from database: `". $t ."` is not a valid table.", E_USER_WARNING);
+				return false;
+			}
+		$columns = "*";
+		if(is_array($options))
+		{
+			if(isset($options['columns']) && is_array($options['columns']))
+			{
+				$selected_columns = [];
+				$all = false;
+				foreach($options['columns'] as $column)
+				{
+					if($column == "*")
+						$selected_columns[] = "*";
+					else if(!is_array($column) && ($tableColumn = $this->getValidColumn($table, $column)) !== null)
+						$selected_columns[] = $tableColumn;
+					else if(is_array($column))
+					{
+						if(!empty($column['alias']))
+						{
+							if(($tableColumn = $this->getValidColumn($table, $column[0])) !== null)
+								$selected_columns[] = $tableColumn ." AS ". $this->quote($column['alias']);
+						}
+						else if(($tableColumn = $this->getValidColumn($table, $column)) !== null)
+							$selected_columns[] = $tableColumn;
+					}
+				}
+				if(count($selected_columns))
+					$columns = implode(",", $selected_columns);
+			}
+			if(isset($options['filters']) && is_array($options['filters']))
+			{
+				if(!empty($processed = $this->processFilters($table, $options['filters'])))
+					$where = " WHERE ". $processed;
+			}
+			if(isset($options['order']) && is_array($options['order']))
+			{
+				// Figure out the format of the order option.
+				if(!is_array(current($options['order'])))
+				{
+					if(($tableColumn = $this->getValidColumn($table, $options['order'][0])) !== null)
+						$order = [[$tableColumn, $options['order'][1]]];
+					else
+						$order = [];
+				}
+				else if(count($options['order']) < 3 && // More elements than just a column and ord? False.
+					(empty($options['order'][1]) || !is_array($options['order'][1])) && // Second element can't be order string? False.
+					count($options['order'][0]) == 2 && // First element can't be table & column? False.
+					($tableColumn = $this->getValidColumn($table, $options['order'][0])) !== null) // First element doesn't match table & column? False.
+				{
+					$order = [[$tableColumn, $options['order'][1]]];
+				}
+				else
+				{
+					$order = [];
+					foreach($options['order'] as $o)
+					{
+						if(($tableColumn = $this->getValidColumn($table, $o[0])) !== null)
+							$order[] = [$tableColumn, $o[1]];
+					}
+				}
+				// Convert $order to a string.
+				foreach($order as &$o)
+				{
+					if(!empty($o[1]) && (substr($o[1], 0, 1) == "D" || substr($o[1], 0, 1) == "d"))
+						$o = $o[0] ." DESC";
+					else
+						$o = $o[0] ." ASC";
+				}
+				if(count($order))
+					$order = " ORDER BY ". implode(",", $order);
+				else
+					$order = "";
+			}
+			if(isset($options['limit']) && is_array($options['limit']))
+			{
+				$options['limit'][0] = (int)$options['limit'][0];
+				$options['limit'][1] = (int)$options['limit'][1];
+				if($options['limit'][0] >= 0 && $options['limit'][1] > 0)
+					$limit = " LIMIT ". $options['limit'][0] .",". $options['limit'][1];
+			}
+		}
+		$query = "SELECT ". $columns ." FROM `". implode("`,`", $table) ."`". (!empty($where) ? $where : "") . (!empty($order) ? $order : "") . (!empty($limit) ? $limit : "");
+		return $this->query($query, $result);
+	}
+	
 	/**
 	 * Runs an insert statement that can also update with the provided data. Can also be used to add an entry to the changelog for queries that should be tracked.
 	 * 
@@ -367,7 +580,7 @@ class Database
 	 */
 	public function insert($table, $mysql_data, $update=true, $leave_cols=[], $log=false)
 	{
-		if(!is_array($this->metadata[$table]))
+		if(empty($this->metadata[$table]))
 		{
 			trigger_error("Failed to insert/update database: `". $table ."` is not a valid table.", E_USER_WARNING);
 			return false;
@@ -378,7 +591,7 @@ class Database
 			return false;
 		}
 		$log = $log
-			&& is_array($this->metadata["changelog"])
+			&& !empty($this->metadata["changelog"])
 			&& count($this->metadata[$table][self::INDEX_KEY]['PRIMARY']) == 1
 			&& $this->metadata[$table][$this->metadata[$table][self::INDEX_KEY]['PRIMARY'][1]['column']]['extra'] == "auto_increment";
 		
@@ -426,7 +639,7 @@ class Database
 	//TODO Remake this in the image of the new SELECT (which is currently in DatabaseView)
 	public function delete($table, $mysql_data, $log=false)
 	{
-		if(!is_array($this->metadata[$table]))
+		if(empty($this->metadata[$table]))
 		{
 			trigger_error("Failed to delete from database: `". $table ."` is not a valid table.", E_USER_WARNING);
 			return false;
@@ -436,7 +649,7 @@ class Database
 			trigger_error("Failed to delete from database: No identifiable row data specified.", E_USER_WARNING);
 			return false;
 		}
-		$log = $log && is_array($this->metadata["changelog"]);
+		$log = $log && !empty($this->metadata["changelog"]);
 		
 		$invalid_cols = $this->validateColumns($table, $mysql_data);
 		if(count($invalid_cols))
@@ -445,7 +658,7 @@ class Database
 		$uni = "";
 		foreach($mysql_data as $k=>$v)
 		{
-			if(is_array($this->metadata[$table][$k]))
+			if(!empty($this->metadata[$table][$k]))
 			{
 				if($uni != "")
 					$uni .= " AND ";
@@ -485,8 +698,13 @@ class Database
 	 */
 	public function smart_quote($table, $k, $v)
 	{
-		if(!is_array($this->metadata[$table][$k]))
+		if(is_array($k) || is_array($table))
+			list($table, $k) = $this->getValidColumn($table, $k, true);
+		if(empty($this->metadata[$table][$k]))
+		{
+			trigger_error("Database->smart_quote could not quote the given value (". $table .", ". $k .", ". $v .").");
 			return null;
+		}
 		switch($this->metadata[$table][$k]['type_basic'])
 		{
 			case "integer":

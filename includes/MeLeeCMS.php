@@ -150,14 +150,15 @@ class MeLeeCMS
 			default: $type = 'unknown';
 		}
 		error_log($type .": ". $message ." in ". $file ." on line ". $line);
-		if(empty($this->temp_data['errors']))
-			$this->temp_data['errors'] = [];
-		$this->temp_data['errors'][] = [
-			'type' => $type,
-			'message' => $message,
-			'file' => $file,
-			'line' => $line,
-		];
+		if(is_object($this->user) && $this->user->has_permission($this->user::PERM_ADMIN))
+		{
+			$this->addData_protected('errors', [
+				'type' => $type,
+				'message' => $message,
+				'file' => $file,
+				'line' => $line,
+			], true, true);
+		}
 		if(is_object($this->database) && !empty($this->database->metadata['error_log']) && ($level & (E_NOTICE|E_USER_NOTICE|E_STRICT)) == 0)
 		{
 			$mysql_data = [
@@ -307,7 +308,7 @@ class MeLeeCMS
 		session_start();
 		if(isset($_SESSION['form_response']))
 		{
-			$this->temp_data['form_response'] = $_SESSION['form_response'];
+			$this->addData_protected('form_response', $_SESSION['form_response'], false, true, 3);
 			unset($_SESSION['form_response']);
 		}
 		if($this->get_setting('user_system') == "")
@@ -486,6 +487,39 @@ class MeLeeCMS
 		}
 	}
 	
+	protected function addData_protected($index, $data, $allowArray=true, $notCustom=true, $overwriteBehavior=3)
+	{
+		if($notCustom)
+			$target = $this->temp_data;
+		else
+		{
+			if(!isset($this->temp_data['custom']) || !is_array($this->temp_data['custom']))
+				$this->temp_data['custom'] = [];
+			$target = $this->temp_data['custom'];
+		}
+		if(empty($target[$index]))
+			$target[$index] = $data;
+		else if($allowArray)
+		{
+			if(is_array($target[$index]))
+				$target[$index][] = $data;
+			else
+				$target[$index] = [$target[$index], $data];
+		}
+		else
+		{
+			if($overwriteBehavior & 1 == 1)
+				$target[$index] = $data;
+			if($overwriteBehavior & 2 == 2)
+				trigger_error("Attempting to set MeLeeCMS ". ($notCustom ? "" : "custom ") ."data with index '". $index ."', but it is already set and isn't allowing an array. ". ($overwriteBehavior&1==1 ? "Overwriting previous data." : "Ignoring new data."));
+		}
+	}
+
+	public function addData($index, $data, $allowArray=true, $overwriteBehavior=3)
+	{
+		$this->addData_protected($index, $data, $allowArray, false, $overwriteBehavior);
+	}
+	
 	public function verify_theme($theme)
 	{
 		if(isset($this->themes[$theme]))
@@ -534,15 +568,21 @@ class MeLeeCMS
 			$subtheme = "default";
 		$this->current_theme = $this->verify_theme($this->cpanel ? $this->get_setting('cpanel_theme') : $this->current_theme);
 		
-		$params = array();
+		$params = [
+			'title' => $this->page_title,
+			'url_path' => $this->get_setting('url_path'),
+			'theme' => $this->current_theme,
+			'content' => [],
+			'css' => [],
+			//'js' => [],
+			//'data' => [],
+		];
 		if(!empty($this->user))
-			$params['user'] = $this->user->myInfo();
-		if(count($_POST))
-			$params['post'] = $_POST;
-		if(count($_GET))
-			$params['get'] = $_GET;
-		if(!empty($this->temp_data['form_response']))
-			$params['form_response'] = $this->temp_data['form_response'];
+			$this->addData_protected('user', $this->user->myInfo(), false, true, 3);
+		if(!empty($_POST))
+			$this->addData_protected('post', $_POST, false, true, 3);
+		if(!empty($_GET))
+			$this->addData_protected('get', $_GET, false, true, 3);
 		
 		if($subtheme == "__xml") // also check if xml output is allowed
 			foreach($this->page_content as $tag=>$content)
@@ -550,25 +590,21 @@ class MeLeeCMS
 		else
 			foreach($this->page_content as $tag=>$content)
 				$params['content@class='.get_class($content).($tag?'@id='.$tag:'')][] = $content->render($subtheme);
-		$params['title'] = $this->page_title;
-		$params['css'] = array();
 		foreach($this->page_css as $css)
 			$params['css'][] = array(
 				'href' => ($css['fromtheme'] ? $this->get_setting('url_path') ."themes/". $this->current_theme ."/css/". $css['href'] : $css['href']),
 				'code' => $css['code'],
 			);
 		$params['js'] = [[
-			'code' => "(function(){function MeLeeCMS(){this.url_path=\"". addslashes($this->get_setting('url_path')) ."\";this.theme=\"". addslashes($this->current_theme) ."\";}window.MeLeeCMS=new MeLeeCMS();}());",
+			'code' => "window.MeLeeCMS = new (function MeLeeCMS(){this.url_path=\"". addslashes($this->get_setting('url_path')) ."\";this.theme=\"". addslashes($this->current_theme) ."\";this.data=". json_encode($this->temp_data) ."})();",
 		]];
 		foreach($this->page_js as $js)
 			$params['js'][] = array(
 				'src' => ($js['fromtheme'] ? $this->get_setting('url_path') ."themes/". $this->current_theme ."/js/". $js['src'] : $js['src']),
 				'code' => $js['code'],
 			);
-		$params['content'] = array();
 		// TODO: This won't include errors during XSLT conversion. Don't know how to fix that.
-		if(!empty($this->temp_data['errors']) && is_object($this->user) && $this->user->has_permission($this->user::PERM_ADMIN))
-			$params['errors'] = $this->temp_data['errors'];
+		$params['data'] = $this->temp_data;
 		if($subtheme == "__xml") // also check if xml output is allowed
 		{
 			header("Content-type: text/xml");

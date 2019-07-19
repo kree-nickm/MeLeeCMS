@@ -46,7 +46,7 @@ class DatabaseView extends Content
 					//||
 					//($type == "text") && in_array($filter['comparator'], [])
 					//||
-					in_array($filter['comparator'], ["=",">","<",">=","<=","IN","LIKE","BETWEEN"])
+					in_array($filter['comparator'], ["=","!=",">","<",">=","<=","IN","LIKE","BETWEEN"])
 				)
 				{
 					if($filter['type'] == "get")

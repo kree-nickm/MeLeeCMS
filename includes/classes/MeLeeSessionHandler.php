@@ -13,10 +13,12 @@ class MeLeeSessionHandler implements SessionHandlerInterface
 			ini_set("session.gc_probability", "1");
 		if(ini_get("session.gc_divisor") <= 0)
 			ini_set("session.gc_divisor", "100");
+		ini_set("session.use_strict_mode", true);
 	}
 	
 	public function open($save_path, $session_name)
 	{
+		// This is only useful for file sessions, which this handler doesn't use.
 		return true;
 	}
 	
@@ -49,6 +51,20 @@ class MeLeeSessionHandler implements SessionHandlerInterface
 	
 	public function destroy($session_id)
 	{
+		$_SESSION = [];
+		if(ini_get("session.use_cookies"))
+		{
+			$params = session_get_cookie_params();
+			setcookie(
+				session_name(),
+				'',
+				time() - 42000,
+				$params["path"],
+				$params["domain"],
+				$params["secure"],
+				$params["httponly"]
+			);
+		}
 		$this->cms->database->delete("sessions", ['session_id'=>$session_id]);
 		return true;
 	}

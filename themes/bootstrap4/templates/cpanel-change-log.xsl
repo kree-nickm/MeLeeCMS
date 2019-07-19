@@ -162,58 +162,6 @@
 				</div>
 			</xsl:if>
 			</xsl:for-each>
-			<!--<xsl:if test="content[@id='data']">
-				<div class="card mb-2">
-					<h4 class="card-header text-white bg-secondary">
-						New Data For This Change
-					</h4>
-					<div class="card-body p-0">
-						<div class="table-responsive"><table class="table table-hover m-0">
-							<thead class="thead-light">
-								<tr>
-									<th scope="col">Column</th>
-									<th scope="col">Data</th>
-								</tr>
-							</thead>
-							<tbody>
-								<xsl:for-each select="content[@id='data']/*">
-								<tr>
-									<td class="h6" scope="row"><xsl:value-of select="name(.)"/></td>
-									<td><xsl:value-of select="."/></td>
-								</tr>
-								</xsl:for-each>
-							</tbody>
-						</table></div>
-					</div>
-				</div>
-			</xsl:if>
-			<xsl:if test="content[@id='previous']">
-				<div class="card">
-					<h4 class="card-header text-white bg-secondary">
-						Previous Data
-					</h4>
-					<div class="card-body p-0">
-						<xsl:for-each select="content[@id='previous']/*">
-							<div class="table-responsive mb-1"><table class="table table-hover m-0">
-								<thead class="thead-light">
-									<tr>
-										<th scope="col">Column</th>
-										<th scope="col">Data</th>
-									</tr>
-								</thead>
-								<tbody>
-									<xsl:for-each select="*">
-									<tr>
-										<td class="h6" scope="row"><xsl:value-of select="name(.)"/></td>
-										<td><xsl:value-of select="."/></td>
-									</tr>
-									</xsl:for-each>
-								</tbody>
-							</table></div>
-						</xsl:for-each>
-					</div>
-				</div>
-			</xsl:if>-->
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
