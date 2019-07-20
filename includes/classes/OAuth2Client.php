@@ -1,125 +1,177 @@
-<?
+<?php
+
 class OAuth2Client
 {
 	const E_STATE_MISMATCH = 1;
 	const E_FAILED_LOGIN = 2;
 	
-	protected $curl;
-	public $curlinfo;
-	public $lastheader;
+	public $curl;
 	public $url;
-	public $client_id;
-	public $client_secret;
-	public $scopes;
-	public $redirect_uri;
-	public $state;
+	protected $client_id;
+	protected $client_secret;
+	protected $grant_type;
+	protected $parameters = [];
 	public $login_attempted = false;
 	public $login_succeeded = false;
 	public $token;
 	public $error = [];
 	
-	public function __construct($url, $client_id, $client_secret, $scopes, $redirect_uri="", $state="")
+	public function __construct($url, $client_id, $client_secret, $grant_type, $parameters=[])
 	{
-		$this->url = $url;
+		if(is_array($url))
+			$this->url = implode("/", $url);
+		else
+			$this->url = $url;
 		$this->client_id = $client_id;
 		$this->client_secret = $client_secret;
-		$this->scopes = $scopes;
-		if($redirect_uri != "")
-			$this->redirect_uri = $redirect_uri;
-		else
+		$this->grant_type = $grant_type;
+		if($this->grant_type === "authorization_code")
 		{
-			if(($i = strpos($_SERVER['REQUEST_URI'], "?")) !== false)
-				$uri = substr($_SERVER['REQUEST_URI'], 0, $i);
+			$this->parameters['scope'] = $parameters['scope'];
+			if(!empty($parameters['redirect_uri']))
+				$this->parameters['redirect_uri'] = $parameters['redirect_uri'];
 			else
-				$uri = $_SERVER['REQUEST_URI'];
-			$this->redirect_uri = ($_SERVER['HTTPS']==="on" ? "https" : "http") ."://". $_SERVER['HTTP_HOST'] . $uri;
+			{
+				if(($i = strpos($_SERVER['REQUEST_URI'], "?")) !== false)
+					$uri = substr($_SERVER['REQUEST_URI'], 0, $i);
+				else
+					$uri = $_SERVER['REQUEST_URI'];
+				$this->parameters['redirect_uri'] = (!empty($_SERVER['HTTPS']) ? "https" : "http") ."://". $_SERVER['HTTP_HOST'] . $uri;
+			}
+			if(!empty($parameters['state']))
+				$this->parameters['state'] = $parameters['state'];
+			else
+				$this->parameters['state'] = md5(session_id());
 		}
-		if($state != "")
-			$this->state = $state;
-		else
-			$this->state = md5(session_id());
+		else if($this->grant_type === "password")
+		{
+			$this->parameters['username'] = $parameters['username'];
+			$this->parameters['password'] = $parameters['password'];
+		}
 		
-		if($_REQUEST['code'] != "" && $_REQUEST['state'] == $this->state)
+		$this->curl = new CURLWrapper();
+		
+		if($this->grant_type === "password")
+		{
+			// TODO: Make sure this isn't run on every single page load.
+			if(!$this->login())
+			{
+				$this->error = [
+					'code' => self::E_FAILED_LOGIN,
+					'lastheader' => $this->curl->lastheader,
+					'curlinfo' => $this->curl->curlinfo,
+					'token' => $this->token,
+				];
+			}
+		}
+		else if(!empty($_REQUEST['code']) && $_REQUEST['state'] == $this->parameters['state'])
 		{
 			if($this->login($_REQUEST['code']))
-				header("Location: ". $this->redirect_uri);
+			{
+				// Reload to get rid of the REQUEST stuff.
+				// Note: MeLeeCMS has its own method for requesting a page refresh, but I think it's fine to do this here.
+				header("Location: ". $this->parameters['redirect_uri']);
+			}
 			else
 			{
 				// We get a login code and everything seems ok, but OAuth2 API rejects the login.
 				$this->error = [
 					'code' => self::E_FAILED_LOGIN,
-					'lastheader' => $this->lastheader,
-					'curlinfo' => $this->curlinfo,
+					'lastheader' => $this->curl->lastheader,
+					'curlinfo' => $this->curl->curlinfo,
 					'token' => $this->token,
 				];
 			}
 		}
-		else if($_REQUEST['code'] != "")
+		else if(!empty($_REQUEST['code']))
 		{
 			// Someone tried to log in, but there was a state mismatch.
 			$this->error = [
 				'code' => self::E_STATE_MISMATCH,
-				'expected' => $this->state,
+				'expected' => $this->parameters['state'],
 				'got' => $_REQUEST['state'],
 			];
 		}
 		
-		if(is_object($_SESSION[$this->client_id."_token"]))
+		if(!empty($_SESSION[$this->client_id."_token"]) && is_object($_SESSION[$this->client_id."_token"]))
 			$this->token = $_SESSION[$this->client_id."_token"];
-	}
-	
-	public function initCURL()
-	{
-		if(!is_object($this->curl))
+		
+		if(!empty($this->token->instance_url))
 		{
-			$this->curl = curl_init();
-			curl_setopt($this->curl, CURLOPT_FRESH_CONNECT, true);
-			curl_setopt($this->curl, CURLOPT_HEADER, true);
-			curl_setopt($this->curl, CURLINFO_HEADER_OUT, true);
-			curl_setopt($this->curl, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($this->curl, CURLOPT_AUTOREFERER, true);
-			curl_setopt($this->curl, CURLOPT_FOLLOWLOCATION, true);
-			curl_setopt($this->curl, CURLOPT_MAXREDIRS, 5);
-			//curl_setopt($this->curl, CURLOPT_SSL_VERIFYPEER, false);
-			curl_setopt($this->curl, CURLOPT_ENCODING, "");
+			// Note: This implementation is Salesforce-specific, so hopefully any other API that uses it follows the same format.
+			if(is_array($url))
+				$this->url = $this->token->instance_url ."/". $url[1];
+			else
+				$this->url = $this->token->instance_url . substr($url, strpos($url, "/", strpos($url, "//")+2));
 		}
 	}
 	
-	public function login($code)
+	public function logout()
+	{
+		$this->token = null;
+		unset($_SESSION[$this->client_id."_token"]);
+		$this->login_attempted = false;
+		$this->login_succeeded = false;
+	}
+	
+	public function login($code=null)
 	{
 		if($this->login_attempted)
 			return $this->login_succeeded;
-		$this->initCURL();
-		curl_setopt($this->curl, CURLOPT_URL, $this->url ."/oauth2/token");
-		curl_setopt($this->curl, CURLOPT_POSTFIELDS, "grant_type=authorization_code"
-			."&client_id=". urlencode($this->client_id)
-			."&client_secret=". urlencode($this->client_secret)
-			."&code=". urlencode($code)
-			."&redirect_uri=". urlencode($this->redirect_uri)
-			."&scope=". urlencode(implode(" ", $this->scopes))
-		);
-		curl_setopt($this->curl, CURLOPT_HTTPHEADER, array("Content-type: application/x-www-form-urlencoded"));
-		list($this->lastheader, $raw) = explode("\n\n", str_replace("\r", "", curl_exec($this->curl)), 2);
-		$this->token = json_decode($raw);
-		if($this->token->access_token)
+		$post = [
+			'grant_type' => $this->grant_type,
+			'client_id' => $this->client_id,
+			'client_secret' => $this->client_secret,
+		];
+		if($this->grant_type == "authorization_code" && $code !== null)
 		{
-			$_SESSION[$this->client_id."_token"] = $this->token;
-			$this->login_succeeded = true;
+			$post['code'] = $code;
+			$post['redirect_uri'] = $this->parameters['redirect_uri'];
+			$post['scope'] = implode(" ", $this->parameters['scope']);
+		}
+		else if($this->grant_type == "password")
+		{
+			$post['username'] = $this->parameters['username'];
+			$post['password'] = $this->parameters['password'];
+		}
+		else if(!empty($this->token->access_token))
+		{
+			return true;
 		}
 		else
 		{
-			unset($_SESSION[$this->client_id."_token"]);
-			$this->login_succeeded = false;
+			return false;
 		}
-		$this->login_attempted = true;
-		return $this->login_succeeded;
+		$raw = $this->curl->request($this->url ."/oauth2/token", [CURLOPT_POSTFIELDS => $post]);
+		if(is_object($this->token = json_decode($raw)))
+		{
+			if(!empty($this->token->access_token))
+			{
+				$_SESSION[$this->client_id."_token"] = $this->token;
+				$this->login_succeeded = true;
+			}
+			else
+			{
+				unset($_SESSION[$this->client_id."_token"]);
+				$this->login_succeeded = false;
+			}
+			$this->login_attempted = true;
+			return $this->login_succeeded;
+		}
+		else
+		{
+			$this->token = $raw;
+			unset($_SESSION[$this->client_id."_token"]);
+			$this->login_attempted = true;
+			$this->login_succeeded = false;
+			return $this->login_succeeded;
+		}
 	}
 	
 	public function api_request($url="", $request="GET", $data="")
 	{
 		if($this->login_attempted && !$this->login_succeeded) // If we failed to login, let's not send more failed API queries.
 			return $this->token;
-		$this->initCURL();
 		if(!empty($this->token->access_token))
 			return $this->perform_api_request($url, $request, $data);
 		else
@@ -128,18 +180,17 @@ class OAuth2Client
 	
 	protected function perform_api_request($url="", $request="GET", $data="")
 	{
-		curl_setopt($this->curl, CURLOPT_HTTPHEADER, array("Authorization: Bearer ". $this->token->access_token, "Content-Type: application/json"));
-		//curl_setopt($this->curl, CURLOPT_COOKIE, "ACCESS_TOKEN=". $this->token->access_token);
-		curl_setopt($this->curl, CURLOPT_CUSTOMREQUEST, $request);
-		curl_setopt($this->curl, CURLOPT_POSTFIELDS, $data);
-		curl_setopt($this->curl, CURLOPT_URL, $this->url . $url);
-		list($this->lastheader, $raw) = explode("\n\n", str_replace("\r", "", curl_exec($this->curl)), 2);
-		$this->curlinfo = curl_getinfo($this->curl);
+		$raw = $this->curl->request($this->url . $url, [
+			CURLOPT_CUSTOMREQUEST => $request,
+			CURLOPT_POSTFIELDS => $data,
+			CURLOPT_HTTPHEADER => ["Authorization: Bearer ". $this->token->access_token, "Content-Type: application/json"],
+			CURLOPT_COOKIE => "ACCESS_TOKEN=". $this->token->access_token,
+		]);
 		return json_decode($raw);
 	}
 	
 	public function getCodeURL()
 	{
-		return $this->url ."/oauth2/authorize?response_type=code&client_id=". urlencode($this->client_id) ."&scope=". urlencode(implode(" ", $this->scopes)) ."&redirect_uri=". urlencode($this->redirect_uri) . "&state=". urlencode($this->state);
+		return $this->url ."/oauth2/authorize?response_type=code&client_id=". urlencode($this->client_id) ."&scope=". urlencode(implode(" ", $this->parameters['scope'])) ."&redirect_uri=". urlencode($this->parameters['redirect_uri']) . "&state=". urlencode($this->parameters['state']);
 	}
 }
