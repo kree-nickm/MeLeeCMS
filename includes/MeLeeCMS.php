@@ -1,11 +1,15 @@
 <?php
 ini_set("display_errors", 0);
 ini_set("log_errors", 1);
+// Note: Don't know if we should care about this, but using __DIR__ means we require PHP>=5.3.0, and it appears in multiple files.
 $error_dir = __DIR__ . DIRECTORY_SEPARATOR ."logs". DIRECTORY_SEPARATOR ."errors-". date("Y-m");
 if(!is_dir($error_dir))
 	mkdir($error_dir, 0755, true);
 ini_set("error_log", $error_dir . DIRECTORY_SEPARATOR . date("Y-m-d") .".log");
 
+/** Define these for PHP<5.3.0, just in case we ever care about backwards-compatibility. */
+defined("E_DEPRECATED") OR define("E_DEPRECATED", 8192);
+defined("E_USER_DEPRECATED") OR define("E_USER_DEPRECATED", 16384);
 /** The current memory usage at the time the page starts loading. */
 define("START_MEMORY", memory_get_usage());
 /** The current millisecond timestamp at the time the page starts loading. */
@@ -40,19 +44,19 @@ function print_load_statistics()
 class MeLeeCMS
 {
 	protected $mode;
-	protected $settings = array();
-	protected $page = array();
+	protected $settings = [];
+	protected $page = [];
 	protected $page_title = "";
 	protected $current_theme = "";
-	protected $page_css = array();
-	protected $page_js = array();
-	protected $page_xsl = array();
-	protected $page_content = array();
+	protected $page_css = [];
+	protected $page_js = [];
+	protected $page_xsl = [];
+	protected $page_content = [];
 	protected $cpanel = false;
 	
-	public $class_paths = array();
+	public $class_paths = [];
 	public $database;
-	public $themes = array();
+	public $themes = [];
 	public $user;
 	public $path_info;
 	public $refresh_requested = ['strip'=>[]];
@@ -61,6 +65,7 @@ class MeLeeCMS
 
 	public function __construct($mode=31)
 	{
+		// Note: Don't know if we should care about this, but using [] to create arrays means we require PHP>=5.4.0, and it appears in just about every file.
 		set_error_handler([$this, "errorHandler"]);
 		// Load and validate $GlobalConfig settings.
 		global $GlobalConfig;
@@ -596,18 +601,18 @@ class MeLeeCMS
 			foreach($this->page_content as $tag=>$content)
 				$params['content@class='.get_class($content).($tag?'@id='.$tag:'')][] = $content->render($subtheme);
 		foreach($this->page_css as $css)
-			$params['css'][] = array(
+			$params['css'][] = [
 				'href' => ($css['fromtheme'] ? $this->get_setting('url_path') ."themes/". $this->current_theme ."/css/". $css['href'] : $css['href']),
 				'code' => $css['code'],
-			);
+			];
 		$params['js'] = [[
 			'code' => "window.MeLeeCMS = new (function MeLeeCMS(){this.url_path=\"". addslashes($this->get_setting('url_path')) ."\";this.theme=\"". addslashes($this->current_theme) ."\";this.data=". json_encode($this->temp_data) ."})();",
 		]];
 		foreach($this->page_js as $js)
-			$params['js'][] = array(
+			$params['js'][] = [
 				'src' => ($js['fromtheme'] ? $this->get_setting('url_path') ."themes/". $this->current_theme ."/js/". $js['src'] : $js['src']),
 				'code' => $js['code'],
-			);
+			];
 		// TODO: This won't include errors during XSLT conversion. Don't know how to fix that.
 		$params['data'] = $this->temp_data;
 		if($subtheme == "__xml") // also check if xml output is allowed

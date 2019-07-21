@@ -66,10 +66,12 @@ class CURLWrapper
 		}
 		else
 		{
+			// Note: Don't know if we should care about this, but using curl_strerror() means we require PHP>=5.5.0
 			$this->lastheader = curl_strerror(curl_errno($this->curl));
 			$raw = curl_error($this->curl);
 		}
 		$this->curlinfo = curl_getinfo($this->curl);
+		// Note: Don't know if we should care about this, but using curl_reset() means we require PHP>=5.5.0
 		curl_reset($this->curl);
 		curl_setopt_array($this->curl, $this->default_options);
 		return $raw;

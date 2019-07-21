@@ -21,10 +21,10 @@ abstract class Content
 	 */
 	public function get_properties()
 	{
-		$result = array();
+		$result = [];
 		foreach(get_object_vars($this) as $p=>$v)
 			if($p != "cms")
-				$result[$p] = array();
+				$result[$p] = [];
 		return $result;
 	}
 
@@ -72,11 +72,11 @@ abstract class Content
 			$dirs = array_unique($cms->class_paths);
 		else
 		{
-			$dirs = array(__DIR__);
+			$dirs = [__DIR__];
 			trigger_error("Content has been loaded without MeLeeCMS.", E_USER_NOTICE);
 		}
-		$ignore_classes = array();
-		self::$subclasses = array();
+		$ignore_classes = [];
+		self::$subclasses = [];
 		$regex_list = "Content";
 		do{
 			$changed = false;

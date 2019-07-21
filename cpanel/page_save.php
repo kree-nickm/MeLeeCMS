@@ -24,8 +24,8 @@ $is_file = false;
 if(isset($_POST['page_file']) || !empty($existing['file']))
 	$is_file = true;
 
-$mysql_data = array();
-$errors = array();
+$mysql_data = [];
+$errors = [];
 // index
 if($existing['index'])
 	$mysql_data['index'] = $existing['index'];
@@ -123,7 +123,7 @@ if(!$special && !empty($_POST['permissions']) && is_array($_POST['permissions'])
 // css
 if(!empty($_POST['page_css']) && is_array($_POST['page_css']))
 {
-	$stylesheets = array();
+	$stylesheets = [];
 	foreach($_POST['page_css'] as $css)
 		if($css != "")
 			$stylesheets[] = ['fromtheme'=>true, 'file'=>$css];
@@ -137,7 +137,7 @@ if(is_array($stylesheets))
 // js
 if(!empty($_POST['page_js']) && is_array($_POST['page_js']))
 {
-	$javascripts = array();
+	$javascripts = [];
 	foreach($_POST['page_js'] as $js)
 		if($js != "")
 			$javascripts[] = ['fromtheme'=>true, 'file'=>$js];
@@ -151,7 +151,7 @@ if(is_array($javascripts))
 // xsl
 if(!empty($_POST['page_xsl']) && is_array($_POST['page_xsl']))
 {
-	$templates = array();
+	$templates = [];
 	foreach($_POST['page_xsl'] as $xsl)
 		if($xsl != "")
 			$templates[] = $xsl;

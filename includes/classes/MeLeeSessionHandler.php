@@ -1,5 +1,6 @@
 <?php
 
+// Note: Don't know if we should care about this, but using SessionHandlerInterface means we require PHP>=5.4.0
 class MeLeeSessionHandler implements SessionHandlerInterface
 {
 	protected $cms;

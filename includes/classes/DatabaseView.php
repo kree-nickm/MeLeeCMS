@@ -181,19 +181,19 @@ class DatabaseView extends Content
 	
 	public function get_properties()
 	{
-		return array(
-			'table' => array(
+		return [
+			'table' => [
 				'type' => "database_table",
 				'desc' => "Table of the database to be viewed."
-			),
-			'config' => array(
+			],
+			'config' => [
 				// Needs to be here so it can be serialized, but can be empty since it doesn't appear by itself on the control panel.
-			),
-			'attrs' => array(
+			],
+			'attrs' => [
 				'type' => "dictionary",
 				'desc' => "Attributes that the theme can use to decide how to display the table."
-			)
-		);
+			]
+		];
 	}
 
 	public function build_params()

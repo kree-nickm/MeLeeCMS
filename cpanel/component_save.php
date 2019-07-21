@@ -15,8 +15,8 @@ print_r($_REQUEST);
 // ---------- Validate input. ----------
 if(!empty($_POST['component_index']) && is_numeric($_POST['component_index']))
 	$existing = $builder->database->query("SELECT * FROM `page_components` WHERE `index`=". (int)$_POST['component_index'] ." LIMIT 0,1", Database::RETURN_ROW);
-$mysql_data = array();
-$errors = array();
+$mysql_data = [];
+$errors = [];
 // index
 if($existing['index'])
 	$mysql_data['index'] = $existing['index'];
@@ -33,7 +33,7 @@ else
 // css
 if(!empty($_POST['page_css']) && is_array($_POST['page_css']))
 {
-	$stylesheets = array();
+	$stylesheets = [];
 	foreach($_POST['page_css'] as $css)
 		if($css != "")
 			$stylesheets[] = ['fromtheme'=>true, 'file'=>$css];
@@ -47,7 +47,7 @@ if(is_array($stylesheets))
 // js
 if(!empty($_POST['page_js']) && is_array($_POST['page_js']))
 {
-	$javascripts = array();
+	$javascripts = [];
 	foreach($_POST['page_js'] as $js)
 		if($js != "")
 			$javascripts[] = ['fromtheme'=>true, 'file'=>$js];
@@ -61,7 +61,7 @@ if(is_array($javascripts))
 // xsl
 if(!empty($_POST['page_xsl']) && is_array($_POST['page_xsl']))
 {
-	$templates = array();
+	$templates = [];
 	foreach($_POST['page_xsl'] as $xsl)
 		if($xsl != "")
 			$templates[] = $xsl;

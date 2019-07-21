@@ -120,6 +120,7 @@ class MeLeeCMSUser extends User
 		
 		$mysql_array = [
 			'username' => $username,
+			// Note: Don't know if we should care about this, but using password_hash() or PASSWORD_DEFAULT means we require PHP>=5.5.0
 			'password' => password_hash($password1, PASSWORD_DEFAULT),
 			'jointime' => time(),
 			'permission' => $permission,
@@ -153,6 +154,7 @@ class MeLeeCMSUser extends User
 		
 		$mysql_array = [
 			'index' => $this->user_info['index'],
+			// Note: Don't know if we should care about this, but using password_hash() or PASSWORD_DEFAULT means we require PHP>=5.5.0
 			'password' => password_hash($password1, PASSWORD_DEFAULT),
 		];
 		$result = $this->cms->database->insert("users", $mysql_array, true, ['index']);

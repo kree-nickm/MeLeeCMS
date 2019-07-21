@@ -16,7 +16,7 @@ if($tempName != "")
 {
 	$classes = get_TextContent_subclasses();
 	$template_data = get_template_data($tempName, 1);
-	$xsl_save = array();
+	$xsl_save = [];
 	if($_POST['xsl_builder'] != "")
 	{
 		$xsl_save['MellinBuilder-render.xsl'] = str_replace("\r", "", stripslashes($_POST['xsl_builder']));
@@ -40,7 +40,7 @@ if($tempName != "")
 		}
 	}
 			
-	$css_save = array();
+	$css_save = [];
 	
 	// TODO: Remove from the _save arrays each file that has the same contents as the corresponding file on disk
 	// That way, if the files on disk are updated, the database won't be trying to retain the older versions

@@ -6,7 +6,7 @@ class Component extends Container
 	public $attrs;
 	public $content;
 	
-	public function __construct($index=0, $attrs=array())
+	public function __construct($index=0, $attrs=[])
 	{
 		$this->index = $index;
 		$this->attrs = $attrs;
@@ -15,16 +15,16 @@ class Component extends Container
 	
 	public function get_properties()
 	{
-		return array(
-			'index' => array(
+		return [
+			'index' => [
 				'type' => "component",
 				'desc' => "The component to insert into the page at this point."
-			),
-			'attrs' => array(
+			],
+			'attrs' => [
 				'type' => "dictionary",
 				'desc' => "Attributes that the theme can use to decide how to display the component on this page."
-			)
-		);
+			]
+		];
 	}
 	
 	protected function loadComponent()

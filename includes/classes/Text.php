@@ -5,7 +5,7 @@ class Text extends Content
 	public $text;
 	public $attrs;
 	
-	public function __construct($text="", $attrs=array())
+	public function __construct($text="", $attrs=[])
 	{
 		$this->text = $text;
 		$this->attrs = $attrs;
@@ -13,21 +13,21 @@ class Text extends Content
 	
 	public function get_properties()
 	{
-		return array(
-			'text' => array(
+		return [
+			'text' => [
 				'type' => "paragraph",
 				'desc' => "HTML to be inserted into the page. Avoid using theme-dependant HTML and CSS. Use attributes and include custom XSL instead."
-			),
-			'attrs' => array(
+			],
+			'attrs' => [
 				'type' => "dictionary",
 				'desc' => "Attributes that the theme can use to decide how to display the text."
-			)
-		);
+			]
+		];
 	}
 
 	public function build_params()
 	{
-		$result = array();
+		$result = [];
 		if(is_array($this->attrs))
 			foreach($this->attrs as $k=>$v)
 				$result["__attr:".$k] = $v;

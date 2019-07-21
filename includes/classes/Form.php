@@ -2,8 +2,8 @@
 
 class Form extends Content
 {
-	public $attributes = array();
-	public $elements = array();
+	public $attributes = [];
+	public $elements = [];
 	
 	public function __construct()
 	{
@@ -11,19 +11,19 @@ class Form extends Content
 	
 	public function get_properties()
 	{
-		return array(
-			'attributes' => array(
+		return [
+			'attributes' => [
 				'type' => "array"
-			),
-			'elements' => array(
+			],
+			'elements' => [
 				'type' => "array"
-			)
-		);
+			]
+		];
 	}
 	
 	public function build_params()
 	{
-		$result = array();
+		$result = [];
 		foreach($this->attributes as $attr=>$val)
 			$result[$attr] = $val;
 		foreach($this->elements as $i=>$elem)
@@ -51,7 +51,7 @@ class Form extends Content
 class Input
 {
 	protected $form;
-	protected $attributes = array();
+	protected $attributes = [];
 	
 	public function __construct(&$form)
 	{
@@ -65,7 +65,7 @@ class Input
 	
 	public function build_params()
 	{
-		$result = array();
+		$result = [];
 		foreach($this->attributes as $attr=>$val)
 			$result[$attr] = $val;
 		return $result;

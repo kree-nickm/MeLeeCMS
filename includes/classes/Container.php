@@ -6,29 +6,29 @@ class Container extends Content
 	public $attrs;
 	public $content;
 	
-	public function __construct($title="", $attrs=array())
+	public function __construct($title="", $attrs=[])
 	{
 		$this->title = $title;
 		$this->attrs = $attrs;
-		$this->content = array();
+		$this->content = [];
 	}
 	
 	public function get_properties()
 	{
-		return array(
-			'title' => array(
+		return [
+			'title' => [
 				'type' => "string",
 				'desc' => "Optional title of the container."
-			),
-			'attrs' => array(
+			],
+			'attrs' => [
 				'type' => "dictionary",
 				'desc' => "Attributes that the theme can use to decide how to display the container."
-			),
-			'content' => array(
+			],
+			'content' => [
 				'type' => "container",
 				'desc' => "Content contained by this container."
-			)
-		);
+			]
+		];
 	}
 	
 	protected function getSimpleArray()

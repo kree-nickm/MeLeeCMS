@@ -36,8 +36,8 @@ class Database
 	protected $database;
 	protected $pdo;
 	protected $cms;
-	public $metadata = array();
-	public $error = array();
+	public $metadata = [];
+	public $error = [];
 	
 	public function __construct($type, $host, $database, $user, $pass, $cms=null)
 	{
@@ -56,14 +56,14 @@ class Database
 	public function refresh_metadata()
 	{
 		// TODO generate errors for tables with no PRIMARY key that is also AUTO_INCREMENT
-		$this->metadata = array();
+		$this->metadata = [];
 		$columns = $this->query("SELECT TABLE_NAME,COLUMN_NAME,COLUMN_DEFAULT,DATA_TYPE,COLUMN_TYPE,COLUMN_KEY,EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=". $this->quote($this->database) ." ORDER BY TABLE_NAME");
 		foreach($columns as $row)
 		{
 			if(empty($this->metadata[$row['TABLE_NAME']]))
-				$this->metadata[$row['TABLE_NAME']] = array();
+				$this->metadata[$row['TABLE_NAME']] = [];
 			if(empty($this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]))
-				$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']] = array();
+				$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']] = [];
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['default'] = $row['COLUMN_DEFAULT'];
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type'] = $row['DATA_TYPE'];
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type_full'] = $row['COLUMN_TYPE'];
@@ -73,14 +73,14 @@ class Database
 		}
 		foreach(array_keys($this->metadata) as $table)
 		{
-			$this->metadata[$table][self::INDEX_KEY] = array();
+			$this->metadata[$table][self::INDEX_KEY] = [];
 			$indexes = $this->query("SHOW INDEX FROM ". $table ." WHERE Non_unique=0");
 			foreach($indexes as $row)
 			{
 				if(empty($this->metadata[$table][self::INDEX_KEY][$row['Key_name']]))
-					$this->metadata[$table][self::INDEX_KEY][$row['Key_name']] = array();
+					$this->metadata[$table][self::INDEX_KEY][$row['Key_name']] = [];
 				if(empty($this->metadata[$table][self::INDEX_KEY][$row['Key_name']][$row['Seq_in_index']]))
-					$this->metadata[$table][self::INDEX_KEY][$row['Key_name']][$row['Seq_in_index']] = array();
+					$this->metadata[$table][self::INDEX_KEY][$row['Key_name']][$row['Seq_in_index']] = [];
 				$this->metadata[$table][self::INDEX_KEY][$row['Key_name']][$row['Seq_in_index']]['column'] = $row['Column_name'];
 				$this->metadata[$table][self::INDEX_KEY][$row['Key_name']][$row['Seq_in_index']]['substr'] = $row['Sub_part'];
 			}
@@ -151,6 +151,7 @@ class Database
 					if(!is_array($return))
 						$return = false;
 					else
+						// Note: Don't know if we should care about this, but using array_column() means we require PHP>=5.5.0
 						$return = array_column($return, $col);
 					break;
 				case self::RETURN_ALL:
@@ -678,13 +679,13 @@ class Database
 		$success = $this->query("DELETE FROM ". $table ." WHERE ". $uni, self::RETURN_COUNT);
 		if($log && $success)
 		{
-			$this->insert("changelog", array(
+			$this->insert("changelog", [
 				'table' => $table,
 				'timestamp' => time(),
 				'data' => "",
 				'previous'=> is_array($previous) ? json_encode($previous) : "",
 				'blame'=> is_object($this->cms) && is_object($this->cms->user) && $this->cms->user->get_property('index')>0 ? $this->cms->user->get_property('index') : $_SERVER['REMOTE_ADDR'],
-			), false, null, false);
+			], false, null, false);
 		}
 		return $success;
 	}

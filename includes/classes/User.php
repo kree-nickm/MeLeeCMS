@@ -54,8 +54,17 @@ class User
 	public function has_permission($perm)
 	{
 		if(is_string($perm))
-			$perm = self::((substr($perm,0,5)=="PERM_" ? "" : "PERM_") . $perm);
-		return ($this->get_property('permission') & $perm) == $perm;
+		{
+			$const = "self::". (substr($perm,0,5)=="PERM_" ? "" : "PERM_") . $perm;
+			if(defined($const))
+				$perm = constant("self::". (substr($perm,0,5)=="PERM_" ? "" : "PERM_") . $perm);
+			else
+				$perm = 0;
+		}
+		if(is_int($perm))
+			return ($this->get_property('permission') & $perm) == $perm;
+		else
+			return false;
 	}
 
 	public function is_logged()
@@ -78,11 +87,11 @@ class User
 			$dirs = array_unique($cms->class_paths);
 		else
 		{
-			$dirs = array(__DIR__);
+			$dirs = [__DIR__];
 			trigger_error("User has been loaded without MeLeeCMS.", E_USER_NOTICE);
 		}
-		$ignore_classes = array();
-		self::$subclasses = array();
+		$ignore_classes = [];
+		self::$subclasses = [];
 		$regex_list = "User";
 		do{
 			$changed = false;
@@ -136,7 +145,8 @@ class User
 			$class = self::class;
 			trigger_error("User has been loaded without MeLeeCMS.", E_USER_NOTICE);
 		}
-		self::$permissions = array();
+		self::$permissions = [];
+		// Note: Don't know if we should care about this, but using class member access on instantiation here means we require PHP>=5.4.0
 		foreach((new ReflectionClass($class))->getConstants() as $con=>$val)
 			if(substr($con, 0, 5) == "PERM_")
 				self::$permissions[$val] = substr($con, 5);

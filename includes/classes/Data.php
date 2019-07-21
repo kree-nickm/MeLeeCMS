@@ -6,7 +6,7 @@ class Data extends Content
 	public $attrs;
 	protected $already_handled;
 	
-	public function __construct($data="", $attrs=array())
+	public function __construct($data="", $attrs=[])
 	{
 		$this->data = $data;
 		$this->attrs = $attrs;
@@ -14,16 +14,16 @@ class Data extends Content
 	
 	public function get_properties()
 	{
-		return array(
-			'data' => array(
+		return [
+			'data' => [
 				'type' => "paragraph",
 				'desc' => "Miscellanious data to be included for use by XSLT."
-			),
-			'attrs' => array(
+			],
+			'attrs' => [
 				'type' => "dictionary",
 				'desc' => "Attributes that the theme can use to decide how to display the data."
-			)
-		);
+			]
+		];
 	}
 	
 	protected function handleData($data, $path)
@@ -70,7 +70,7 @@ class Data extends Content
 	public function build_params()
 	{
 		$this->already_handled = [$this];
-		$result = array();
+		$result = [];
 		if(is_array($this->attrs))
 			foreach($this->attrs as $k=>$v)
 				$result["__attr:".$k] = $v;
