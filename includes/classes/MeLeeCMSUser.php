@@ -32,6 +32,7 @@ class MeLeeCMSUser extends User
 				{
 					if(!empty($_POST['password']))
 						$_SESSION['password'] = crypt(stripslashes($_POST['password']), $user['password']);
+					// Note: Don't know if we should care about this, but using hash_equals() means we require PHP>=5.6.0beta1
 					if(hash_equals($user['password'], $_SESSION['password']))
 					{
 						$this->logged_in = true;

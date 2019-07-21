@@ -1,7 +1,7 @@
 <?php
-if(version_compare(PHP_VERSION, "5.5.0", "<"))
+if(version_compare(PHP_VERSION, "5.6.0beta1", "<"))
 {
-	echo("MeLeeCMS requires PHP version 5.5.0 or higher. Current version is ". PHP_VERSION .".");
+	echo("MeLeeCMS requires PHP version 5.6.0 or higher. Current version is ". PHP_VERSION .".");
 }
 else
 {
