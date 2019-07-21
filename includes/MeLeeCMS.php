@@ -3,7 +3,7 @@ ini_set("display_errors", 0);
 ini_set("log_errors", 1);
 $error_dir = __DIR__ . DIRECTORY_SEPARATOR ."logs". DIRECTORY_SEPARATOR ."errors-". date("Y-m");
 if(!is_dir($error_dir))
-	mkdir($error_dir, 0777, true);
+	mkdir($error_dir, 0755, true);
 ini_set("error_log", $error_dir . DIRECTORY_SEPARATOR . date("Y-m-d") .".log");
 
 /** The current memory usage at the time the page starts loading. */
@@ -77,7 +77,7 @@ class MeLeeCMS
 		}
 		else
 		{
-			$this->mode = $mode & 4;
+			$this->mode = 0;
 		}
 		$this->settings['server_path'] = $GlobalConfig['server_path'];
 		$this->settings['url_path'] = $GlobalConfig['url_path'];
@@ -150,7 +150,7 @@ class MeLeeCMS
 			default: $type = 'unknown';
 		}
 		error_log($type .": ". $message ." in ". $file ." on line ". $line);
-		if(is_object($this->user) && $this->user->has_permission($this->user::PERM_ADMIN))
+		if(is_object($this->user) && $this->user->has_permission("ADMIN"))
 		{
 			$this->addData_protected('errors', [
 				'type' => $type,
@@ -555,6 +555,11 @@ class MeLeeCMS
 
 	public function render($subtheme="")
 	{
+		if(!is_file("config.php"))
+		{
+			echo("No configuration file. MeLeeCMS may not have been installed. Refer to the installation instructions.");
+			return false;
+		}
 		if(isset($this->refresh_requested['url']))
 		{
 			$this->refreshPage();

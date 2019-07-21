@@ -53,6 +53,8 @@ class User
 
 	public function has_permission($perm)
 	{
+		if(is_string($perm))
+			$perm = self::((substr($perm,0,5)=="PERM_" ? "" : "PERM_") . $perm);
 		return ($this->get_property('permission') & $perm) == $perm;
 	}
 
