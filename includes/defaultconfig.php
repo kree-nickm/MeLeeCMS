@@ -29,7 +29,7 @@ $GlobalConfig['dbname'] = "";
 $GlobalConfig['cpanel_dir'] = "cpanel";
 
 // The path to your wesite's root directory within the server. This is usually something like "/home/user/public_html/".
-$GlobalConfig['server_path'] = dirname(__FILE__, 2) . DIRECTORY_SEPARATOR;
+$GlobalConfig['server_path'] = dirname(__DIR__) . DIRECTORY_SEPARATOR;
 
 // The URL path to your website from the domain name. If your website loads right from "yourdomain.com", this should be "/". If it loads from "yourdomain.com/yoursite", this should be "/yoursite/". Etc.
 $GlobalConfig['url_path'] = dirname(str_replace("/". $GlobalConfig['cpanel_dir'] ."/", "/", $_SERVER['SCRIPT_NAME'])) ."/";

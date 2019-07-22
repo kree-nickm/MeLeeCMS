@@ -1,6 +1,8 @@
 <?php
 $password = "";
 
+ini_set("display_errors", 0);
+ini_set("log_errors", 1);
 if(empty($password))
 {
 	echo("Before you can begin the installation, you must set a password to prevent unauthorized installations. Open <tt>install.php</tt> in a text editor and change the line at the very top that says <tt>\$password = \"\";</tt> and enter your desired password between the quotes, so that it looks like <tt>\$password = \"mypassword\";</tt><br/>Then, reload this page and enter that password to begin installation. The password does not need to be very secure, as it is one-time-use for this installation. It should just be letters and/or numbers, as any symbols might not work. ");
@@ -13,6 +15,7 @@ else if(empty($_POST['password']) || $_POST['password'] != $password)
 }
 else
 {
+	ini_set("display_errors", 1);
 	if(!empty($_POST['config_submit']))
 	{
 		if(is_file("config.php"))
@@ -46,7 +49,6 @@ else
 	{
 		require_once("includes/MeLeeCMS.php");
 		$builder = new MeLeeCMS(0);
-		ini_set("display_errors", 1);
 
 		if($builder->setup_database() && is_array($builder->database->metadata))
 		{
@@ -168,7 +170,7 @@ else
 			</tr>
 <?php
 if(empty($_POST['server_path']))
-	$server_path = dirname(__FILE__) . DIRECTORY_SEPARATOR;
+	$server_path = __DIR__ . DIRECTORY_SEPARATOR;
 else
 	$server_path = $_POST['server_path'];
 ?>

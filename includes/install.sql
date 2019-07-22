@@ -140,10 +140,10 @@ ALTER TABLE `themes`
 
 ALTER TABLE `users`
   ADD PRIMARY KEY (`index`),
-  ADD UNIQUE KEY `username` (`username`);
+  ADD UNIQUE KEY `username` (`username`(250));
 
 ALTER TABLE `sessions`
-  ADD UNIQUE KEY `session_id` (`session_id`);
+  ADD UNIQUE KEY `session_id` (`session_id`(250));
 
 ALTER TABLE `error_log`
   ADD PRIMARY KEY (`index`);
