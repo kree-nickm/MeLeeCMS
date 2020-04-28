@@ -6,7 +6,8 @@ class OAuth2Client
 	const E_FAILED_LOGIN = 2;
 	
 	public $curl;
-	public $url;
+	public $auth_url;
+	public $api_url;
 	protected $client_id;
 	protected $client_secret;
 	protected $grant_type;
@@ -19,9 +20,10 @@ class OAuth2Client
 	public function __construct($url, $client_id, $client_secret, $grant_type, $parameters=[])
 	{
 		if(is_array($url))
-			$this->url = implode("/", $url);
+			$this->auth_url = implode("/", $url);
 		else
-			$this->url = $url;
+			$this->auth_url = $url;
+		$this->api_url = $this->auth_url;
 		$this->client_id = $client_id;
 		$this->client_secret = $client_secret;
 		$this->grant_type = $grant_type;
@@ -100,9 +102,9 @@ class OAuth2Client
 		{
 			// Note: This implementation is Salesforce-specific, so hopefully any other API that uses it follows the same format.
 			if(is_array($url))
-				$this->url = $this->token->instance_url ."/". $url[1];
+				$this->api_url = $this->token->instance_url ."/". $url[1];
 			else
-				$this->url = $this->token->instance_url . substr($url, strpos($url, "/", strpos($url, "//")+2));
+				$this->api_url = $this->token->instance_url . substr($url, strpos($url, "/", strpos($url, "//")+2));
 		}
 	}
 	
@@ -142,7 +144,7 @@ class OAuth2Client
 		{
 			return false;
 		}
-		$raw = $this->curl->request($this->url ."/oauth2/token", [CURLOPT_POSTFIELDS => $post]);
+		$raw = $this->curl->request($this->auth_url ."/oauth2/token", [CURLOPT_POSTFIELDS => $post]);
 		if(is_object($this->token = json_decode($raw)))
 		{
 			if(!empty($this->token->access_token))
@@ -168,29 +170,43 @@ class OAuth2Client
 		}
 	}
 	
-	public function api_request($url="", $request="GET", $data="")
+	public function api_request($url="", $request="GET", $data="", $headers=[])
 	{
 		if($this->login_attempted && !$this->login_succeeded) // If we failed to login, let's not send more failed API queries.
 			return $this->token;
 		if(!empty($this->token->access_token))
-			return $this->perform_api_request($url, $request, $data);
+			return $this->perform_api_request($url, $request, $data, $headers);
 		else
 			return null; //TODO: Might be more useful to return the error response here, but also save it so you don't keep making API queries with the same error.
 	}
 	
-	protected function perform_api_request($url="", $request="GET", $data="")
+	protected function perform_api_request($url="", $request="GET", $data="", $headers=[])
 	{
-		$raw = $this->curl->request($this->url . $url, [
+		$options = [
 			CURLOPT_CUSTOMREQUEST => $request,
 			CURLOPT_POSTFIELDS => $data,
-			CURLOPT_HTTPHEADER => ["Authorization: Bearer ". $this->token->access_token, "Content-Type: application/json"],
+			CURLOPT_HTTPHEADER => $headers,
 			CURLOPT_COOKIE => "ACCESS_TOKEN=". $this->token->access_token,
-		]);
+		];
+		$hasAuth = false;
+		$hasCType = false;
+		foreach($options[CURLOPT_HTTPHEADER] as $head)
+		{
+			if(substr($head, 0, 14) == "Authorization:")
+				$hasAuth = true;
+			if(substr($head, 0, 13) == "Content-Type:")
+				$hasCType = true;
+		}
+		if(!$hasAuth)
+			$options[CURLOPT_HTTPHEADER][] = "Authorization: Bearer ". $this->token->access_token;
+		if(!$hasCType)
+			$options[CURLOPT_HTTPHEADER][] = "Content-Type: application/json";
+		$raw = $this->curl->request($this->api_url . $url, $options);
 		return json_decode($raw);
 	}
 	
 	public function getCodeURL()
 	{
-		return $this->url ."/oauth2/authorize?response_type=code&client_id=". urlencode($this->client_id) ."&scope=". urlencode(implode(" ", $this->parameters['scope'])) ."&redirect_uri=". urlencode($this->parameters['redirect_uri']) . "&state=". urlencode($this->parameters['state']);
+		return $this->auth_url ."/oauth2/authorize?response_type=code&client_id=". urlencode($this->client_id) ."&scope=". urlencode(implode(" ", $this->parameters['scope'])) ."&redirect_uri=". urlencode($this->parameters['redirect_uri']) . "&state=". urlencode($this->parameters['state']);
 	}
 }

@@ -141,6 +141,8 @@ class Transformer
 	 */
 	public static function array_to_xml($tag, $data)
 	{
+		if(is_object($data))
+			$data = json_decode(json_encode($data), true);
 		// Note: Don't know if we should care about this, but using ENT_XML1|ENT_DISALLOWED in this method means we require PHP>=5.4.0
 		if(is_array($data))
 		{
@@ -188,11 +190,17 @@ class Transformer
 			if($multiplets)
 				return $result;
 			else
+			{
+				if(is_numeric(substr($tag, 0, 1)))
+					$tag = "_". $tag;
 				// Note: Don't know if we should care about this, but using array dereferencing here and below means we require PHP>=5.4.0
 				return "<". $tag .">". $result ."</". explode(" ", $tag, 2)[0] .">";
+			}
 		}
 		else
 		{
+			if(is_numeric(substr($tag, 0, 1)))
+				$tag = "_". $tag;
 			return "<". $tag .">". htmlentities($data, ENT_QUOTES|ENT_XML1|ENT_DISALLOWED, "UTF-8") ."</". explode(" ", $tag, 2)[0] .">";
 		}
 	}

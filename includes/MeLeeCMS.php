@@ -96,7 +96,7 @@ class MeLeeCMS
 			array_unshift($this->class_paths, $GlobalConfig['server_path'] ."includes". DIRECTORY_SEPARATOR ."classes". DIRECTORY_SEPARATOR);
 		spl_autoload_register(array($this, "load_class"), true);
 		// Setup the rest of MeLeeCMS based on the $mode.
-		$this->path_info = substr(isset($_SERVER['ORIG_PATH_INFO']) ? $_SERVER['ORIG_PATH_INFO'] : (isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : ""), 1);
+		$this->path_info = (isset($_SERVER['PATH_INFO']) ? substr($_SERVER['PATH_INFO'],1) : "");
 		if(($this->mode &  1) ==  1) $this->setup_database();
 		if(($this->mode &  2) ==  2) $this->setup_settings();
 		if(($this->mode &  4) ==  4) $this->setup_themes();
