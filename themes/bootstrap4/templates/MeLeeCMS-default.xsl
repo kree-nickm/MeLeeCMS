@@ -178,6 +178,13 @@
 </xsl:element>
 </xsl:template>
 
+<!-- A text block with alert styling -->
+<xsl:template match="content[@class='Text' and @alert]">
+<div class="alert alert-{@alert}" role="alert">
+	<xsl:value-of select="."/>
+</div>
+</xsl:template>
+
 <xsl:template match="content[@class='DatabaseView']">
 <div class="table-responsive">
 	<xsl:element name="table">
