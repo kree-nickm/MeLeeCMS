@@ -27,7 +27,7 @@ class TwitchUser extends User
 			if(!empty($this->user_api->token) && is_object($this->user_api->token) && !empty($this->user_api->token->access_token))
 			{
 				// We have a valid access token from the API.
-				if(!empty($_SESSION['user_data']['twitch_id']) && !empty($_SESSION['user_data']['time']) && $_SESSION['user_data']['time']+86000 >= time())
+				if(!empty($_SESSION['user_data']['twitch_id']))
 				{
 					// We have a recent ID stored in the session, use that instead of bothering the API again.
 					$this->user_info = $this->cms->database->query("SELECT * FROM `users` WHERE `twitch_id`=". (int)$_SESSION['user_data']['twitch_id'], Database::RETURN_ROW);
@@ -46,7 +46,6 @@ class TwitchUser extends User
 					// We have a response, which means we need to use it to update the account data from the API and use the updated data.
 					$this->cms->database->insert("users", ['twitch_id'=>$user_data->id, 'jointime'=>time(), 'permission'=>1], false);
 					$this->user_info = $this->cms->database->query("SELECT * FROM `users` WHERE `twitch_id`=". (int)$user_data->id, Database::RETURN_ROW);
-					$_SESSION['user_data']['time'] = time();
 				}
 				// At this point, $this->user_info should contain our account data. If it doesn't, then an error must have occurred with the API.
 				if(is_array($this->user_info))
@@ -108,14 +107,17 @@ class TwitchUser extends User
 	public function api_request($url="", $request="GET", $data="", $headers=[])
 	{
 		global $GlobalConfig;
+		$headers = array_merge($headers, ["Client-ID: {$GlobalConfig['twitch_client_id']}"]);
 		if(substr($url, 0, 8) == "/kraken/")
-			$headers = array_merge($headers, ["Accept: application/vnd.twitchtv.v5+json", "Client-ID: {$GlobalConfig['twitch_client_id']}", "Authorization: OAuth ". $this->user_api->token->access_token]);
+			$headers = array_merge($headers, ["Accept: application/vnd.twitchtv.v5+json", "Authorization: OAuth ". $this->user_api->token->access_token]);
+		else if(substr($url, 0, 7) == "/helix/")
+			$headers = array_merge($headers, ["Authorization: Bearer ". $this->user_api->token->access_token]);
 		return $this->user_api->api_request($url, $request, $data, $headers);
 	}
 	
 	public function getFollows()
 	{
-		$this->user_info['follows'] = $this->getPagedResponse("/users/follows?first=100&from_id={$this->user_info['twitch_id']}");
+		$this->user_info['follows'] = $this->getPagedResponse("/helix/users/follows?first=100&from_id={$this->user_info['twitch_id']}");
 		$this->cms->database->insert("users", ['index'=>$this->user_info['index'], 'follows'=>json_encode($this->user_info['follows'])], true, ['index']);
 	}
 	
@@ -150,7 +152,7 @@ class TwitchUser extends User
 				$after = "";
 			}
 			$response = $this->api_request("{$endpoint}{$after}");
-			if(!empty($response) && is_object($response) && is_array($response->$containerKey))
+			if(!empty($response) && is_object($response) && !empty($response->$containerKey) && is_array($response->$containerKey))
 			{
 				if(!empty($response->total))
 					$total = $response->total;
@@ -158,7 +160,7 @@ class TwitchUser extends User
 			}
 			else
 			{
-				trigger_error("Error retreiving results for endpoint '{$endpoint}'. Response from server: ". print_r($response,true) ."\n Header from that response: \n". $this->user_api->error['lastheader'], E_USER_WARNING);
+				trigger_error("Error retreiving results for endpoint '{$endpoint}'. Response from server: ". print_r($response,true) ."\n Header from that response: \n". $this->user_api->curl->lastheader, E_USER_WARNING);
 				break;
 			}
 			$loops++;

@@ -495,12 +495,12 @@ class MeLeeCMS
 	protected function addData_protected($index, $data, $allowArray=true, $notCustom=true, $overwriteBehavior=3)
 	{
 		if($notCustom)
-			$target = $this->temp_data;
+			$target =& $this->temp_data;
 		else
 		{
 			if(!isset($this->temp_data['custom']) || !is_array($this->temp_data['custom']))
 				$this->temp_data['custom'] = [];
-			$target = $this->temp_data['custom'];
+			$target =& $this->temp_data['custom'];
 		}
 		if(empty($target[$index]))
 			$target[$index] = $data;

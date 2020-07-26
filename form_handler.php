@@ -6,9 +6,19 @@ $builder = new MeLeeCMS(15);
 $response = [];
 // NOTE: As a general rule, the "if" checks below should only be used to determine which form the page request is trying to use. It should not perform any sort of validation of the form input - save that for after the proper form has been identified.
 
-if($_POST['example'] != "")
+if(!empty($_POST['addToCategory']))
 {
-	include("includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR ."example.php");
+	include("includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR ."addToCategory.php");
+}
+
+if(!empty($_POST['orderCategories']))
+{
+	include("includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR ."orderCategories.php");
+}
+
+if(!empty($_POST['editCategory']))
+{
+	include("includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR ."editCategory.php");
 }
 
 // End of processing.

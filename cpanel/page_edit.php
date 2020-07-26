@@ -4,7 +4,7 @@ require_once("load_page.php");
 if(isset($_GET['confirmdelete']) && !empty($_GET['pageId']) && is_numeric($_GET['pageId']))
 {
 	if($builder->database->delete("pages", ['index'=>(int)$_GET['pageId']], true))
-		$_SESSION['onload_notification'] = [['__attr:type'=>"primary", "Page was deleted successfully."], '__attr:title'=>"Page Deleted"];
+		$_SESSION['onload_notification'] = [['__attr:type'=>"primary", "Page was deleted successfully. Note: This doesn't delete the associated PHP file, if there is one."], '__attr:title'=>"Page Deleted"];
 	else
 		$_SESSION['onload_notification'] = [['__attr:type'=>"warning", "No page matching the given index was found."], '__attr:title'=>"Page Not Deleted"];
 	header("Location: pages.php");
@@ -49,6 +49,8 @@ if(!empty($page) && is_array($page) || !empty($_GET['pageId']) && ($_GET['pageId
 	if($is_file)
 	{
 		$data = [
+			'title' => empty($page['title']) ? "" : $page['title'],
+			'site_title' => $builder->get_setting('site_title'),
 			'file' => empty($page['file']) ? "" : $page['file'],
 			'select@id=subtheme' => ['value'=>empty($page['subtheme'])?"":$page['subtheme'], 'option'=>[]],
 		];

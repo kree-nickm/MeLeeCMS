@@ -16,14 +16,12 @@
 				<h6 class="card-subtitle text-muted">Make changes to the properties and content of this page.</h6>
 			</div>
 			<div class="card-body row">
-			<xsl:if test="not(content[@id='props']/file)">
-				<div class="input-group form-group col-md-6 col-lg-4" title="The title of the page that will appear in the browser tab.">
+				<div class="input-group form-group col-md-6 col-lg-4" title="The title of the page that will appear in the browser tab. Can by overwritten in PHP files.">
 					<input type="text" class="form-control" name="page_title" value="{content[@id='props']/title}" placeholder="Page Title"/>
 					<div class="input-group-append">
 						<span class="input-group-text"> - <xsl:value-of select="content[@id='props']/site_title"/></span>
 					</div>
 				</div>
-			</xsl:if>
 			<xsl:if test="content[@id='props']/url_path">
 				<div class="input-group form-group col-md-6 col-lg-4" title="The URL to access the page.">
 					<div class="input-group-prepend">

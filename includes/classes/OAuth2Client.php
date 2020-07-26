@@ -19,6 +19,7 @@ class OAuth2Client
 	
 	public function __construct($url, $client_id, $client_secret, $grant_type, $parameters=[])
 	{
+		// Setup the properties that we'll need.
 		if(is_array($url))
 			$this->auth_url = implode("/", $url);
 		else
@@ -51,8 +52,10 @@ class OAuth2Client
 			$this->parameters['password'] = $parameters['password'];
 		}
 		
+		// Begin the login process.
 		$this->curl = new CURLWrapper();
 		
+		// W-I-P code for password logins.
 		if($this->grant_type === "password")
 		{
 			// TODO: Make sure this isn't run on every single page load.
@@ -66,6 +69,7 @@ class OAuth2Client
 				];
 			}
 		}
+		// Check if this request is redirected from a successful authentication.
 		else if(!empty($_REQUEST['code']) && $_REQUEST['state'] == $this->parameters['state'])
 		{
 			if($this->login($_REQUEST['code']))
@@ -112,6 +116,7 @@ class OAuth2Client
 	{
 		$this->token = null;
 		unset($_SESSION[$this->client_id."_token"]);
+		unset($_SESSION[$this->client_id."_token_time"]);
 		$this->login_attempted = false;
 		$this->login_succeeded = false;
 	}
@@ -150,11 +155,13 @@ class OAuth2Client
 			if(!empty($this->token->access_token))
 			{
 				$_SESSION[$this->client_id."_token"] = $this->token;
+				$_SESSION[$this->client_id."_token_time"] = time();
 				$this->login_succeeded = true;
 			}
 			else
 			{
 				unset($_SESSION[$this->client_id."_token"]);
+				unset($_SESSION[$this->client_id."_token_time"]);
 				$this->login_succeeded = false;
 			}
 			$this->login_attempted = true;
@@ -164,6 +171,50 @@ class OAuth2Client
 		{
 			$this->token = $raw;
 			unset($_SESSION[$this->client_id."_token"]);
+			unset($_SESSION[$this->client_id."_token_time"]);
+			$this->login_attempted = true;
+			$this->login_succeeded = false;
+			return $this->login_succeeded;
+		}
+	}
+	
+	public function refresh()
+	{
+		if(empty($this->token->refresh_token))
+			return false;
+		$post = [
+			'grant_type' => "refresh_token",
+			'refresh_token' => $this->token->refresh_token,
+			'client_id' => $this->client_id,
+			'client_secret' => $this->client_secret,
+		];
+		$raw = $this->curl->request($this->auth_url ."/oauth2/token", [CURLOPT_POSTFIELDS => $post]);
+		if(is_object($json = json_decode($raw)))
+		{
+			if(!empty($json->access_token))
+			{
+				foreach(get_object_vars($json) as $prop=>$val)
+				{
+					$this->token->$prop = $json->$prop;
+				}
+				$_SESSION[$this->client_id."_token"] = $this->token;
+				$_SESSION[$this->client_id."_token_time"] = time();
+				$this->login_succeeded = true;
+			}
+			else
+			{
+				unset($_SESSION[$this->client_id."_token"]);
+				unset($_SESSION[$this->client_id."_token_time"]);
+				$this->login_succeeded = false;
+			}
+			$this->login_attempted = true;
+			return $this->login_succeeded;
+		}
+		else
+		{
+			$this->token = $raw;
+			unset($_SESSION[$this->client_id."_token"]);
+			unset($_SESSION[$this->client_id."_token_time"]);
 			$this->login_attempted = true;
 			$this->login_succeeded = false;
 			return $this->login_succeeded;
@@ -172,10 +223,18 @@ class OAuth2Client
 	
 	public function api_request($url="", $request="GET", $data="", $headers=[])
 	{
+		if(!empty($this->token->expires_in) && ($_SESSION[$this->client_id."_token_time"] + $this->token->expires_in) >= time())
+			$this->refresh();
 		if($this->login_attempted && !$this->login_succeeded) // If we failed to login, let's not send more failed API queries.
 			return $this->token;
 		if(!empty($this->token->access_token))
-			return $this->perform_api_request($url, $request, $data, $headers);
+		{
+			$response = $this->perform_api_request($url, $request, $data, $headers);
+			if(!empty($response->status) && $response->status == 401) // Allegedly supposed to use this, but I don't know that it is reliable: strpos($this->curl->lastheader, "\nWWW-Authenticate:") !== false
+				if($this->refresh())
+					$response = $this->perform_api_request($url, $request, $data, $headers);
+			return $response;
+		}
 		else
 			return null; //TODO: Might be more useful to return the error response here, but also save it so you don't keep making API queries with the same error.
 	}

@@ -64,22 +64,38 @@ if($is_file)
 	{
 		if(!empty($_POST['page_file']) && $_POST['page_file'] != $existing['file'])
 		{
-			$already = $builder->database->query("SELECT `index` FROM pages WHERE `file`=". $builder->database->quote($_POST['page_file']) ." AND `index`!=". (int)$_POST['page_index'], Database::RETURN_FIELD);
-			if(!empty($already))
+			$alreadyDB = $builder->database->query("SELECT `index` FROM pages WHERE `file`=". $builder->database->quote($_POST['page_file']) ." AND `index`!=". (int)$_POST['page_index'], Database::RETURN_FIELD);
+			$path = $builder->get_setting('server_path') ."includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR;
+			$filepath = $path . $_POST['page_file'];
+			$alreadyFile = is_file($filepath);
+			// TODO: Deal with these possibilities rather than displaying an error and giving up.
+			if(!empty($alreadyDB))
+			{
+				$errors[] = ['__attr:type'=>"danger", "PHP file '". $_POST['page_file'] ."' already belongs to another page."];
+			}
+			else if($alreadyFile)
 			{
 				$errors[] = ['__attr:type'=>"danger", "PHP file '". $_POST['page_file'] ."' already exists."];
 			}
 			else
 			{
-				$path = $builder->get_setting('server_path') ."includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR;
-				if(!empty($existing['file']) && is_file($path . $existing['file']))
-					rename($path . $existing['file'], $path . $_POST['page_file']);
+				$filedir = dirname($filepath);
+				if(!is_dir($filedir))
+				{
+					//umask(7777);
+					// Note: This is super annoying, but mkdir() "needs" an octal, but it will convert any non-octal to an octal for you. Unfortunately, it is really bad at identifying when it's given an octal, so rather than even attempting to give it an octal, let's just explicitly give it a decimal, so we know that it will convert.
+					mkdir($filedir, octdec(fileperms($builder->get_setting('server_path') ."includes")), true);
+				}
+				$oldfilepath = $path . $existing['file'];
+				if(!empty($existing['file']) && is_file($oldfilepath))
+				{
+					rename($oldfilepath, $filepath);
+				}
 				else
 				{
-					mkdir($path);
-					if(!empty($existing['file']) && !is_file($path . $existing['file']))
+					if(!empty($existing['file']) && !is_file($oldfilepath))
 						$errors[] = ['__attr:type'=>"warning", "This page referred to '". $existing['file'] ."' but it doesn't exist. Creating new '". $_POST['page_file'] ."' instead of renaming file."];
-					$fp = fopen($path . $_POST['page_file'], "w");
+					$fp = fopen($filepath, "w");
 					fwrite($fp, "<?php\n");
 					fclose($fp);
 				}

@@ -73,8 +73,6 @@ CREATE TABLE `settings` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO `settings` (`setting`, `value`, `type`, `description`) VALUES
-('site_title', 'MeLeeCMS', 'string', 'Name used on browser tabs for this website. Will appear after the specific page name, ie. <tt>Page Name - Site Title</tt>'),
-('default_theme', 'default', 'theme', 'The theme of the website, from which all pages will load their CSS, JS, and XSL. Changing this could break the website if the new theme is not setup to support all of the pages of the site. Does not affect the control panel.'),
 ('index_page', '1', 'page', 'Page that will load if someone visits your website but doesn\'t specify another page. For example, if they visit the URL <tt>www.yourdomain.com/</tt>, with nothing after the slash.');
 
 CREATE TABLE `themes` (
