@@ -46,8 +46,12 @@
 			</xsl:for-each>
 		</ul>
 	</div>
-	<button class="nav-link btn btn-secondary" data-toggle="modal" data-target="#login_popup">Login</button>
-	<a class="nav-link btn btn-sm btn-outline-secondary" href="?output=xml" target="_blank">XML</a>
+   <xsl:if test="not(data/user/logged)">
+      <button class="nav-link btn btn-secondary" data-toggle="modal" data-target="#login_popup">Login</button>
+   </xsl:if>
+   <xsl:if test="data/user/logged">
+      <a class="nav-link btn btn-sm btn-outline-secondary" href="?output=xml" target="_blank">XML</a>
+   </xsl:if>
 </nav>
 
 <xsl:apply-templates select="content[@notification]"/>
