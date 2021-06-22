@@ -28,21 +28,55 @@
 </head>
 <body class="">
 
+<xsl:if test="content[@id='branding'] or content[@id='nav']">
 <nav class="shadow navbar navbar-expand-sm navbar-dark bg-dark">
 	<a class="navbar-brand" href="index.php"><xsl:value-of select="content[@id='branding']"/></a>
 	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
 	<div class="collapse navbar-collapse" id="navbarSupportedContent">
 		<ul class="navbar-nav mr-auto">
 			<xsl:for-each select="content[@id='nav']/content">
-				<xsl:element name="li">
-					<xsl:attribute name="class">nav-item<xsl:if test="@active!=''"> active</xsl:if></xsl:attribute>
-					<xsl:element name="a">
-						<xsl:attribute name="class">nav-link</xsl:attribute>
-						<xsl:attribute name="href"><xsl:value-of select="url"/></xsl:attribute>
-						<xsl:value-of select="text"/>
-						<xsl:if test="@active!=''"><span class="sr-only">(current)</span></xsl:if>
+				<xsl:choose>
+				<xsl:when test="@type='dropdown'">
+					<xsl:element name="li">
+						<xsl:attribute name="class">nav-item dropdown<xsl:if test="@active!=''"> active</xsl:if></xsl:attribute>
+						<xsl:element name="a">
+							<xsl:attribute name="class">nav-link dropdown-toggle</xsl:attribute>
+							<xsl:attribute name="href">#</xsl:attribute>
+							<xsl:attribute name="role">button</xsl:attribute>
+							<xsl:attribute name="data-toggle">dropdown</xsl:attribute>
+							<xsl:attribute name="aria-haspopup">true</xsl:attribute>
+							<xsl:attribute name="aria-expanded">false</xsl:attribute>
+							<xsl:attribute name="id">ndd<xsl:value-of select="@id"/></xsl:attribute>
+							<xsl:value-of select="text"/>
+							<xsl:if test="badge"><span class="badge badge-secondary ml-1"><xsl:value-of select="badge"/></span></xsl:if>
+							<xsl:if test="@active!=''"><span class="sr-only">(current)</span></xsl:if>
+						</xsl:element>
+						<div class="dropdown-menu" aria-labelledby="ndd{@id}">
+							<xsl:for-each select="sublink">
+								<xsl:element name="a">
+									<xsl:attribute name="class">dropdown-item<xsl:if test="@active!=''"> active</xsl:if></xsl:attribute>
+									<xsl:attribute name="href"><xsl:value-of select="url"/></xsl:attribute>
+									<xsl:value-of select="text"/>
+									<xsl:if test="badge"><span class="badge badge-primary ml-1"><xsl:value-of select="badge"/></span></xsl:if>
+									<xsl:if test="@active!=''"><span class="sr-only">(current)</span></xsl:if>
+								</xsl:element>
+							</xsl:for-each>
+						</div>
 					</xsl:element>
-				</xsl:element>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:element name="li">
+						<xsl:attribute name="class">nav-item<xsl:if test="@active!=''"> active</xsl:if></xsl:attribute>
+						<xsl:element name="a">
+							<xsl:attribute name="class">nav-link</xsl:attribute>
+							<xsl:attribute name="href"><xsl:value-of select="url"/></xsl:attribute>
+							<xsl:value-of select="text"/>
+							<xsl:if test="badge"><span class="badge badge-secondary ml-1"><xsl:value-of select="badge"/></span></xsl:if>
+							<xsl:if test="@active!=''"><span class="sr-only">(current)</span></xsl:if>
+						</xsl:element>
+					</xsl:element>
+				</xsl:otherwise>
+				</xsl:choose>
 			</xsl:for-each>
 		</ul>
 	</div>
@@ -53,6 +87,7 @@
       <a class="nav-link btn btn-sm btn-outline-secondary" href="?output=xml" target="_blank">XML</a>
    </xsl:if>
 </nav>
+</xsl:if>
 
 <xsl:apply-templates select="content[@notification]"/>
 <xsl:apply-templates select="content[not(@hidden) and @id!='branding' and @id!='nav' and not(@notification)]"/>

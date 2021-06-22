@@ -715,7 +715,17 @@ class Database
             return "null";
          else
          {
-            trigger_error("Tried to set null to a column that doesn't allow null (". $table .", ". $k .", ". $v .").");
+            trigger_error("Tried to set null to a column that doesn't allow null (". $table .", ". $k .").");
+            return null;
+         }
+      }
+      if(is_array($v) || is_object($v))
+      {
+         if($this->metadata[$table][$k]['type'] === "json")
+            return $this->quote(json_encode($v));
+         else
+         {
+            trigger_error("Tried to set an object or array to a column that is not JSON (". $table .", ". $k .", ". (string)$v .").");
             return null;
          }
       }
