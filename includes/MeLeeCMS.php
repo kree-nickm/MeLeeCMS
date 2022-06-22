@@ -12,7 +12,7 @@ defined("E_DEPRECATED") OR define("E_DEPRECATED", 8192);
 defined("E_USER_DEPRECATED") OR define("E_USER_DEPRECATED", 16384);
 /** The current memory usage at the time the page starts loading. */
 define("START_MEMORY", memory_get_usage());
-/** The current millisecond timestamp at the time the page starts loading. */
+/** The current microsecond timestamp at the time the page starts loading. */
 define("START_TIME", microtime(true));
 /** Prints out the time elapsed and net memory usage since the page first started loading, in the form of an HTML comment. */
 function print_load_statistics()
@@ -62,6 +62,7 @@ class MeLeeCMS
 	public $refresh_requested = ['strip'=>[]];
 	public $temp_data = [];
 	public $include_later = [];
+	public $forms = [];
 
 	public function __construct($mode=31)
 	{
@@ -90,6 +91,8 @@ class MeLeeCMS
 		$this->settings['site_title'] = $GlobalConfig['site_title'];
 		$this->settings['default_theme'] = $GlobalConfig['default_theme'];
 		$this->settings['cpanel_theme'] = $GlobalConfig['cpanel_theme'];
+      if(!empty($GlobalConfig['forms']) && is_array($GlobalConfig['forms']))
+         $this->forms = $GlobalConfig['forms'];
 		// Setup the initial object properties.
 		array_unshift($this->class_paths, __DIR__ . DIRECTORY_SEPARATOR ."classes". DIRECTORY_SEPARATOR);
 		if(substr(__DIR__, 0, strlen($GlobalConfig['server_path'])) != $GlobalConfig['server_path'])
@@ -175,8 +178,8 @@ class MeLeeCMS
 				'file' => $file,
 				'line' => $line,
 			];
-			if(is_object($this->user))
-				$mysql_data['user'] = $this->user->get_property('index');
+			if(!empty($this->user->get_property('index')))
+				$mysql_data['user'] = (int)$this->user->get_property('index');
 			$this->database->insert("error_log", $mysql_data, false);
 		}
 		return true;

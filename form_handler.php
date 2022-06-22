@@ -1,27 +1,40 @@
 <?php
+ob_start();
 require_once("includes". DIRECTORY_SEPARATOR ."MeLeeCMS.php");
 $builder = new MeLeeCMS(15);
 
-// Process POST data.
+// Process request data.
 $response = [];
-// NOTE: As a general rule, the "if" checks below should only be used to determine which form the page request is trying to use. It should not perform any sort of validation of the form input - save that for after the proper form has been identified.
 
-if(!empty($_POST['addToCategory']))
+foreach($builder->forms as $formId=>$form)
 {
-	include("includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR ."addToCategory.php");
-}
-
-if(!empty($_POST['orderCategories']))
-{
-	include("includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR ."orderCategories.php");
-}
-
-if(!empty($_POST['editCategory']))
-{
-	include("includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR ."editCategory.php");
+   if(is_callable($form['select']) && is_file("includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR . $form['file']))
+   {
+      if($form['select']($builder))
+      {
+         if(empty($form['permit']) || !is_callable($form['permit']) || $form['permit']($builder))
+         {
+            // Note: $form['permit'] should only be specified for forms pulled from the database (which isn't yet supported). Forms specified in config.php shouldn't use it, and should instead handle permission checks in the form's PHP file, because otherwise, config.php will get cluttered with too much form logic.
+            include("includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR . $form['file']);
+         }
+         else
+         {
+            $response[$formId] = [];
+            $response[$formId]['success'] = false;
+            $response[$formId]['status'] = "denied";
+            $response[$formId]['error'] = "You don't have permission to use this form.";
+         }
+      }
+   }
+   else
+   {
+      trigger_error("Invalid form \"{$formId}\" in config file:". (is_callable($form['select'])?"":" \$form['select'] is not a callable function, \"{$form['select']}\" given instead.") . (is_file("includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR . $form['file'])?"":" {$form['file']} is not a valid file in the 'includes/forms/' directory."), E_USER_WARNING);
+   }
 }
 
 // End of processing.
+ob_end_clean();
+ob_start();
 echo(json_encode($response));
 if(!isset($_REQUEST['AJAX']))
 {
@@ -35,3 +48,4 @@ if(!isset($_REQUEST['AJAX']))
 	}
 	header("Location: ". $destination);
 }
+ob_end_flush();

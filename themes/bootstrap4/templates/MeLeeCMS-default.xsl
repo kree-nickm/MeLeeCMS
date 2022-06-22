@@ -20,6 +20,8 @@
 		<xsl:attribute name="type">text/css</xsl:attribute>
 		<xsl:attribute name="rel">stylesheet</xsl:attribute>
 		<xsl:attribute name="href"><xsl:value-of select="href"/></xsl:attribute>
+		<xsl:if test="integrity"><xsl:attribute name="integrity"><xsl:value-of select="integrity"/></xsl:attribute></xsl:if>
+		<xsl:if test="crossorigin"><xsl:attribute name="crossorigin"><xsl:value-of select="crossorigin"/></xsl:attribute></xsl:if>
 	</xsl:element>
 </xsl:for-each>
 <xsl:for-each select="css[code!='']">
@@ -29,7 +31,7 @@
 <body id="MeLeeCMSBody" class="">
 
 <xsl:if test="content[@id='branding'] or content[@id='nav']">
-<nav class="navbar navbar-expand-sm navbar-dark">
+<nav class="shadow navbar navbar-expand-sm navbar-dark">
 	<a class="navbar-brand" href="index.php"><xsl:value-of select="content[@id='branding']"/></a>
 	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
 	<div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -125,6 +127,8 @@
 	<xsl:element name="script">
 		<xsl:attribute name="type">text/javascript</xsl:attribute>
 		<xsl:if test="src and src!=''"><xsl:attribute name="src"><xsl:value-of select="src"/></xsl:attribute></xsl:if>
+		<xsl:if test="integrity"><xsl:attribute name="integrity"><xsl:value-of select="integrity"/></xsl:attribute></xsl:if>
+		<xsl:if test="crossorigin"><xsl:attribute name="crossorigin"><xsl:value-of select="crossorigin"/></xsl:attribute></xsl:if>
 		<xsl:value-of select="code"/>
 	</xsl:element>
 </xsl:for-each>
