@@ -160,7 +160,7 @@ class TwitchUser extends User
 			}
 			else
 			{
-				trigger_error("Error retreiving results for endpoint '{$endpoint}'. Response from server: ". print_r($response,true) ."\n Header from that response: \n". $this->user_api->curl->lastheader, E_USER_WARNING);
+				trigger_error("Error retreiving results for endpoint '{$endpoint}{$after}'. Response from server: ". print_r($response,true) ."\n Header from that response: \n". $this->user_api->curl->lastheader, E_USER_WARNING);
 				break;
 			}
 			$loops++;
