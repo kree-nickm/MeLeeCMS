@@ -28,7 +28,7 @@
 </xsl:for-each>
 </ul>
 
-<xsl:for-each select="content[@id!='nav']">
+<xsl:for-each select="content[@id!='nav' and @class!='Data']">
 	<xsl:value-of select="."/>
 </xsl:for-each>
 
