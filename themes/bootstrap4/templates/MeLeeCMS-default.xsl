@@ -12,9 +12,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
 <title><xsl:value-of select="title"/></title>
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css"/>
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn" crossorigin="anonymous"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.2/css/bootstrap-select.min.css"/>
-<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css" integrity="sha384-5sAR7xN1Nv6T6+dT2mhtzEpVJvfS3NScPQTrOxhwjIuvcA67KV2R5Jz6kr4abQsz" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
 <xsl:for-each select="css[href!='']">
 	<xsl:element name="link">
 		<xsl:attribute name="type">text/css</xsl:attribute>
@@ -26,32 +26,72 @@
 	<style><xsl:value-of select="code"/></style>
 </xsl:for-each>
 </head>
-<body class="">
+<body id="MeLeeCMSBody" class="">
 
-<nav class="shadow navbar navbar-expand-sm navbar-dark bg-dark">
+<xsl:if test="content[@id='branding'] or content[@id='nav']">
+<nav class="navbar navbar-expand-sm navbar-dark">
 	<a class="navbar-brand" href="index.php"><xsl:value-of select="content[@id='branding']"/></a>
 	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
 	<div class="collapse navbar-collapse" id="navbarSupportedContent">
 		<ul class="navbar-nav mr-auto">
 			<xsl:for-each select="content[@id='nav']/content">
-				<xsl:element name="li">
-					<xsl:attribute name="class">nav-item<xsl:if test="@active!=''"> active</xsl:if></xsl:attribute>
-					<xsl:element name="a">
-						<xsl:attribute name="class">nav-link</xsl:attribute>
-						<xsl:attribute name="href"><xsl:value-of select="url"/></xsl:attribute>
-						<xsl:value-of select="text"/>
-						<xsl:if test="@active!=''"><span class="sr-only">(current)</span></xsl:if>
+				<xsl:choose>
+				<xsl:when test="@type='dropdown'">
+					<xsl:element name="li">
+						<xsl:attribute name="class">nav-item dropdown<xsl:if test="@active!=''"> active</xsl:if></xsl:attribute>
+						<xsl:element name="a">
+							<xsl:attribute name="class">nav-link dropdown-toggle</xsl:attribute>
+							<xsl:attribute name="href">#</xsl:attribute>
+							<xsl:attribute name="role">button</xsl:attribute>
+							<xsl:attribute name="data-toggle">dropdown</xsl:attribute>
+							<xsl:attribute name="aria-haspopup">true</xsl:attribute>
+							<xsl:attribute name="aria-expanded">false</xsl:attribute>
+							<xsl:attribute name="id">ndd<xsl:value-of select="@id"/></xsl:attribute>
+							<xsl:value-of select="text"/>
+							<xsl:if test="badge"><span class="badge badge-secondary ml-1"><xsl:value-of select="badge"/></span></xsl:if>
+							<xsl:if test="@active!=''"><span class="sr-only">(current)</span></xsl:if>
+						</xsl:element>
+						<div class="dropdown-menu" aria-labelledby="ndd{@id}">
+							<xsl:for-each select="sublink">
+								<xsl:element name="a">
+									<xsl:attribute name="class">dropdown-item<xsl:if test="@active!=''"> active</xsl:if></xsl:attribute>
+									<xsl:attribute name="href"><xsl:value-of select="url"/></xsl:attribute>
+									<xsl:value-of select="text"/>
+									<xsl:if test="badge"><span class="badge badge-primary ml-1"><xsl:value-of select="badge"/></span></xsl:if>
+									<xsl:if test="@active!=''"><span class="sr-only">(current)</span></xsl:if>
+								</xsl:element>
+							</xsl:for-each>
+						</div>
 					</xsl:element>
-				</xsl:element>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:element name="li">
+						<xsl:attribute name="class">nav-item<xsl:if test="@active!=''"> active</xsl:if></xsl:attribute>
+						<xsl:element name="a">
+							<xsl:attribute name="class">nav-link</xsl:attribute>
+							<xsl:attribute name="href"><xsl:value-of select="url"/></xsl:attribute>
+							<xsl:value-of select="text"/>
+							<xsl:if test="badge"><span class="badge badge-secondary ml-1"><xsl:value-of select="badge"/></span></xsl:if>
+							<xsl:if test="@active!=''"><span class="sr-only">(current)</span></xsl:if>
+						</xsl:element>
+					</xsl:element>
+				</xsl:otherwise>
+				</xsl:choose>
 			</xsl:for-each>
 		</ul>
 	</div>
-	<button class="nav-link btn btn-secondary" data-toggle="modal" data-target="#login_popup">Login</button>
-	<a class="nav-link btn btn-sm btn-outline-secondary" href="?output=xml" target="_blank">XML</a>
+   <xsl:if test="not(data/user/logged)">
+      <button class="nav-link btn btn-secondary ml-1" data-toggle="modal" data-target="#login_popup">Login</button>
+      <a class="nav-link btn btn-secondary ml-1" href="{url_path}register">Register</a>
+   </xsl:if>
+   <xsl:if test="data/user/logged">
+      <a class="nav-link btn btn-sm btn-outline-secondary" href="?output=xml" target="_blank">XML</a>
+   </xsl:if>
 </nav>
+</xsl:if>
 
 <xsl:apply-templates select="content[@notification]"/>
-<xsl:apply-templates select="content[not(@hidden) and @id!='branding' and @id!='nav' and not(@notification)]"/>
+<xsl:apply-templates select="content[not(@hidden) and @id!='branding' and @id!='nav' and not(@notification) and @class!='Data']"/>
 
 <div class="modal fade" id="login_popup" tabindex="-1" role="dialog" aria-labelledby="login_popup_label">
 	<div class="modal-dialog modal-sm" role="document">
@@ -77,10 +117,9 @@
 	</div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.2/js/bootstrap-select.min.js"></script>
 <xsl:for-each select="js">
 	<xsl:element name="script">
@@ -104,7 +143,7 @@
 		</div>
 		<xsl:element name="div">
 			<xsl:attribute name="class">
-				card-body
+				card-body no-footer
 				<xsl:if test="@nopadding">p-0</xsl:if>
 			</xsl:attribute>
 			<xsl:apply-templates select="content[@id!='subtitle']"/>
@@ -237,6 +276,8 @@
 						<xsl:value-of select="."/>
 					</xsl:element>
 				</xsl:for-each>
+			</div>
+			<div class="modal-footer">
 			</div>
 		</div>
 	</div>

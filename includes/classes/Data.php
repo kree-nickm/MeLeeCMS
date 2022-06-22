@@ -82,4 +82,9 @@ class Data extends Content
 		else
 			return $this->handleData($this->data, []);
 	}
+
+	/*public function render($subtheme="default")
+	{
+		return "";
+	}*/
 }

@@ -57,7 +57,7 @@ class Database
 	{
 		// TODO generate errors for tables with no PRIMARY key that is also AUTO_INCREMENT
 		$this->metadata = [];
-		$columns = $this->query("SELECT TABLE_NAME,COLUMN_NAME,COLUMN_DEFAULT,DATA_TYPE,COLUMN_TYPE,COLUMN_KEY,EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=". $this->quote($this->database) ." ORDER BY TABLE_NAME");
+		$columns = $this->query("SELECT TABLE_NAME,COLUMN_NAME,COLUMN_DEFAULT,DATA_TYPE,COLUMN_TYPE,COLUMN_KEY,IS_NULLABLE,EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=". $this->quote($this->database) ." ORDER BY TABLE_NAME");
 		foreach($columns as $row)
 		{
 			if(empty($this->metadata[$row['TABLE_NAME']]))
@@ -69,6 +69,7 @@ class Database
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type_full'] = $row['COLUMN_TYPE'];
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['type_basic'] = !empty(self::$basic_types[$row['DATA_TYPE']]) ? self::$basic_types[$row['DATA_TYPE']] : "text";
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['key'] = $row['COLUMN_KEY'];
+			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['null'] = ($row['IS_NULLABLE']==="YES" ? true : false);
 			$this->metadata[$row['TABLE_NAME']][$row['COLUMN_NAME']]['extra'] = $row['EXTRA'];
 		}
 		foreach(array_keys($this->metadata) as $table)
@@ -708,6 +709,26 @@ class Database
 			trigger_error("Database->smart_quote could not quote the given value (". $table .", ". $k .", ". $v .").");
 			return null;
 		}
+      if($v === null)
+      {
+         if($this->metadata[$table][$k]['null'])
+            return "null";
+         else
+         {
+            trigger_error("Tried to set null to a column that doesn't allow null (". $table .", ". $k .").");
+            return null;
+         }
+      }
+      if(is_array($v) || is_object($v))
+      {
+         if($this->metadata[$table][$k]['type'] === "json")
+            return $this->quote(json_encode($v));
+         else
+         {
+            trigger_error("Tried to set an object or array to a column that is not JSON (". $table .", ". $k .", ". (string)$v .").");
+            return null;
+         }
+      }
 		switch($this->metadata[$table][$k]['type_basic'])
 		{
 			case "integer":

@@ -468,7 +468,7 @@ class MeLeeCMS
 		// TODO: $fromtheme doesn't currently do anything, but it might be totally unnecessary. When would you ever include an XSL stylesheet from outside the theme?
 		if($href != "" || $code != "")
 		{
-			$this->page_xsl[] = array('href'=>$href, 'fromtheme'=>$fromtheme);
+			$this->page_xsl[] = array('href'=>$href, 'code'=>$code, 'fromtheme'=>$fromtheme);
 			return true;
 		}
 		else

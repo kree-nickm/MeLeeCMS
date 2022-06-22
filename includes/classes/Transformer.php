@@ -175,15 +175,17 @@ class Transformer
 				if(is_numeric($subtag) || $parts[0] == "")
 				{
 					if($multiplets === 0)
-						throw new Exception("Malformed data array cannot be converted to XML.");
+						throw new Exception("Malformed data array cannot be converted to XML. Numeric index (". $subtag .") when container is already not an array. Element: <". $tag . $attrs .">");
 					$result .= self::array_to_xml($tag . $attrs, $subdata);
 					$multiplets = 1;
 				}
 				else
 				{
 					if($multiplets === 1)
-						throw new Exception("Malformed data array cannot be converted to XML.");
-					$result .= self::array_to_xml($parts[0] . $attrs, $subdata);
+						throw new Exception("Malformed data array cannot be converted to XML. Non-numeric index when container is already an array. Element: <". $parts[0] . $attrs .">");
+               $fixedtag = preg_replace("/[^a-zA-Z0-9_]/i", "", $parts[0]);
+               $fixedtag .= " original_tag=\"". htmlentities($parts[0], ENT_QUOTES|ENT_XML1|ENT_DISALLOWED, "UTF-8") ."\"";
+					$result .= self::array_to_xml($fixedtag . $attrs, $subdata);
 					$multiplets = 0;
 				}
 			}
