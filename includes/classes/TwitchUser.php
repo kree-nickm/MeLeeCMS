@@ -35,7 +35,7 @@ class TwitchUser extends User
 				if(empty($this->user_info))
 				{
 					$user_data = $this->api_request("/helix/users");
-					if(!empty($user_data) && is_object($user_data) && !empty($user_data->data) && is_array($user_data->data) && !empty($user_data->data[0]))
+					if(!empty($user_data) && is_object($user_data) && isset($user_data->data) && is_array($user_data->data) && !empty($user_data->data[0]))
 					{
 						$user_data = $user_data->data[0];
 					}
@@ -115,11 +115,158 @@ class TwitchUser extends User
 		return $this->user_api->api_request($url, $request, $data, $headers);
 	}
 	
-	public function getFollows()
+	public function updateFollows()
 	{
 		$this->user_info['follows'] = $this->getPagedResponse("/helix/users/follows?first=100&from_id={$this->user_info['twitch_id']}");
 		$this->cms->database->insert("users", ['index'=>$this->user_info['index'], 'follows'=>json_encode($this->user_info['follows'])], true, ['index']);
 	}
+   
+   public function getUsers($users=[], $updateAge=86400)
+   {
+      // Divvy up the users array by the data type given so we can query MySQL, and also store them in a normalized array for later.
+      $userArrs = [];
+      $userIdsQuoted = [];
+      $userLoginsQuoted = [];
+      foreach($users as $user)
+      {
+         if(is_object($user) && !empty($user->user_id)) // Array passed in from API "Get Followed Streams" etc
+         {
+            $userArrs[$user->user_id] = ['id'=>$user->user_id, 'login'=>null];
+            $userIdsQuoted[$user->user_id] = $this->cms->database->quote($user->user_id);
+         }
+         if(is_object($user) && !empty($user->to_id)) // Array passed in from API "Get Users Follows" when querying users that are being followed
+         {
+            $userArrs[$user->to_id] = ['id'=>$user->to_id, 'login'=>null];
+            $userIdsQuoted[$user->to_id] = $this->cms->database->quote($user->to_id);
+         }
+         if(is_object($user) && !empty($user->from_id)) // Array passed in from API "Get Users Follows" when querying users who are following
+         {
+            $userArrs[$user->from_id] = ['id'=>$user->from_id, 'login'=>null];
+            $userIdsQuoted[$user->from_id] = $this->cms->database->quote($user->from_id);
+         }
+         if(is_object($user) && !empty($user->broadcaster_id)) // Array passed in from API "Get Channel Information" etc
+         {
+            $userArrs[$user->broadcaster_id] = ['id'=>$user->broadcaster_id, 'login'=>null];
+            $userIdsQuoted[$user->broadcaster_id] = $this->cms->database->quote($user->broadcaster_id);
+         }
+         else if(is_object($user) && !empty($user->broadcaster_login)) // Array passed in from API "Search Channels" etc
+         {
+            $userArrs[$user->broadcaster_login] = ['login'=>$user->broadcaster_login, 'id'=>null];
+            $userLoginsQuoted[$user->broadcaster_login] = $this->cms->database->quote($user->broadcaster_login);
+         }
+         if(is_object($user) && !empty($user->creator_id)) // Array passed in from API "Get Clips" etc
+         {
+            $userArrs[$user->creator_id] = ['id'=>$user->creator_id, 'login'=>null];
+            $userIdsQuoted[$user->creator_id] = $this->cms->database->quote($user->creator_id);
+         }
+         if(is_object($user) && !empty($user->moderator_id)) // Array passed in from API "Get Banned Users" etc
+         {
+            $userArrs[$user->moderator_id] = ['id'=>$user->moderator_id, 'login'=>null];
+            $userIdsQuoted[$user->moderator_id] = $this->cms->database->quote($user->moderator_id);
+         }
+         if(is_object($user) && !empty($user->gifter_id)) // Array passed in from API "Get Broadcaster Subscriptions" etc
+         {
+            $userArrs[$user->gifter_id] = ['id'=>$user->gifter_id, 'login'=>null];
+            $userIdsQuoted[$user->gifter_id] = $this->cms->database->quote($user->gifter_id);
+         }
+         else if(is_object($user) && !empty($user->gifter_login)) // Array passed in from API "Check User Subscription" etc
+         {
+            $userArrs[$user->gifter_login] = ['login'=>$user->gifter_login, 'id'=>null];
+            $userLoginsQuoted[$user->gifter_login] = $this->cms->database->quote($user->gifter_login);
+         }
+         if(is_object($user) && !empty($user->login)) // Array passed in from API "Get Users" etc
+         {
+            $userArrs[$user->login] = ['login'=>$user->login, 'id'=>null];
+            $userLoginsQuoted[$user->login] = $this->cms->database->quote($user->login);
+         }
+         if(is_numeric($user))
+         {
+            $userArrs[$user] = ['id'=>$user, 'login'=>null];
+            $userIdsQuoted[$user] = $this->cms->database->quote($user);
+         }
+         else if(is_scalar($user))
+         {
+            $userArrs[$user] = ['login'=>$user, 'id'=>null];
+            $userLoginsQuoted[$user] = $this->cms->database->quote($user);
+         }
+         //if(<everything above failed>)
+         //   trigger_error("Invalid user format '". gettype($user) ."' given in the array parameter of TwitchUser->getUsers(): ". print_r($user, true));
+      }
+      // Build the WHERE clause and do the MySQL query.
+      $where = [];
+      if(count($userIdsQuoted))
+         $where[] = "`id` IN (". implode(",", $userIdsQuoted) .")";
+      if(count($userLoginsQuoted))
+         $where[] = "`login` IN (". implode(",", $userLoginsQuoted) .")";
+      $mysqlResult = $this->cms->database->query("SELECT * FROM custom_twitchusercache WHERE `last_api_query`>". (time()-(int)$updateAge) . (count($where) ? " AND (".implode(" OR ", $where).")" : ""), Database::RETURN_ALL);
+      
+      $output = [];
+      // Build a list of user to query the API for, from the users that were either not in MySQL or had not been queried in a day.
+      $usersToFetch = [];
+      foreach($userArrs as $user)
+      {
+         $found = false;
+         foreach($mysqlResult as $row)
+         {
+            if($user['id'] == $row['id'] || $user['login'] == $row['login'])
+            {
+               $found = true;
+               $output[] = json_decode($row['data']);
+               break;
+            }
+         }
+         if(!$found)
+            $usersToFetch[] = $user;
+      }
+      // Fetch the requested users from the API.
+      $mysql_data = [];
+      $numQueries = ceil(count($usersToFetch)/100);
+      for($i=0; $i<$numQueries; $i++)
+      {
+         $usersAPIQuery = "";
+         for($k=0; $k<100 && count($usersToFetch)>(100*$i+$k); $k++)
+         {
+            if($k > 0)
+               $usersAPIQuery .= "&";
+            $user = $usersToFetch[100*$i+$k];
+            if(!empty($user['id']))
+               $usersAPIQuery .= "id={$user['id']}";
+            else if(!empty($user['login']))
+               $usersAPIQuery .= "login={$user['login']}";
+         }
+         $responseUsers = $this->api_request("/helix/users?{$usersAPIQuery}");
+         if(is_object($responseUsers))
+         {
+            if(isset($responseUsers->data) && is_array($responseUsers->data))
+            {
+               foreach($responseUsers->data as $user)
+               {
+                  if(!empty($user->id))
+                  {
+                     if(!empty($user->email))
+                        unset($user->email);
+                     $mysql_data[] = [
+                        'id' => $user->id,
+                        'login' => $user->login,
+                        'data' => json_encode($user),
+                        'last_api_query' => time(),
+                     ];
+                     $output[] = $user;
+                  }
+                  else
+                     trigger_error("Response from API query to get users (page {$i}) contained an invalid user. Content is: ". print_r($user, true));
+               }
+            }
+            else
+               trigger_error("Response from API query to get users (page {$i}) did not contain a data array. Response content is: ". print_r($responseUsers, true));
+         }
+         else
+            trigger_error("Response from API query to get users (page {$i}) is not an object, it is: ". print_r($responseUsers, true));
+      }
+      if(count($mysql_data))
+         $this->cms->database->insert("custom_twitchusercache", $mysql_data, true);
+      return $output;
+   }
 	
 	// For a typical Twitch API query where the API returns up to 100 results, and gives you a cursor to retreive additional results if there are more than 100.
 	public function getPagedResponse($endpoint="/", $containerKey="data")
@@ -152,7 +299,7 @@ class TwitchUser extends User
 				$after = "";
 			}
 			$response = $this->api_request("{$endpoint}{$after}");
-			if(!empty($response) && is_object($response) && !empty($response->$containerKey) && is_array($response->$containerKey))
+			if(!empty($response) && is_object($response) && isset($response->$containerKey) && is_array($response->$containerKey))
 			{
 				if(!empty($response->total))
 					$total = $response->total;
@@ -203,7 +350,7 @@ class TwitchUser extends User
 	
 	public function setCustomData($key, $data, $save=true)
 	{
-		if(!is_array($this->user_info['custom_data']))
+		if(!isset($this->user_info['custom_data']) || !is_array($this->user_info['custom_data']))
 			$this->user_info['custom_data'] = [];
 		$this->user_info['custom_data'][$key] = $data;
 		if($save)
