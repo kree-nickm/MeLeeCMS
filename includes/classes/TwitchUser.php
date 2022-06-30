@@ -298,6 +298,7 @@ class TwitchUser extends User
       return $output;
    }
 	
+   // TODO: Could maybe move the below paged queries to OAuth2Client
 	// For a typical Twitch API query where the API returns up to 100 results, and gives you a cursor to retreive additional results if there are more than 100.
 	public function getPagedResponse($endpoint="/", $containerKey="data")
 	{

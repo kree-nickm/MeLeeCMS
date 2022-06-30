@@ -63,8 +63,8 @@ class OAuth2Client
 			{
 				$this->error = [
 					'code' => self::E_FAILED_LOGIN,
-					'lastheader' => $this->curl->getLastRawHeaders(),
-					'curlinfo' => $this->curl->getLastRequestInfo(),
+					'last_reponse' => $this->curl->getLastHeaders(),
+					'last_request' => $this->curl->getLastRequestInfo(),
 					'token' => $this->token,
 				];
 			}
@@ -83,8 +83,8 @@ class OAuth2Client
 				// We get a login code and everything seems ok, but OAuth2 API rejects the login.
 				$this->error = [
 					'code' => self::E_FAILED_LOGIN,
-					'lastheader' => $this->curl->getLastRawHeaders(),
-					'curlinfo' => $this->curl->getLastRequestInfo(),
+					'last_reponse' => $this->curl->getLastHeaders(),
+					'last_request' => $this->curl->getLastRequestInfo(),
 					'token' => $this->token,
 				];
 			}
@@ -221,6 +221,7 @@ class OAuth2Client
 		}
 	}
 	
+   // TODO: Check rate limits and handle it. Different APIs do it different though, unfortunately.
 	public function api_request($url="", $request="GET", $data="", $headers=[])
 	{
 		if(!empty($this->token->expires_in) && ($_SESSION[$this->client_id."_token_time"] + $this->token->expires_in) >= time())

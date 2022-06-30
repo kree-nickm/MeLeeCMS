@@ -4,7 +4,6 @@ class CURLWrapper
 {
 	public $curl;
 	public $default_options;
-	public $response_headers_raw = [];
 	public $response_headers = [];
 	public $request_info = [];
 	
@@ -68,7 +67,7 @@ class CURLWrapper
          foreach(explode("\n", $response_headers_raw) as $i=>$line)
          {
             if($i == 0) // Response status line
-               list($response_headers['protocol'], $response_headers['code'], $response_headers['status']) = explode(" ", $line);
+               list($response_headers['protocol'], $response_headers['code'], $response_headers['status']) = explode(" ", $line, 3);
             else
             {
                list($key, $val) = explode(": ", $line);
@@ -78,13 +77,12 @@ class CURLWrapper
 		}
 		else
 		{
-         // TODO: Review what a failed response looks like to verify this is how we want to handle it.
 			// Note: Don't know if we should care about this, but using curl_strerror() means we require PHP>=5.5.0
-			$response_headers_raw = curl_strerror(curl_errno($this->curl));
-			$raw = curl_error($this->curl);
+			$raw = ['type'=>curl_strerror(curl_errno($this->curl)), 'message'=>curl_error($this->curl)];
 		}
-		$this->response_headers_raw[] = $response_headers_raw;
 		$this->response_headers[] = $response_headers;
+      
+      // Parse the request_header field into an array before storing it.
 		$request_info = curl_getinfo($this->curl);
       if(!empty($request_info['request_header']))
       {
@@ -93,7 +91,13 @@ class CURLWrapper
          {
             $line = trim($line);
             if($i == 0) // Request status line
-               list($request_headers['method'], $request_headers['uri'], $request_headers['protocol']) = explode(" ", $line);
+            {
+               // This weird code is in case the URI has spaces.
+               $req = explode(" ", $line);
+               $request_headers['method'] = array_shift($req);
+               $request_headers['protocol'] = array_pop($req);
+               $request_headers['uri'] = implode(" ", $req);
+            }
             else if(!empty($line))
             {
                list($key, $val) = explode(": ", $line);
@@ -103,6 +107,7 @@ class CURLWrapper
          $request_info['request_header'] = $request_headers;
       }
 		$this->request_info[] = $request_info;
+      
 		// Note: Don't know if we should care about this, but using curl_reset() means we require PHP>=5.5.0
 		curl_reset($this->curl);
 		curl_setopt_array($this->curl, $this->default_options);
@@ -112,11 +117,6 @@ class CURLWrapper
    public function getLastHeaders()
    {
       return $this->response_headers[count($this->response_headers)-1];
-   }
-   
-   public function getLastRawHeaders()
-   {
-      return $this->response_headers_raw[count($this->response_headers_raw)-1];
    }
    
    public function getLastRequestInfo()
