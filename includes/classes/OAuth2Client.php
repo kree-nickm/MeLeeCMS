@@ -63,8 +63,8 @@ class OAuth2Client
 			{
 				$this->error = [
 					'code' => self::E_FAILED_LOGIN,
-					'lastheader' => $this->curl->lastheader,
-					'curlinfo' => $this->curl->curlinfo,
+					'lastheader' => $this->curl->getLastRawHeaders(),
+					'curlinfo' => $this->curl->getLastRequestInfo(),
 					'token' => $this->token,
 				];
 			}
@@ -83,8 +83,8 @@ class OAuth2Client
 				// We get a login code and everything seems ok, but OAuth2 API rejects the login.
 				$this->error = [
 					'code' => self::E_FAILED_LOGIN,
-					'lastheader' => $this->curl->lastheader,
-					'curlinfo' => $this->curl->curlinfo,
+					'lastheader' => $this->curl->getLastRawHeaders(),
+					'curlinfo' => $this->curl->getLastRequestInfo(),
 					'token' => $this->token,
 				];
 			}
@@ -230,7 +230,7 @@ class OAuth2Client
 		if(!empty($this->token->access_token))
 		{
 			$response = $this->perform_api_request($url, $request, $data, $headers);
-			if(!empty($response->status) && $response->status == 401) // Allegedly supposed to use this, but I don't know that it is reliable: strpos($this->curl->lastheader, "\nWWW-Authenticate:") !== false
+			if(!empty($response->status) && $response->status == 401) // Allegedly supposed to use this, but I don't know that it is reliable: strpos($this->curl->response_headers_raw, "\nWWW-Authenticate:") !== false
 				if($this->refresh())
 					$response = $this->perform_api_request($url, $request, $data, $headers);
 			return $response;

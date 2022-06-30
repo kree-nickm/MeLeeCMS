@@ -4,7 +4,6 @@ class TwitchUser extends User
 	const PERM_VIEW = 1;
 	const PERM_ADMIN = 2;
 	
-	//public $app;
 	public $user_api;
 	public $login_error = false;
 
@@ -21,32 +20,54 @@ class TwitchUser extends User
 		}
 		else
 		{
-			$this->user_api = new OAuth2Client("https://id.twitch.tv", $GlobalConfig['twitch_client_id'], $GlobalConfig['twitch_client_secret'], "authorization_code", ['scope'=>$GlobalConfig['twitch_scope'], 'redirect_uri'=>$GlobalConfig['twitch_redirect_uri']]);
+			$this->user_api = new OAuth2Client(
+            "https://id.twitch.tv",
+            $GlobalConfig['twitch_client_id'],
+            $GlobalConfig['twitch_client_secret'],
+            "authorization_code",
+            [
+               'scope' => $GlobalConfig['twitch_scope'],
+               'redirect_uri' => $GlobalConfig['twitch_redirect_uri']
+            ]
+         );
 			$this->user_api->api_url = "https://api.twitch.tv";
-			//$this->app = new TwitchApplication("https://api.twitch.tv/helix/", $GlobalConfig['twitch_client_id'], $GlobalConfig['twitch_client_secret']);
-			if(!empty($this->user_api->token) && is_object($this->user_api->token) && !empty($this->user_api->token->access_token))
+         
+         // Check if we have a valid access token from the API.
+			if(!empty($this->user_api->token->access_token))
 			{
-				// We have a valid access token from the API.
+				// Check if we have a recent ID stored in the session, use that instead of bothering the Twitch API again.
 				if(!empty($_SESSION['user_data']['twitch_id']))
 				{
-					// We have a recent ID stored in the session, use that instead of bothering the API again.
 					$this->user_info = $this->cms->database->query("SELECT * FROM `users` WHERE `twitch_id`=". (int)$_SESSION['user_data']['twitch_id'], Database::RETURN_ROW);
 				}
+            
+				// If we didn't have user info stored for one reason or another, fetch it from the Twitch API.
 				if(empty($this->user_info))
 				{
 					$user_data = $this->api_request("/helix/users");
-					if(!empty($user_data) && is_object($user_data) && isset($user_data->data) && is_array($user_data->data) && !empty($user_data->data[0]))
+					if(!empty($user_data->data[0]))
 					{
 						$user_data = $user_data->data[0];
 					}
 				}
+            
 				// At this point, either $this->user_info will be our account data, or $user_data will be a response from the API with basic user data.
-				if(!empty($user_data) && is_object($user_data) && !empty($user_data->id))
+				if(!empty($user_data->id))
 				{
 					// We have a response, which means we need to use it to update the account data from the API and use the updated data.
 					$this->cms->database->insert("users", ['twitch_id'=>$user_data->id, 'jointime'=>time(), 'permission'=>1], false);
+               if(!empty($user_data->email))
+                  unset($user_data->email);
+               $mysql_data = [
+                  'id' => $user_data->id,
+                  'login' => $user_data->login,
+                  'data' => json_encode($user_data),
+                  'last_api_query' => time(),
+               ];
+					$this->cms->database->insert("custom_twitchusercache", $mysql_data, true);
 					$this->user_info = $this->cms->database->query("SELECT * FROM `users` WHERE `twitch_id`=". (int)$user_data->id, Database::RETURN_ROW);
 				}
+            
 				// At this point, $this->user_info should contain our account data. If it doesn't, then an error must have occurred with the API.
 				if(is_array($this->user_info))
 				{
@@ -65,6 +86,7 @@ class TwitchUser extends User
 				// We don't have a valid access token, but we have an error response from the API.
 				$this->login_error = $this->user_api->token;
 			}
+         
 			// At this point, $this->user_info should contain our account data. If it doesn't, then there simply is no account data to get.
 			if(is_array($this->user_info))
 			{
@@ -120,6 +142,13 @@ class TwitchUser extends User
 		$this->user_info['follows'] = $this->getPagedResponse("/helix/users/follows?first=100&from_id={$this->user_info['twitch_id']}");
 		$this->cms->database->insert("users", ['index'=>$this->user_info['index'], 'follows'=>json_encode($this->user_info['follows'])], true, ['index']);
 	}
+   
+   public function getUser($updateAge=86400)
+   {
+      if(!empty($this->user_info['twitch_id']))
+      {
+      }
+   }
    
    public function getUsers($users=[], $updateAge=86400)
    {
@@ -218,6 +247,7 @@ class TwitchUser extends User
          if(!$found)
             $usersToFetch[] = $user;
       }
+
       // Fetch the requested users from the API.
       $mysql_data = [];
       $numQueries = ceil(count($usersToFetch)/100);
