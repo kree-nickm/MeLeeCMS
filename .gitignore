@@ -4,3 +4,5 @@
 /includes/pages/*
 /includes/forms/*
 /documentation/
+/.phpdoc/
+/phpdox.xml
