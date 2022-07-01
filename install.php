@@ -1,6 +1,6 @@
 <?php
 $password = "";
-
+// TODO: Copy most of this into various files in includes/install/
 ini_set("display_errors", 0);
 ini_set("log_errors", 1);
 if(empty($password))

@@ -52,6 +52,19 @@ function print_load_statistics()
  */
 class MeLeeCMS
 {
+   const SETUP_DATABASE = 1;
+   const SETUP_SETTINGS = 2;
+   const SETUP_THEMES = 4;
+   const SETUP_USER = 8;
+   const SETUP_FORMS = 32;
+   const SETUP_PAGES = 64;
+   const SETUP_PAGE = 16;
+   
+   const MODE_AUTH = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_USER;
+   const MODE_FORM = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_USER | self::SETUP_FORMS;
+   const MODE_PAGE = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_THEMES | self::SETUP_USER | self::SETUP_PAGES | self::SETUP_PAGE;
+   const MODE_ALL  = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_THEMES | self::SETUP_USER | self::SETUP_FORMS | self::SETUP_PAGES | self::SETUP_PAGE;
+   
 	protected $mode;
 	protected $settings = [];
 	protected $page = [];
@@ -71,9 +84,11 @@ class MeLeeCMS
 	public $refresh_requested = ['strip'=>[]];
 	public $temp_data = [];
 	public $include_later = [];
+	public $pages = [];
+	public $special_pages = [];
 	public $forms = [];
 
-	public function __construct($mode=31)
+	public function __construct($mode=self::MODE_ALL)
 	{
 		// Note: Don't know if we should care about this, but using [] to create arrays means we require PHP>=5.4.0, and it appears in just about every file.
 		set_error_handler([$this, "errorHandler"]);
@@ -94,14 +109,18 @@ class MeLeeCMS
 		{
 			$this->mode = 0;
 		}
+      if(!empty($GlobalConfig['force_https']) && empty($_SERVER['HTTPS']))
+      {
+         header("Location: https://". $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI']);
+         exit;
+      }
 		$this->settings['server_path'] = $GlobalConfig['server_path'];
 		$this->settings['url_path'] = $GlobalConfig['url_path'];
 		$this->settings['user_system'] = $GlobalConfig['user_system'];
 		$this->settings['site_title'] = $GlobalConfig['site_title'];
 		$this->settings['default_theme'] = $GlobalConfig['default_theme'];
 		$this->settings['cpanel_theme'] = $GlobalConfig['cpanel_theme'];
-      if(!empty($GlobalConfig['forms']) && is_array($GlobalConfig['forms']))
-         $this->forms = $GlobalConfig['forms'];
+		$this->settings['index_page'] = $GlobalConfig['index_page'];
 		// Setup the initial object properties.
 		array_unshift($this->class_paths, __DIR__ . DIRECTORY_SEPARATOR ."classes". DIRECTORY_SEPARATOR);
 		if(substr(__DIR__, 0, strlen($GlobalConfig['server_path'])) != $GlobalConfig['server_path'])
@@ -109,11 +128,13 @@ class MeLeeCMS
 		spl_autoload_register(array($this, "load_class"), true);
 		// Setup the rest of MeLeeCMS based on the $mode.
 		$this->path_info = (isset($_SERVER['PATH_INFO']) ? substr($_SERVER['PATH_INFO'],1) : "");
-		if(($this->mode &  1) ==  1) $this->setup_database();
-		if(($this->mode &  2) ==  2) $this->setup_settings();
-		if(($this->mode &  4) ==  4) $this->setup_themes();
-		if(($this->mode &  8) ==  8) $this->setup_user();
-		if(($this->mode & 16) == 16) $this->setup_page();
+		if(($this->mode & self::SETUP_DATABASE) == self::SETUP_DATABASE) $this->setup_database();
+		if(($this->mode & self::SETUP_SETTINGS) == self::SETUP_SETTINGS) $this->setup_settings();
+		if(($this->mode & self::SETUP_THEMES) == self::SETUP_THEMES) $this->setup_themes();
+		if(($this->mode & self::SETUP_USER) == self::SETUP_USER) $this->setup_user();
+		if(($this->mode & self::SETUP_FORMS) == self::SETUP_FORMS) $this->setup_forms();
+		if(($this->mode & self::SETUP_PAGES) == self::SETUP_PAGES) $this->setup_pages();
+		if(($this->mode & self::SETUP_PAGE) == self::SETUP_PAGE) $this->setup_page();
 		if(isset($this->refresh_requested['url']))
 			$this->refreshPage();
 	}
@@ -144,6 +165,18 @@ class MeLeeCMS
 			header("Location: ". $url);
 		}
 	}
+   
+	public function debugLog(...$input)
+   {
+      foreach($input as $in)
+      {
+         //echo("<!--");
+         echo("<pre>");
+         print_r($in);
+         echo("</pre>");
+         //echo("-->");
+      }
+   }
 	
 	public function errorHandler($level, $message, $file, $line, $context)
 	{
@@ -168,13 +201,13 @@ class MeLeeCMS
 		}
 		error_log($type .": ". $message ." in ". $file ." on line ". $line);
 		if(is_object($this->user) && $this->user->has_permission("ADMIN"))
-		{
-			$this->addData_protected('errors', [
+		{ // TODO: This seems to be causing errors in the XSLT.
+			/*$this->addData_protected('errors', [
 				'type' => $type,
 				'message' => $message,
 				'file' => $file,
 				'line' => $line,
-			], true, true);
+			], true, true);*/
 		}
 		if(is_object($this->database) && !empty($this->database->metadata['error_log']) && ($level & (E_NOTICE|E_USER_NOTICE|E_STRICT)) == 0)
 		{
@@ -227,16 +260,14 @@ class MeLeeCMS
 		}
 		catch(PDOException $x)
 		{
-			trigger_error($x, E_USER_WARNING);
+			trigger_error($x, E_USER_ERROR);
 			return false;
 		}
 	}
 	
 	public function setup_settings()
 	{
-		global $GlobalConfig;
-		if(is_object($this->database))
-			$settings = $this->database->query("SELECT `setting`,`value` FROM `settings`", Database::RETURN_ALL);
+      $settings = is_object($this->database) ? $this->database->query("SELECT `setting`,`value` FROM `settings`", Database::RETURN_ALL) : null;
 		if(is_array($settings))
 		{
 			foreach($settings as $s)
@@ -245,31 +276,37 @@ class MeLeeCMS
 		}
 		else
 		{
-			trigger_error("Unable to load settings table". (is_object($this->database) ? "; SQLSTATE=". $this->database->error[0] .", \"". $this->database->error[2] ."\"" : "") .".", E_USER_WARNING);
+			trigger_error("Unable to load settings table; ". (is_object($this->database) ? "SQLSTATE={$this->database->error[0]}, \"{$this->database->error[2]}\"" : "Database is not loaded.") .".", E_USER_ERROR);
 			return false;
 		}
 	}
 	
 	public function setup_themes()
 	{
-		$dir = dir($this->get_setting('server_path') ."themes");
-		while(false !== $file = $dir->read())
+		$themesDir = dir($this->get_setting('server_path') ."themes");
+		while(false !== $theme = $themesDir->read())
 		{
-			if($file{0} != "." && is_dir($dir->path . DIRECTORY_SEPARATOR . $file))
+         // Check if this entry is a valid directory.
+			if($theme{0} != "." && is_dir($themesDir->path . DIRECTORY_SEPARATOR . $theme))
 			{
-				$this->themes[$file] = [
-					'url_path' => $this->get_setting('url_path') ."themes/". $file ."/",
-					'subtheme' => [],
+				$this->themes[$theme] = [
+					'url_path' => $this->get_setting('url_path') ."themes/". $theme ."/",
+					'description' => "",
+					'thumbnail' => "",
+					'superthemes' => [],
+					'subthemes' => [],
 					'css' => [],
 					'js' => [],
 					'xsl' => [],
 				];
-				if(is_file($desc_file = $dir->path . DIRECTORY_SEPARATOR . $file . DIRECTORY_SEPARATOR . "description.txt"))
-					$this->themes[$file]['description'] = file_get_contents($desc_file);
-				if(is_file($thumb_file = $dir->path . DIRECTORY_SEPARATOR . $file . DIRECTORY_SEPARATOR . "thumbnail.png"))
-					$this->themes[$file]['thumbnail'] = $this->get_setting('url_path') ."themes/". $file ."/thumbnail.png";
+				if(is_file($desc_file = $themesDir->path . DIRECTORY_SEPARATOR . $theme . DIRECTORY_SEPARATOR . "description.txt"))
+					$this->themes[$theme]['description'] = file_get_contents($desc_file);
+				if(is_file($themesDir->path . DIRECTORY_SEPARATOR . $theme . DIRECTORY_SEPARATOR . "thumbnail.png"))
+					$this->themes[$theme]['thumbnail'] = $this->get_setting('url_path') ."themes/". $theme ."/thumbnail.png";
+				if(is_file($super_file = $themesDir->path . DIRECTORY_SEPARATOR . $theme . DIRECTORY_SEPARATOR . "superthemes.png"))
+					$this->themes[$theme]['superthemes'] = file($super_file);
 				// Find CSS
-				$css_path = $dir->path . DIRECTORY_SEPARATOR . $file . DIRECTORY_SEPARATOR . "css" . DIRECTORY_SEPARATOR;
+				$css_path = $themesDir->path . DIRECTORY_SEPARATOR . $theme . DIRECTORY_SEPARATOR . "css";
 				if(is_dir($css_path))
 				{
 					$css_dir = dir($css_path);
@@ -277,12 +314,12 @@ class MeLeeCMS
 					{
 						if(substr($file2, -4) == ".css")
 						{
-							$this->themes[$file]['css'][] = $file2;
+							$this->themes[$theme]['css'][] = $file2;
 						}
 					}
 				}
 				// Find JS
-				$js_path = $dir->path . DIRECTORY_SEPARATOR . $file . DIRECTORY_SEPARATOR . "js" . DIRECTORY_SEPARATOR;
+				$js_path = $themesDir->path . DIRECTORY_SEPARATOR . $theme . DIRECTORY_SEPARATOR . "js";
 				if(is_dir($js_path))
 				{
 					$js_dir = dir($js_path);
@@ -290,12 +327,12 @@ class MeLeeCMS
 					{
 						if(substr($file2, -3) == ".js")
 						{
-							$this->themes[$file]['js'][] = $file2;
+							$this->themes[$theme]['js'][] = $file2;
 						}
 					}
 				}
 				// Find XSL
-				$template_path = $dir->path . DIRECTORY_SEPARATOR . $file . DIRECTORY_SEPARATOR . "templates" . DIRECTORY_SEPARATOR;
+				$template_path = $themesDir->path . DIRECTORY_SEPARATOR . $theme . DIRECTORY_SEPARATOR . "templates" . DIRECTORY_SEPARATOR;
 				if(is_dir($template_path))
 				{
 					$template_dir = dir($template_path);
@@ -303,11 +340,11 @@ class MeLeeCMS
 					{
 						if(substr($file2, 0, 9) == "MeLeeCMS-" && substr($file2, -4) == ".xsl")
 						{
-							$this->themes[$file]['subtheme'][] = ['__attr:name'=>substr($file2, 9, -4), $file2];
+							$this->themes[$theme]['subthemes'][] = ['__attr:name'=>substr($file2, 9, -4), $file2];
 						}
 						else if(substr($file2, -4) == ".xsl")
 						{
-							$this->themes[$file]['xsl'][] = $file2;
+							$this->themes[$theme]['xsl'][] = $file2;
 						}
 					}
 				}
@@ -345,86 +382,193 @@ class MeLeeCMS
 		}
 	}
 	
+	public function setup_forms()
+	{
+      global $GlobalConfig;
+      if(isset($GlobalConfig['forms']) && is_array($GlobalConfig['forms']))
+         $this->forms = $GlobalConfig['forms'];
+	}
+	
+	public function setup_pages()
+	{
+      global $GlobalConfig;
+      if(isset($GlobalConfig['pages']) && is_array($GlobalConfig['pages']))
+         foreach($GlobalConfig['pages'] as $id=>$page)
+            $this->addPage($page, $id);
+		if(is_object($this->database))
+		{
+         $pages = $this->database->query("SELECT * FROM `pages`", Database::RETURN_ALL);
+         foreach($pages as $page)
+            $this->addPage($page);
+      }
+	}
+   
+	public function addPage($pageData)
+   {
+      // First figure out if it's a normal page, a special page, or invalid.
+      if(!empty($pageData['url']) && is_string($pageData['url']))
+      {
+         if(empty($this->pages[$pageData['url']]))
+         {
+            $pageVar = "pages";
+            $pageId = $pageData['url'];
+            $this->$pageVar[$pageId] = ['url' => $pageData['url']];
+         }
+         else
+         {
+            trigger_error("Page already exists with the URL '{$pageData['url']}'. Overwriting pages with MeLeeCMS->addPage() is not allowed.", E_USER_WARNING);
+            return false;
+         }
+      }
+      else if(!empty($pageData['select']) && is_callable($pageData['select']) && !empty($pageData['id']))
+      {
+         if(empty($this->special_pages[$pageData['id']]))
+         {
+            $pageVar = "special_pages";
+            $pageId = $pageData['id'];
+            $this->$pageVar[$pageId] = ['id' => $pageData['id'], 'select' => $pageData['select']];
+         }
+         else
+         {
+            // TODO: Probably allow it. Will also need to allow special pages to load from database.
+            trigger_error("Special page already exists with the ID '{$pageData['id']}'. Overwriting special pages with MeLeeCMS->addPage() is not allowed.", E_USER_WARNING);
+            return false;
+         }
+      }
+      else
+      {
+         trigger_error("Pages must have either a 'url' (non-empty string), or both an 'id' (any) and 'select' (function) parameter.", E_USER_WARNING);
+         return false;
+      }
+      
+      // Now figure out if it's a hard-coded PHP file or a file built with the control panel.
+      if(!empty($pageData['file']) && is_file("includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR . $pageData['file']))
+      {
+         $this->$pageVar[$pageId]['file'] = $pageData['file'];
+         $this->$pageVar[$pageId]['subtheme'] = $pageData['subtheme'] ?? "";
+         if(!empty($pageData['css']) || !empty($pageData['js']) || !empty($pageData['xsl']) || !empty($pageData['permission']) || !empty($pageData['content']))
+            trigger_error("CSS, JS, XSL, permissions, and content are all ignored when page is loaded from a file, but some of them were provided to a file page.", E_USER_NOTICE);
+      }
+      else if(isset($pageData['content']))
+      {
+         $this->$pageVar[$pageId]['title'] = $pageData['title'] ?? $pageData['url'] ?? $pageData['id'];
+         $this->$pageVar[$pageId]['subtheme'] = $pageData['subtheme'] ?? "";
+         $this->$pageVar[$pageId]['permission'] = $pageData['permission'] ?? 1;
+         $this->$pageVar[$pageId]['content'] = $pageData['content'] ?? "";
+         // Verify that css, js, and xsl and properly defined.
+         foreach(['css','js','xsl'] as $type)
+         {
+            if(!empty($pageData[$type]))
+            {
+               if(is_string($pageData[$type]))
+                  $this->$pageVar[$pageId][$type] = json_decode($pageData[$type], true);
+               else if(!is_array($pageData[$type]))
+                  $this->$pageVar[$pageId][$type] = [];
+            }
+            else
+               $this->$pageVar[$pageId][$type] = [];
+            if($type != "xsl")
+               foreach($this->$pageVar[$pageId][$type] as $k=>$v)
+                  if(is_string($v))
+                     $this->$pageVar[$pageId][$type][$k] = ['file'=>$v, 'fromtheme'=>true];
+         }
+      }
+      else
+      {
+         trigger_error("Pages must have either a 'file' (valid file in includes/pages/ directory) or 'content' (serialized PHP objects or blank) parameter.", E_USER_WARNING);
+         return false;
+      }
+      return true;
+   }
+	
 	public function setup_page()
 	{
-		if(is_object($this->database))
+      // Special case for viewing/debugging the special pages.
+      if(!empty($_GET['specialPage']) && !empty($this->special_pages[$_GET['specialPage']]))
+      {
+         $this->page = $this->special_pages[$_GET['specialPage']];
+      }
+      
+      // Normal page request.
+      if(empty($this->page))
+      {
+         $pageId = !empty($this->path_info) ? $this->path_info : $this->get_setting('index_page');
+         if(!empty($this->pages[$pageId]))
+            $this->page = $this->pages[$pageId];
+         // TODO: Allow page to load without loading all pages first. Gotta manually check $GlobalConfig pages and the database.
+      }
+      
+      // Determine any problems with the request.
+      if(!empty($this->page))
+      {
+         if(empty($this->page['permission']) || !empty($this->user) && $this->user->has_permission($this->page['permission']))
+         {
+            // No problems.
+         }
+         else if(empty($this->user) || !$this->user->is_logged())
+         {
+            http_response_code(401);
+            $this->page = null;
+         }
+         else
+         {
+            http_response_code(403);
+            $this->page = null;
+         }
+      }
+      else
+      {
+         http_response_code(404);
+      }
+      
+      // Resolve problematic requests into a special page.
+      if(empty($this->page))
+      {
+         foreach($this->special_pages as $spage)
+         {
+            if($spage['select']($this) && false)
+            {
+               $this->page = $spage;
+               break;
+            }
+         }
+         if(empty($this->page))
+         {
+            trigger_error("Page request '{$this->path_info}' couldn't resolve to a page or a special page. HTTP response would have been ". http_response_code() .". Make sure a special page is defined for that response code.", E_USER_WARNING);
+            $this->page = [
+               'subtheme' => "default",
+               'content' => "a:1:{s:7:\"content\";O:9:\"Container\":3:{s:5:\"title\";s:17:\"An Error Occurred\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:4:\"Text\":2:{s:4:\"text\";s:45:\"An unknown error occurred. Response code ". http_response_code() .".\";s:5:\"attrs\";a:0:{}}}}}",
+               'title' => "Error",
+               'css' => [],
+               'js' => [],
+               'xsl' => [],
+            ];
+         }
+      }
+      
+      // Finish setting up the page output.
+		if(!empty($this->page['file']))
 		{
-			if($this->path_info != "")
-				$query = "SELECT * FROM `pages` WHERE `url`=". $this->database->quote($this->path_info) ." LIMIT 0,1";
-			else if(!empty($_GET['specialPage']) && is_numeric($_GET['specialPage']))
-				$query = "SELECT * FROM `pages_special` WHERE `index`=". (int)$_GET['specialPage'] ." LIMIT 0,1";
-			else
-				$query = "SELECT * FROM `pages` WHERE `index`=". (int)$this->get_setting('index_page') ." LIMIT 0,1";
-			$this->page = $this->database->query($query, Database::RETURN_ROW);
-			// Note: build_page() only needs to be called if everything is good. require_permission() calls setup_special_page() on a failure, which calls build_page() for itself.
-			if(is_array($this->page))
-			{
-				if($this->require_permission($this->get_page('permission')))
-				{
-					$this->build_page();
-					return true;
-				}
-			}
-			else
-				$this->setup_special_page(2, "Page Not Found");
-		}
-		else
-			// TODO: This is pointless. If there's no database, we can't access the database error page.
-			$this->setup_special_page(3, "Database Error");
-		return false;
-	}
-	
-	public function setup_special_page($id, $title="")
-	{
-		if(is_object($this->database))
-			$this->page = $this->database->query("SELECT * FROM `pages_special` WHERE `index`=". $id, Database::RETURN_ROW);
-		else
-			$this->page = ""; // Makes sure the below check will generate the necessary error.
-		if(!is_array($this->page))
-		{
-			trigger_error("No '". $title ."' page data (". $id .") found.", E_USER_WARNING);
-			$this->page = array('title' => $title);
-		}
-		$this->build_page();
-		// TODO: Return, maybe?
-	}
-	
-	protected function build_page()
-	{
-		if($this->get_page('file'))
-		{
-			$file = $this->get_setting("server_path") ."includes/pages/". $this->get_page('file');
+			$file = $this->get_setting("server_path") ."includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR . $this->page['file'];
 			if(is_file($file))
 				$this->include_later[] = $file;
 			else
-				trigger_error("Page index ". $this->get_page('index') ." refers to file ". $this->get_page('file') .", but it does not exist.", E_USER_WARNING);
+				trigger_error("Page refers to file {$this->page['file']}, but it does not exist.", E_USER_ERROR);
 		}
 		else
 		{
-			$this->set_title($this->get_page('title'));
-			$content = unserialize($this->get_page('content'));
+			$this->set_title($this->page['title']);
+			$content = unserialize($this->page['content']);
 			if(is_array($content))
 				foreach($content as $x=>$object)
 					$this->add_content($object, $x);
-			$page_js = json_decode($this->get_page('js'), true);
-			if(is_array($page_js)) foreach($page_js as $js)
+			foreach($this->page['js'] as $js)
 				$this->attach_js($js['file'], "", $js['fromtheme']);
-			$page_css = json_decode($this->get_page('css'), true);
-			if(is_array($page_css)) foreach($page_css as $css)
+			foreach($this->page['css'] as $css)
 				$this->attach_css($css['file'], "", $css['fromtheme']);
-			$page_xsl = json_decode($this->get_page('xsl'), true);
-			if(is_array($page_xsl)) foreach($page_xsl as $xsl)
+			foreach($this->page['xsl'] as $xsl)
 				$this->attach_xsl($xsl);
-			// TODO: Return, maybe?
 		}
-	}
-
-	public function require_permission($level=0)
-	{
-		if($level == 0 || $this->user->has_permission($level))
-			return true;
-		$this->setup_special_page(1, "Permission Denied");
-		return false;
 	}
 
 	public function set_cpanel($cp)
