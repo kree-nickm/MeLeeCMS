@@ -1,5 +1,5 @@
 $(function(){
-	// Ideally 'invertal' should be specified dynamically.
+	// Ideally 'interval' should be specified dynamically.
 	let interval = 1000*10*60;
 	let timer;
 	function refresh()

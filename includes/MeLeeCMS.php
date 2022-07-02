@@ -1,4 +1,5 @@
 <?php
+// TODO: Implement a namespace
 ini_set("display_errors", 0);
 ini_set("log_errors", 1);
 // Note: Don't know if we should care about this, but using __DIR__ means we require PHP>=5.3.0, and it appears in multiple files.
@@ -67,13 +68,13 @@ class MeLeeCMS
    
 	protected $mode;
 	protected $settings = [];
+	protected $cpanel;
 	protected $page_title = "";
-	protected $current_theme = "";
+	protected $page_theme = "";
 	protected $page_css = [];
 	protected $page_js = [];
 	protected $page_xsl = [];
 	protected $page_content = [];
-	protected $cpanel;
 	
 	public $class_paths = [];
 	public $path_info;
@@ -125,7 +126,7 @@ class MeLeeCMS
 		array_unshift($this->class_paths, __DIR__ . DIRECTORY_SEPARATOR ."classes". DIRECTORY_SEPARATOR);
 		if(substr(__DIR__, 0, strlen($this->settings['server_path'])) != $this->settings['server_path'])
 			array_unshift($this->class_paths, $this->settings['server_path'] ."includes". DIRECTORY_SEPARATOR ."classes". DIRECTORY_SEPARATOR);
-		spl_autoload_register(array($this, "load_class"), true);
+		spl_autoload_register(array($this, "loadClass"), true);
       
       // Detmine if we are in the control panel.
       $this->cpanel = (dirname($_SERVER['SCRIPT_FILENAME']) == $this->settings['server_path'] . $this->settings['cpanel_dir']);
@@ -133,21 +134,21 @@ class MeLeeCMS
 		// Setup the rest of MeLeeCMS based on the $mode.
 		$this->path_info = (isset($_SERVER['PATH_INFO']) ? substr($_SERVER['PATH_INFO'],1) : "");
 		if(($this->mode & self::SETUP_DATABASE) > 0)
-         $this->setup_database();
+         $this->setupDatabase();
 		if(($this->mode & self::SETUP_SETTINGS) > 0)
-         $this->setup_settings();
+         $this->setupSettings();
 		if(($this->mode & self::SETUP_THEMES) > 0)
-         $this->setup_themes();
+         $this->setupThemes();
 		if(($this->mode & self::SETUP_USER) > 0)
-         $this->setup_user();
+         $this->setupUser();
 		if(($this->mode & self::SETUP_FORMS) > 0)
-         $this->setup_forms();
+         $this->setupForms();
 		if(($this->mode & (self::SETUP_PAGES | self::SETUP_PAGE)) > 0)
-         $this->setup_special_pages();
+         $this->setupSpecialPages();
 		if(($this->mode & self::SETUP_PAGES) > 0)
-         $this->setup_pages();
+         $this->setupPages();
 		if(($this->mode & self::SETUP_PAGE) > 0)
-         $this->setup_page();
+         $this->setupPage();
       
       // If a refresh was requested at some point during initialization, do it now.
 		if(isset($this->refresh_requested['url']))
@@ -224,7 +225,7 @@ class MeLeeCMS
       // Send the error to the XML output if the user has permission to view errors.
 		if(is_object($this->user) && $this->user->has_permission("ADMIN"))
 		{
-			$this->addData_protected('errors', [
+			$this->addDataProtected('errors', [
 				'type' => $type,
 				'message' => $message,
 				'file' => $file,
@@ -260,7 +261,7 @@ class MeLeeCMS
 		return empty($this->page->$key) ? "" : $this->page->$key;
 	}
 
-	public function load_class($class)
+	public function loadClass($class)
 	{
 		foreach($this->class_paths as $path)
 		{
@@ -271,9 +272,10 @@ class MeLeeCMS
 			}
 		}
 		throw new Exception("Unable to load class '". $class ."'.");
+      // TODO: Somehow check if it's a core class that breaks the entire page, or some less important custom one that only breaks part of the page.
 	}
 	
-	public function setup_database()
+	public function setupDatabase()
 	{
 		global $GlobalConfig;
 		try
@@ -288,7 +290,7 @@ class MeLeeCMS
 		}
 	}
 	
-	public function setup_settings()
+	public function setupSettings()
 	{
       $settings = is_object($this->database) ? $this->database->query("SELECT `setting`,`value` FROM `settings`", Database::RETURN_ALL) : null;
 		if(is_array($settings))
@@ -303,88 +305,41 @@ class MeLeeCMS
 			return false;
 		}
 	}
+   
+   public function addTheme($directory)
+   {
+      if($directory == "." || $directory == ".." || !is_dir($this->get_setting('server_path') ."themes". DIRECTORY_SEPARATOR . $directory))
+      {
+         trigger_error("Tried to add '{$directory}' as a theme, but it is not a valid directory.", E_USER_NOTICE);
+         return false;
+      }
+      else if(empty($this->themes[$directory]))
+      {
+         $this->themes[$directory] = new Theme($this, $directory);
+         return true;
+      }
+      else
+         return true;
+   }
 	
-	public function setup_themes()
+	public function setupThemes()
 	{
 		$themesDir = dir($this->get_setting('server_path') ."themes");
-		while(false !== $theme = $themesDir->read())
-		{
-         // Check if this entry is a valid directory.
-			if($theme{0} != "." && is_dir($themesDir->path . DIRECTORY_SEPARATOR . $theme))
-			{
-				$this->themes[$theme] = [
-					'url_path' => $this->get_setting('url_path') ."themes/". $theme ."/",
-					'description' => "",
-					'thumbnail' => "",
-					'superthemes' => [],
-					'subthemes' => [],
-					'css' => [],
-					'js' => [],
-					'xsl' => [],
-				];
-				if(is_file($desc_file = $themesDir->path . DIRECTORY_SEPARATOR . $theme . DIRECTORY_SEPARATOR . "description.txt"))
-					$this->themes[$theme]['description'] = file_get_contents($desc_file);
-				if(is_file($themesDir->path . DIRECTORY_SEPARATOR . $theme . DIRECTORY_SEPARATOR . "thumbnail.png"))
-					$this->themes[$theme]['thumbnail'] = $this->get_setting('url_path') ."themes/". $theme ."/thumbnail.png";
-				if(is_file($super_file = $themesDir->path . DIRECTORY_SEPARATOR . $theme . DIRECTORY_SEPARATOR . "superthemes.png"))
-					$this->themes[$theme]['superthemes'] = file($super_file);
-				// Find CSS
-				$css_path = $themesDir->path . DIRECTORY_SEPARATOR . $theme . DIRECTORY_SEPARATOR . "css";
-				if(is_dir($css_path))
-				{
-					$css_dir = dir($css_path);
-					while(false !== ($file2 = $css_dir->read()))
-					{
-						if(substr($file2, -4) == ".css")
-						{
-							$this->themes[$theme]['css'][] = $file2;
-						}
-					}
-				}
-				// Find JS
-				$js_path = $themesDir->path . DIRECTORY_SEPARATOR . $theme . DIRECTORY_SEPARATOR . "js";
-				if(is_dir($js_path))
-				{
-					$js_dir = dir($js_path);
-					while(false !== ($file2 = $js_dir->read()))
-					{
-						if(substr($file2, -3) == ".js")
-						{
-							$this->themes[$theme]['js'][] = $file2;
-						}
-					}
-				}
-				// Find XSL
-				$template_path = $themesDir->path . DIRECTORY_SEPARATOR . $theme . DIRECTORY_SEPARATOR . "templates" . DIRECTORY_SEPARATOR;
-				if(is_dir($template_path))
-				{
-					$template_dir = dir($template_path);
-					while(false !== ($file2 = $template_dir->read()))
-					{
-						if(substr($file2, 0, 9) == "MeLeeCMS-" && substr($file2, -4) == ".xsl")
-						{
-							$this->themes[$theme]['subthemes'][] = ['__attr:name'=>substr($file2, 9, -4), $file2];
-						}
-						else if(substr($file2, -4) == ".xsl")
-						{
-							$this->themes[$theme]['xsl'][] = $file2;
-						}
-					}
-				}
-			}
-		}
-		$this->set_theme($this->get_setting('default_theme'));
+		while(false !== ($theme = $themesDir->read()))
+         if($theme != "." && $theme != "..")
+            $this->addTheme($theme);
+		$this->setTheme($this->get_setting('default_theme'));
 		return count($this->themes)>0;
 	}
 	
-	public function setup_user()
+	public function setupUser()
 	{
 		session_set_save_handler(new MeLeeSessionHandler($this), true);
 		session_name($this->get_setting('cookie_prefix') ."sessid");
 		session_start();
 		if(isset($_SESSION['form_response']))
 		{
-			$this->addData_protected('form_response', $_SESSION['form_response'], false);
+			$this->addDataProtected('form_response', $_SESSION['form_response'], false);
 			unset($_SESSION['form_response']);
 		}
 		if($this->get_setting('user_system') == "")
@@ -404,14 +359,14 @@ class MeLeeCMS
 		}
 	}
 	
-	public function setup_forms()
+	public function setupForms()
 	{
       global $GlobalConfig;
       if(isset($GlobalConfig['forms']) && is_array($GlobalConfig['forms']))
          $this->forms = $GlobalConfig['forms'];
 	}
 	
-	public function setup_special_pages()
+	public function setupSpecialPages()
 	{
       global $GlobalConfig;
       // I'm not sure if it's worth it to isolate only the special pages from $GlobalConfig.
@@ -420,9 +375,8 @@ class MeLeeCMS
             $this->addPage($page);
 	}
 	
-	public function setup_pages()
+	public function setupPages()
 	{
-      global $GlobalConfig;
 		if(is_object($this->database))
 		{
          $pages = $this->database->query("SELECT * FROM `pages`", Database::RETURN_ALL);
@@ -463,7 +417,7 @@ class MeLeeCMS
       }
    }
 	
-	public function setup_page()
+	public function setupPage()
 	{
       global $GlobalConfig;
       // Special case for viewing/debugging the special pages.
@@ -552,30 +506,30 @@ class MeLeeCMS
       $this->page->loadToCMS();
 	}
 
-	public function set_theme($theme)
+	public function setTheme($theme)
 	{
 		if(!empty($this->themes[$theme]))
-			$this->current_theme = $theme;
+			$this->page_theme = $this->themes[$theme];
 		else if($this->cpanel && !empty($this->themes[$this->get_setting('cpanel_theme')]))
-			$this->current_theme = $this->get_setting('cpanel_theme');
+			$this->page_theme = $this->themes[$this->get_setting('cpanel_theme')];
 		else if(!empty($this->themes[$this->get_setting('default_theme')]))
-			$this->current_theme = $this->get_setting('default_theme');
+			$this->page_theme = $this->themes[$this->get_setting('default_theme')];
 		else if(!empty($this->themes["default"]))
-			$this->current_theme = "default";
+			$this->page_theme = $this->themes["default"];
 		else
 		{
 			reset($this->themes);
 			if(!empty(current($this->themes)))
-				$this->current_theme = key($this->themes);
+				$this->page_theme = $this->themes;
 			else
-				$this->current_theme = null;
+            throw new Exception("Page has no valid themes.");
 		}
-		return $this->current_theme;
+		return $this->page_theme;
 	}
 
-	public function get_theme()
+	public function getTheme()
 	{
-		return $this->current_theme;
+		return $this->page_theme;
 	}
 
 	public function set_subtheme($subtheme)
@@ -642,7 +596,7 @@ class MeLeeCMS
    // $allowArray will cause the data at $index to be converted to an array if it isn't already, then add $data to it.
    // $allowOverwrite is only checked if $allowArray is false. Determines whether to overwrite the old data or ignore the new data.
    // $errorIfExists is only checked if $allowArray is false. If the data exists and this is non-zero, an error will be reported at the specified level of this argument.
-	protected function addData_protected($index, $data, $allowArray=true, $notCustom=true, $allowOverwrite=true, $errorIfExists=E_USER_NOTICE)
+	protected function addDataProtected($index, $data, $allowArray=true, $notCustom=true, $allowOverwrite=true, $errorIfExists=E_USER_NOTICE)
 	{
       if(empty($index) || empty($data))
          return false;
@@ -695,22 +649,12 @@ class MeLeeCMS
 
 	public function addData($index, $data, $allowArray=true, $allowOverwrite=true, $errorIfExists=E_USER_NOTICE)
 	{
-		return $this->addData_protected($index, $data, $allowArray, false, $allowOverwrite, $errorIfExists);
+		return $this->addDataProtected($index, $data, $allowArray, false, $allowOverwrite, $errorIfExists);
 	}
 	
 	public function parse_template($data, $class, $subtheme)
 	{
-		$trans = new Transformer();
-		$path = $this->get_setting('server_path') ."themes". DIRECTORY_SEPARATOR . $this->current_theme . DIRECTORY_SEPARATOR ."templates". DIRECTORY_SEPARATOR;
-		if(is_file($file = ($path . $class."-".$subtheme.".xsl")))
-			$trans->set_stylesheet("", $file);
-		else if(is_file($file = ($path . $class."-default.xsl")))
-			$trans->set_stylesheet("", $file);
-		else
-			return $data;
-		// TODO: Should this even look for XSL files for each element? Basic elements can be in the main XSL file, they don't need their own.
-		//echo("<!-- ". $class ."-". $subtheme ." => ". $file .": ". print_r($data, true) ." -->");
-		return $trans->transform($data, $class, $this->page_xsl);
+      return $this->getTheme()->parseTemplate($data, $class, $subtheme, $this->page_xsl);
 	}
 
 	public function render($subtheme="")
@@ -734,18 +678,18 @@ class MeLeeCMS
 		$params = [
 			'title' => $this->page_title,
 			'url_path' => $this->get_setting('url_path'),
-			'theme' => $this->get_theme(),
+			'theme' => $this->getTheme()->name,
 			'content' => [],
 			'css' => [],
 			//'js' => [],
 			//'data' => [],
 		];
 		if(!empty($this->user))
-			$this->addData_protected('user', $this->user->myInfo(), false);
+			$this->addDataProtected('user', $this->user->myInfo(), false);
 		if(!empty($_POST))
-			$this->addData_protected('post', $_POST, false);
+			$this->addDataProtected('post', $_POST, false);
 		if(!empty($_GET))
-			$this->addData_protected('get', $_GET, false);
+			$this->addDataProtected('get', $_GET, false);
 		
 		if($subtheme == "__xml") // also check if xml output is allowed
 			foreach($this->page_content as $tag=>$content)
@@ -755,20 +699,20 @@ class MeLeeCMS
 				$params['content@class='.get_class($content).($tag?'@id='.$tag:'')][] = $content->render($subtheme);
 		foreach($this->page_css as $css)
 			$params['css'][] = [
-				'href' => ($css['fromtheme'] ? $this->get_setting('url_path') ."themes/". $this->get_theme() ."/css/". $css['href'] : $css['href']),
+				'href' => ($css['fromtheme'] ? $this->getTheme()->resolveFile("css", $css['href']) : $css['href']),
 				'code' => $css['code'],
 			];
 		$params['js'] = [[
 			'code' => 
             "window.MeLeeCMS = new (function MeLeeCMS(){".
                "this.url_path=\"". addslashes($this->get_setting('url_path')) ."\";".
-               "this.theme=\"". addslashes($this->get_theme()) ."\";".
+               "this.theme=\"". addslashes($this->getTheme()->name) ."\";".
                "this.data=". json_encode($this->temp_data).
             "})();",
 		]];
 		foreach($this->page_js as $js)
 			$params['js'][] = [
-				'src' => ($js['fromtheme'] ? $this->get_setting('url_path') ."themes/". $this->get_theme() ."/js/". $js['src'] : $js['src']),
+				'src' => ($js['fromtheme'] ? $this->getTheme()->resolveFile("js", $js['src']) : $js['src']),
 				'code' => $js['code'],
 			];
 		// TODO: This won't include errors during XSLT conversion. Don't know how to fix that.
