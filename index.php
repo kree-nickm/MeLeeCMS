@@ -7,7 +7,7 @@ if(version_compare(PHP_VERSION, "5.6.0beta1", "<"))
 else
 {
 	require_once("includes". DIRECTORY_SEPARATOR ."MeLeeCMS.php");
-	$builder = new MeLeeCMS();
+	$builder = new MeLeeCMS(MeLeeCMS::MODE_PAGE);
 
 	foreach($builder->include_later as $file)
 		include($file);

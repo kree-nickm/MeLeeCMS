@@ -52,7 +52,7 @@ $GlobalConfig['cpanel_dir'] = "mcmsadmin"; // TODO: This can be programmatically
 // The URL path to your website from the domain name. If your website loads right from "yourdomain.com", this should be "/". If it loads from "yourdomain.com/yoursite", this should be "/yoursite/". Etc.
 $GlobalConfig['url_path'] = dirname(str_replace("/". $GlobalConfig['cpanel_dir'] ."/", "/", $_SERVER['SCRIPT_NAME']));
 // You don't need this 'if' check in your config.php file. It's only here to correct the default value. Also, MeLeeCMS already does this check.
-if($GlobalConfig['url_path'][-1] != "/")
+if($GlobalConfig['url_path']{-1} != "/")
    $GlobalConfig['url_path'] .= "/";
 
 // This will redirect any page request from HTTP to HTTPS automatically, making sure no one accidentally uses the non-secure URL. Make sure your website has an SSL certificate and HTTPS works before setting this to true.

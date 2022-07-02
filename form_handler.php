@@ -1,7 +1,7 @@
 <?php
 ob_start();
 require_once("includes". DIRECTORY_SEPARATOR ."MeLeeCMS.php");
-$builder = new MeLeeCMS(15);
+$builder = new MeLeeCMS(MeLeeCMS::MODE_FORM);
 
 // Process request data.
 $response = [];

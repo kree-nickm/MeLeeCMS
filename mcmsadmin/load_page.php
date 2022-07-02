@@ -3,11 +3,10 @@ require_once("../includes/MeLeeCMS.php");
 $builder = new MeLeeCMS(15);
 $builder->set_title("Control Panel");
 $builder->add_content(new Text("<span class='fas fa-cogs'></span> Control Panel"), "branding");
-$builder->set_cpanel(true);
 
 $admin_perm = array_search("ADMIN", User::get_permissions($builder));
 if($admin_perm)
-	if(!$builder->require_permission($admin_perm))
+	if(!$builder->user->has_permission($admin_perm))
 	{
 		$builder->render((!empty($_GET['output']) && $_GET['output']=="xml") ? "__xml" : "default");
 		exit;
