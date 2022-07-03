@@ -6,7 +6,7 @@ class TwitchUser extends User
 	const PERM_VIEW = 1;
 	const PERM_ADMIN = 2;
 	
-	public $user_api;
+	public $api;
 	public $login_error = false;
 
 	protected $obscured_cols = ["permission"];
@@ -22,7 +22,7 @@ class TwitchUser extends User
 		}
 		else
 		{
-			$this->user_api = new OAuth2Client(
+			$this->api = new OAuth2Client(
             "https://id.twitch.tv",
             $GlobalConfig['twitch_client_id'],
             $GlobalConfig['twitch_client_secret'],
@@ -32,10 +32,10 @@ class TwitchUser extends User
                'redirect_uri' => $GlobalConfig['twitch_redirect_uri']
             ]
          );
-			$this->user_api->api_url = "https://api.twitch.tv";
+			$this->api->api_url = "https://api.twitch.tv";
          
          // Check if we have a valid access token from the API.
-			if(!empty($this->user_api->token->access_token))
+			if(!empty($this->api->token->access_token))
 			{
 				// Check if we have a recent ID stored in the session, use that instead of bothering the Twitch API again.
 				if(!empty($_SESSION['user_data']['twitch_id']))
@@ -85,10 +85,10 @@ class TwitchUser extends User
 					unset($_SESSION['user_data']);
 				}
 			}
-			else if(!empty($this->user_api->token) && is_object($this->user_api->token))
+			else if(!empty($this->api->token) && is_object($this->api->token))
 			{
 				// We don't have a valid access token, but we have an error response from the API.
-				$this->login_error = $this->user_api->token;
+				$this->login_error = $this->api->token;
 			}
          
 			// At this point, $this->user_info should contain our account data. If it doesn't, then there simply is no account data to get.
@@ -120,16 +120,16 @@ class TwitchUser extends User
 			}
 			
 			$this->user_info['ip'] = $_SERVER['REMOTE_ADDR'];
-			if(!empty($this->user_api->error['code']))
+			if(!empty($this->api->error['code']))
 			{
-				switch($this->user_api->error['code'])
+				switch($this->api->error['code'])
 				{
 					case OAuth2Client::E_STATE_MISMATCH:
 						$sessions = $this->cms->database->query("SELECT `session_id` FROM sessions WHERE `ip`=". $this->cms->database->quote($_SERVER['REMOTE_ADDR']), Database::RETURN_COLUMN);
-						trigger_error("State mismatch during login from \"". $_SERVER['REMOTE_ADDR'] ."\". Expected \"". $this->user_api->error['expected'] ."\" but got \"". $this->user_api->error['got'] ."\". Either someone is trying to break something, or two different sessions were created for this person during the login attempt. Current session is \"". session_id() ."\". That IP has the following sessions currently open:\n". implode("\n", $sessions), E_USER_ERROR);
+						trigger_error("State mismatch during login from \"". $_SERVER['REMOTE_ADDR'] ."\". Expected \"". $this->api->error['expected'] ."\" but got \"". $this->api->error['got'] ."\". Either someone is trying to break something, or two different sessions were created for this person during the login attempt. Current session is \"". session_id() ."\". That IP has the following sessions currently open:\n". implode("\n", $sessions), E_USER_ERROR);
 						break;
 					case OAuth2Client::E_FAILED_LOGIN:
-						trigger_error("Login failed after code was obtained from OAuth2. Response from server: ". print_r($this->user_api->error['token'],true) ."\n Header from that response: \n". $this->user_api->error['lastheader'], E_USER_ERROR);
+						trigger_error("Login failed after code was obtained from OAuth2. Response from server: ". print_r($this->api->error['token'],true) ."\n Header from that response: \n". $this->api->error['lastheader'], E_USER_ERROR);
 						break;
 				}
 			}
@@ -143,8 +143,8 @@ class TwitchUser extends User
 		if(substr($url, 0, 8) == "/kraken/")
 			trigger_error("Attempted to send request '{$url}' to the old Twitch API which has been turned off.", E_USER_WARNING);
 		else if(substr($url, 0, 7) == "/helix/")
-			$headers = array_merge($headers, ["Authorization: Bearer {$this->user_api->token->access_token}"]);
-		return $this->user_api->api_request($url, $request, $data, $headers);
+			$headers = array_merge($headers, ["Authorization: Bearer {$this->api->token->access_token}"]);
+		return $this->api->api_request($url, $request, $data, $headers);
 	}
 	
 	public function updateFollows()
@@ -278,8 +278,6 @@ class TwitchUser extends User
                   {
                      if(!empty($user->email))
                         unset($user->email);
-                     if(!empty($user->stream))
-                        unset($user->stream);
                      $mysql_data[] = [
                         'id' => $user->id,
                         'login' => $user->login,
@@ -399,7 +397,7 @@ class TwitchUser extends User
 			}
 			else
 			{
-				trigger_error("Error retreiving results for endpoint '{$endpoint}{$after}'. Response from server: ". print_r($response,true) ."\n Header from that response: \n". $this->user_api->curl->lastheader, E_USER_WARNING);
+				trigger_error("Error retreiving results for endpoint '{$endpoint}{$after}'. Response from server: ". print_r($response,true) ."\n Header from that response: \n". $this->api->curl->lastheader, E_USER_WARNING);
 				break;
 			}
 			$loops++;
@@ -453,13 +451,5 @@ class TwitchUser extends User
 	protected function saveCustomData()
 	{
 		$this->cms->database->insert("users", ['index'=>$this->user_info['index'], 'custom_data'=>json_encode($this->user_info['custom_data'])], true, ['index']);
-	}
-	
-	public function getCodeURL()
-	{
-		if(is_object($this->user_api))
-			return $this->user_api->getCodeURL();
-		else
-			return "";
 	}
 }

@@ -869,7 +869,8 @@ class MeLeeCMS
 			else
 				echo($html);
 		}
-      $this->debugLog("ADMIN", "API requests:", $this->user->user_api->getReport());
+      if(!empty($this->user->api))
+         $this->debugLog("ADMIN", "API requests:", $this->user->api->getReport());
       foreach($this->debug_log as $input)
       {
          echo("<!--\n");
