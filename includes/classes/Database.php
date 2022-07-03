@@ -1,4 +1,5 @@
 <?php
+namespace MeLeeCMS;
 
 class Database
 {
@@ -43,7 +44,7 @@ class Database
 	{
 		$this->database = $database;
 		$this->cms = $cms;
-		$this->pdo = new PDO($type .":host=". $host .";dbname=". $database .";charset=utf8", $user, $pass);
+		$this->pdo = new \PDO($type .":host=". $host .";dbname=". $database .";charset=utf8", $user, $pass);
 		if($this->pdo)
 			$this->refresh_metadata();
 	}
@@ -99,7 +100,7 @@ class Database
 	 * @param string $type Provides a data type hint for drivers that have alternate quoting styles.
 	 * @return boolean|string A quoted string that is theoretically safe to pass into an SQL statement. Returns __FALSE__ if the driver does not support quoting in this way.
 	 */
-	public function quote($string, $type=PDO::PARAM_STR)
+	public function quote($string, $type=\PDO::PARAM_STR)
 	{
 		return $this->pdo->quote($string, $type);
 	}
@@ -136,19 +137,19 @@ class Database
 					$return = $sta->rowCount();
 					break;
 				case self::RETURN_FIELD:
-					$return = $sta->fetch(PDO::FETCH_NUM);
+					$return = $sta->fetch(\PDO::FETCH_NUM);
 					if(is_array($return))
 						$return = $return[0];
 					else
 						$return = false;
 					break;
 				case self::RETURN_ROW:
-					$return = $sta->fetch(PDO::FETCH_ASSOC);
+					$return = $sta->fetch(\PDO::FETCH_ASSOC);
 					if(!is_array($return))
 						$return = false;
 					break;
 				case self::RETURN_COLUMN:
-					$return = $sta->fetchAll(PDO::FETCH_BOTH);
+					$return = $sta->fetchAll(\PDO::FETCH_BOTH);
 					if(!is_array($return))
 						$return = false;
 					else
@@ -156,7 +157,7 @@ class Database
 						$return = array_column($return, $col);
 					break;
 				case self::RETURN_ALL:
-					$return = $sta->fetchAll(PDO::FETCH_ASSOC);
+					$return = $sta->fetchAll(\PDO::FETCH_ASSOC);
 					if(!is_array($return))
 						$return = false;
 					break;
@@ -166,7 +167,7 @@ class Database
 						$return = true;
 					else
 					{
-						$return = $sta->fetchAll(PDO::FETCH_ASSOC);
+						$return = $sta->fetchAll(\PDO::FETCH_ASSOC);
 						if(!is_array($return))
 							$return = false;
 					}

@@ -1,4 +1,5 @@
 <?php
+namespace MeLeeCMS;
 
 /**
  * Superclass of all classes that can be added to a page as content.
@@ -30,7 +31,7 @@ abstract class Content
 
 	public function render($subtheme="default")
 	{
-		return $this->cms->parse_template($this->build_params(), get_class($this), $subtheme);
+		return $this->cms->parse_template($this->build_params(), $this->getContentClass(), $subtheme);
 	}
 	
 	/**
@@ -56,6 +57,16 @@ abstract class Content
 		foreach(get_object_vars($this) as $p=>$v)
 			$this->$p = $v;
 	}
+   
+   public function getContentClass()
+   {
+      $class = get_class($this);
+      $namespace = __namespace__ ."\\";
+      if($namespace == substr($class, 0, strlen($namespace)))
+         return substr($class, strlen($namespace));
+      else
+         return "\\". $class;
+   }
 	
 	/** @var string[] Stores the last result of {@see Content::get_subclasses()} so that it won't be run more than once per page load. */
 	protected static $subclasses;

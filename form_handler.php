@@ -1,4 +1,6 @@
 <?php
+namespace MeLeeCMS;
+
 ob_start();
 require_once("includes". DIRECTORY_SEPARATOR ."MeLeeCMS.php");
 $builder = new MeLeeCMS(MeLeeCMS::MODE_FORM);

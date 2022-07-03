@@ -1,8 +1,21 @@
-/config.php*
-/includes/builder_php_errors.log
-/includes/logs/*
+# User-Specific Files
 /includes/pages/*
+!test-page.php
+
 /includes/forms/*
+!test-form.php
+
+/themes/*
+!default/
+!bootstrap4/
+
+/addons/*
+
+# Private User Files
+**/config.php*
+/includes/logs/*
+
+# Documentation
 /documentation/
 /.phpdoc/
 /phpdox.xml

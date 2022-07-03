@@ -1,4 +1,5 @@
 <?php
+namespace MeLeeCMS;
 
 /**
  * Superclass of all classes that can be used to hold user properties.
@@ -136,6 +137,7 @@ class User
 	 */
 	public static function get_permissions($cms)
 	{
+      // TODO: Test this with the new namespaces. Might even just remove it after I implement a new permissions feature
 		if(is_array(self::$permissions))
 			return self::$permissions;
 		if(is_object($cms) && is_object($cms->user))

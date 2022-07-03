@@ -1,4 +1,6 @@
 <?php
+namespace MeLeeCMS;
+
 class TwitchUser extends User
 {
 	const PERM_VIEW = 1;
@@ -99,6 +101,12 @@ class TwitchUser extends User
 					$this->user_info['follows'] = json_decode($this->user_info['follows']);
 				else
 					$this->user_info['follows'] = [];
+            
+            $tzset = date_default_timezone_set($this->user_info['timezone']);
+            if(!$tzset)
+            {
+               // TODO: Some sort of code that determines user timezone until they manually set it.
+            }
 			}
 			else
 			{

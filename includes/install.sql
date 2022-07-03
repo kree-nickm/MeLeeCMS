@@ -73,6 +73,7 @@ CREATE TABLE `users` (
   `username` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
   `jointime` bigint(20) UNSIGNED NOT NULL,
+  `timezone` varchar(255) NOT NULL,
   `permission` bigint(20) UNSIGNED NOT NULL,
   `custom_data` longblob NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;

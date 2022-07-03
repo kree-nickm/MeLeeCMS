@@ -3,10 +3,10 @@
  * This file provides descriptions of various configuration options that you
  * can use to setup and modify the way MeLeeCMS works. This file is loaded by
  * the CMS to provide default values for these options where applicable. To use
- * your own configuration options, copy this file into your base website
- * directory and rename it to config.php, and make your changes there. If you
- * edit this file without first copying it, your changes will be overwritten
- * when MeLeeCMS is updated.
+ * your own configuration options, copy this file into this same directory and
+ * rename it to config.php, and make your changes there. If you edit this file
+ * without first copying it, your changes will be overwritten when MeLeeCMS is
+ * updated.
  *****************************************************************************/
 
 // The array that contains all of the settings that the site needs to function. All of the elements are described below.
@@ -100,7 +100,7 @@ if(is_file("includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR ."test-
 // These are special pages, like the 404 page, etc. You can overwrite them in your config.php if you follow the same format.
 $GlobalConfig['pages']['404'] = [ // Arbitrary array key, '404' in this case. Only useful if you want to overwrite this definition in your own config.php.
    'id' => "404", // A unique ID for the special page.
-   'select' => function($cms){ return http_response_code()==404; }, // A function that returns true if this page should load, or false if not. A normal page that matches the requested URL will load first if possible. If that load fails, then, special pages are checked in the order they are defined, and the first matching page is displayed.
+   'select' => function($cms){ return http_response_code()==404; }, // A function that returns true if this page should load, or false if not. A normal page that matches the requested URL will load first if possible. If that load fails, then, special pages are checked in the order they are defined, and the first matching page is displayed. A reference to the MeLeeCMS instance is provided in case you need it.
    'subtheme' => "default", // See above.
    'content' => "a:1:{s:7:\"content\";O:9:\"Container\":3:{s:5:\"title\";s:14:\"Page Not Found\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:4:\"Text\":2:{s:4:\"text\";s:45:\"The page you are looking for cannot be found.\";s:5:\"attrs\";a:0:{}}}}}", // Serialized PHP data. Not recommended that you do this if you are defining your own special pages; just use a file instead.
    'title' => "Page Not Found",

@@ -1,4 +1,5 @@
 <?php
+namespace MeLeeCMS;
 
 /**
  */
@@ -51,9 +52,9 @@ class Transformer
 	{
 		$xmlcode = self::array_to_xml($root, $data);
 		//print_r($xmlcode);
-		$xml = new DOMDocument();
+		$xml = new \DOMDocument();
 		$xml->loadXML($xmlcode);
-		$xsl = new DOMDocument();
+		$xsl = new \DOMDocument();
 		if(is_file($this->stylesheets['file']))
 			$xsl->load($this->stylesheets['file']);
 		else
@@ -66,7 +67,7 @@ class Transformer
 			$node->appendChild($attr);
 			$xsl->documentElement->appendChild($node);
 		}
-		$proc = new XSLTProcessor();
+		$proc = new \XSLTProcessor();
 		$proc->importStyleSheet($xsl);
 		//return $proc->transformToXML($xml);
 		$result = $proc->transformToDoc($xml);
@@ -175,14 +176,14 @@ class Transformer
 				if(is_numeric($subtag) || $parts[0] == "")
 				{
 					if($multiplets === 0)
-						throw new Exception("Malformed data array cannot be converted to XML. Numeric index (". $subtag .") when container is already not an array. Element: <". $tag . $attrs .">");
+						throw new \Exception("Malformed data array cannot be converted to XML. Numeric index (". $subtag .") when container is already not an array. Element: <". $tag . $attrs .">");
 					$result .= self::array_to_xml($tag . $attrs, $subdata);
 					$multiplets = 1;
 				}
 				else
 				{
 					if($multiplets === 1)
-						throw new Exception("Malformed data array cannot be converted to XML. Non-numeric index when container is already an array. Element: <". $parts[0] . $attrs .">");
+						throw new \Exception("Malformed data array cannot be converted to XML. Non-numeric index when container is already an array. Element: <". $parts[0] . $attrs .">");
                $fixedtag = preg_replace("/[^a-zA-Z0-9_]/i", "", $parts[0]);
                $fixedtag .= " original_tag=\"". htmlentities($parts[0], ENT_QUOTES|ENT_XML1|ENT_DISALLOWED, "UTF-8") ."\"";
 					$result .= self::array_to_xml($fixedtag . $attrs, $subdata);

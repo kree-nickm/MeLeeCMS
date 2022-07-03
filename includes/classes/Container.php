@@ -1,4 +1,5 @@
 <?php
+namespace MeLeeCMS;
 
 class Container extends Content
 {
@@ -46,7 +47,7 @@ class Container extends Content
 	{
 		$result = $this->getSimpleArray();
 		foreach($this->content as $c=>$content)
-			$result['content@class='.get_class($content).($c?'@id='.$c:'')][] = $content->build_params();
+			$result['content@class='.$content->getContentClass().($c?'@id='.$c:'')][] = $content->build_params();
 		return $result;
 	}
 
@@ -54,8 +55,8 @@ class Container extends Content
 	{
 		$params = $this->getSimpleArray();
 		foreach($this->content as $c=>$content)
-			$params['content@class='.get_class($content).($c?'@id='.$c:'')][] = $content->render($subtheme);
-		return $this->cms->parse_template($params, get_class($this), $subtheme);
+			$params['content@class='.$content->getContentClass().($c?'@id='.$c:'')][] = $content->render($subtheme);
+		return $this->cms->parse_template($params, $this->getContentClass(), $subtheme);
 	}
 	
 	public function set_cms($cms)
@@ -72,7 +73,7 @@ class Container extends Content
 			$x = "__". $x;
 		else if($x == "")
 			$x = "__". count($this->content);
-		if(is_subclass_of($content, "Content"))
+		if(is_subclass_of($content, "MeLeeCMS\\Content"))
 		{
 			return $this->content[$x] = $content->set_cms($this->cms);
 		}

@@ -1,4 +1,5 @@
 <?php
+namespace MeLeeCMS;
 
 /**
  * A User class that provides basic login features and a permission for the control panel.
@@ -47,6 +48,11 @@ class MeLeeCMSUser extends User
 									$this->user_info['custom_data_keys'][] = $key;
 									$this->user_info[$key] = $val;
 								}
+                  $tzset = date_default_timezone_set($this->user_info['timezone']);
+                  if(!$tzset)
+                  {
+                     // TODO: Some sort of code that determines user timezone until they manually set it.
+                  }
 						// Load a new page if the login was just submitted in order to clear the POST data.
 						if(isset($_POST['username']) || isset($_POST['password']))
 							$this->cms->requestRefresh();
@@ -60,6 +66,24 @@ class MeLeeCMSUser extends User
 			}
 		}
 	}
+   
+   public function changeTimezone($timezone)
+   {
+      $okay = date_default_timezone_set($timezone);
+      if($okay)
+      {
+         $this->user_info['timezone'] = $timezone;
+         $mysql_array = [
+            'index' => $this->user_info['index'],
+            'timezone' => $timezone,
+         ];
+         $result = $this->cms->database->insert("users", $mysql_array, true, ['index']);
+      }
+      else
+      {
+         trigger_error("User #{$this->user_info['index']} tried to set an invalid timezone '{$timezone}'", E_USER_NOTICE);
+      }
+   }
 	
 	public function setCustomDataGroup($array)
 	{

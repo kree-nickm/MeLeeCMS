@@ -1,4 +1,5 @@
 <?php
+namespace MeLeeCMS;
 
 class Theme
 {
@@ -10,6 +11,7 @@ class Theme
    public $thumbnail = "";
    public $superthemes_raw = [];
    public $superthemes = [];
+   public $are_superthemes_resolved = false;
    public $subthemes = [];
    public $css = [];
    public $js = [];
@@ -21,7 +23,7 @@ class Theme
       if(!empty($cms))
          $this->cms = $cms;
       else
-         throw new Exception("Theme must be provided a MeLeeCMS reference.");
+         throw new \Exception("Theme must be provided a MeLeeCMS reference.");
       
       // TODO: Validate $directory just in case something other than MeLeeCMS sent it in.
       $this->name = $directory;
@@ -33,23 +35,11 @@ class Theme
       
       if(is_file($this->server_path . "thumbnail.png"))
          $this->thumbnail = $this->url_path ."thumbnail.png";
+      else
+         $this->thumbnail = $this->cms->get_setting('url_path') ."themes/default/thumbnail.png";
       
-      // TODO: We need MeLeeCMS to tell us when themes are loaded before we can begin resolving them, but it would probably be better to do this with recursive Theme creation through MeLeeCMS.
       if(is_file($superthemes_file = $this->server_path ."superthemes.txt"))
-      {
          $this->superthemes_raw = file($superthemes_file, FILE_IGNORE_NEW_LINES|FILE_SKIP_EMPTY_LINES);
-         foreach($this->superthemes_raw as $supertheme)
-         {
-            if($supertheme == "default")
-            {
-               trigger_error("Theme '{$this->name}' has 'default' as a supertheme. Do not do this, as it would break theme chaining, and 'default' is always checked last in the chain regardless. Ignoring it, but remove 'default' from the superthemes.txt file.", E_USER_NOTICE);
-            }
-            else if(!$this->cms->addTheme($supertheme))
-            {
-               trigger_error("Theme '{$this->name}' has the theme '{$supertheme}' as a supertheme, but '{$supertheme}' does not exist.", E_USER_WARNING);
-            }
-         }
-      }
       
       // Find CSS
       $css_path = $this->server_path ."css";
@@ -98,6 +88,37 @@ class Theme
          }
       }
    }
+   
+   public function resolveSuperthemes()
+   {
+      if($this->name != "default")
+         $this->cms->addTheme("default");
+      foreach($this->superthemes_raw as $supertheme)
+      {
+         if($supertheme == "default")
+         {
+            trigger_error("Theme '{$this->name}' has 'default' as a supertheme. Do not do this, as it would break theme chaining, and 'default' is always checked last in the chain regardless. Ignoring it, but remove 'default' from the superthemes.txt file.", E_USER_NOTICE);
+         }
+         else if($supertheme == $this->name)
+         {
+            trigger_error("Theme '{$this->name}' has itself in its own superthemes.txt file. Don't.", E_USER_WARNING);
+         }
+         else if(($theme = $this->cms->addTheme($supertheme)) != null)
+         {
+            $this->superthemes[] = $theme;
+         }
+         else
+         {
+            trigger_error("Theme '{$this->name}' has the theme '{$supertheme}' as a supertheme, but '{$supertheme}' does not exist.", E_USER_WARNING);
+         }
+      }
+      $this->are_superthemes_resolved = true;
+      foreach($this->superthemes as $theme)
+      {
+         if(!$theme->are_superthemes_resolved)
+            $theme->resolveSuperthemes();
+      }
+   }
 	
 	public function hasFile($type, $name, $name_extra="default", $recursion=[])
 	{
@@ -144,6 +165,9 @@ class Theme
          foreach($this->superthemes as $supertheme)
             if($supertheme->hasFile($type, $name, "", [$this->name]))
                return $supertheme->resolveFile($type, $name);
+         if(!empty($this->cms->themes['default']))
+            if($this->cms->themes['default']->hasFile($type, $name, "", [$this->name]))
+               return $this->cms->themes['default']->resolveFile($type, $name);
 			return "";
       }
    }
@@ -168,8 +192,10 @@ class Theme
          foreach($this->superthemes as $supertheme)
             if($supertheme->hasFile("templates", $class, $subtheme, [$this->name]))
                return $supertheme->parseTemplate($data, $class, $subtheme, $added_xsl, $transformer);
+         if(!empty($this->cms->themes['default']))
+            if($this->cms->themes['default']->hasFile("templates", $class, $subtheme, [$this->name]))
+               return $this->cms->themes['default']->parseTemplate($data, $class, $subtheme, $added_xsl, $transformer);
 			return $data;
       }
-		//echo("<!-- ". $class ."-". $subtheme ." => ". $file .": ". print_r($data, true) ." -->");
 	}
 }

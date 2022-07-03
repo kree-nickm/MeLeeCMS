@@ -1,4 +1,5 @@
 <?php
+namespace MeLeeCMS;
 
 class Page
 {
@@ -23,7 +24,7 @@ class Page
       if(!empty($cms))
          $this->cms = $cms;
       else
-         throw new Exception("Page must be provided a MeLeeCMS reference.");
+         throw new \Exception("Page must be provided a MeLeeCMS reference.");
       
       // Special case for generating a generic error page, when $page_data is explicitly false
       if($page_data === false)
@@ -56,7 +57,7 @@ class Page
          }
          else
          {
-            throw new Exception("Pages must have either a 'url' (non-empty string), or both an 'id' (any) and 'select' (function) parameter.");
+            throw new \Exception("Pages must have either a 'url' (non-empty string), or both an 'id' (any) and 'select' (function) parameter.");
          }
          
          // Now figure out if it's a hard-coded PHP file or a file built with the control panel.
@@ -98,7 +99,7 @@ class Page
             }
          }
          else
-            throw new Exception("Pages must have either a 'file' (valid file in includes/pages/ directory) or 'content' (serialized PHP objects or blank) parameter.");
+            throw new \Exception("Pages must have either a 'file' (valid file in includes/pages/ directory) or 'content' (serialized PHP objects or blank) parameter.");
       }
    }
    

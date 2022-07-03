@@ -1,4 +1,5 @@
 <?php
+namespace MeLeeCMS;
 
 class Component extends Container
 {

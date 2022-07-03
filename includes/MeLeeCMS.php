@@ -1,5 +1,15 @@
 <?php
-// TODO: Implement a namespace
+namespace MeLeeCMS;
+
+/*
+ * TODO: Guilty admission: This project has inconsistent indentations and naming conventions. This is a consequence of being developed over more than a decade, and my preferences and text editors/settings changing over that time period. So, to clarify the project's conventions in the hope of eventually making every file conform to them:
+ * * Indentations should be 3 spaces.
+ * * Class names should be PascalCase
+ * * Constants should be CAPITAL_UNDER_SCORED
+ * * Class methods should be camelCase()
+ * * All other variables and functions should be under_scored
+ * The naming conventions are my best attempt to conform to PHP's own naming conventions, which are themselves inconsistent.
+ */
 ini_set("display_errors", 0);
 ini_set("log_errors", 1);
 // Note: Don't know if we should care about this, but using __DIR__ means we require PHP>=5.3.0, and it appears in multiple files.
@@ -98,8 +108,7 @@ class MeLeeCMS
 		// Load and validate $GlobalConfig settings.
 		global $GlobalConfig;
 		require_once(__DIR__ . DIRECTORY_SEPARATOR ."defaultconfig.php");
-      // TODO: Move config.php into includes directory. No reason it should be in the unprotected website root.
-		include_once("config.php");
+		include_once(__DIR__ . DIRECTORY_SEPARATOR ."config.php");
       
       if(!empty($GlobalConfig['force_https']) && empty($_SERVER['HTTPS']))
       {
@@ -121,7 +130,7 @@ class MeLeeCMS
 		$this->settings['default_theme'] = $GlobalConfig['default_theme'];
 		$this->settings['cpanel_theme'] = $GlobalConfig['cpanel_theme'];
 		$this->settings['index_page'] = $GlobalConfig['index_page'];
-         
+      
 		// Setup the load paths for classes.
 		array_unshift($this->class_paths, __DIR__ . DIRECTORY_SEPARATOR ."classes". DIRECTORY_SEPARATOR);
 		if(substr(__DIR__, 0, strlen($this->settings['server_path'])) != $this->settings['server_path'])
@@ -193,7 +202,6 @@ class MeLeeCMS
          echo("-->");
       }
    }
-	
    
 	public function errorHandler($level, $message, $file, $line, $context)
 	{
@@ -263,16 +271,26 @@ class MeLeeCMS
 
 	public function loadClass($class)
 	{
-		foreach($this->class_paths as $path)
-		{
-			if(is_file($path . $class .".php"))
-			{
-				require_once($path . $class .".php");
-				return true;
-			}
-		}
-		throw new Exception("Unable to load class '". $class ."'.");
-      // TODO: Somehow check if it's a core class that breaks the entire page, or some less important custom one that only breaks part of the page.
+      $parts = explode("\\", $class);
+      $classname = array_pop($parts);
+      if(count($parts) == 1 && $parts[0] == __namespace__)
+      {
+         foreach($this->class_paths as $path)
+         {
+            if(is_file($path . $classname .".php"))
+            {
+               require_once($path . $classname .".php");
+               return true;
+            }
+         }
+         throw new \Exception("Unable to load class '". $class ."' in MeLeeCMS namespace. Class file not found.");
+         // TODO: Somehow check if it's a core class that breaks the entire page, or some less important custom one that only breaks part of the page.
+      }
+      else
+      {
+         trigger_error("Unable to load class '". $class ."'. Class is outside MeLeeCMS namespace.", E_USER_WARNING);
+         return false;
+      }
 	}
 	
 	public function setupDatabase()
@@ -283,7 +301,7 @@ class MeLeeCMS
 			$this->database = new Database("mysql", $GlobalConfig['dbhost'], $GlobalConfig['dbname'], $GlobalConfig['dbuser'], $GlobalConfig['dbpass'], $this);
 			return true;
 		}
-		catch(PDOException $x)
+		catch(\PDOException $x)
 		{
 			trigger_error($x, E_USER_ERROR);
 			return false;
@@ -308,26 +326,31 @@ class MeLeeCMS
    
    public function addTheme($directory)
    {
-      if($directory == "." || $directory == ".." || !is_dir($this->get_setting('server_path') ."themes". DIRECTORY_SEPARATOR . $directory))
+      if(!empty($this->themes[$directory]))
+         return $this->themes[$directory];
+      else if($directory == "." || $directory == ".." || !is_dir($this->get_setting('server_path') ."themes". DIRECTORY_SEPARATOR . $directory))
       {
          trigger_error("Tried to add '{$directory}' as a theme, but it is not a valid directory.", E_USER_NOTICE);
-         return false;
-      }
-      else if(empty($this->themes[$directory]))
-      {
-         $this->themes[$directory] = new Theme($this, $directory);
-         return true;
+         return null;
       }
       else
-         return true;
+      {
+         $this->themes[$directory] = new Theme($this, $directory);
+         // Theme->resolveSuperthemes() needs to be called after this, but it might call MeLeeCMS->addTheme() again, so we don't want to do it here to prevent recursion.
+         return $this->themes[$directory];
+      }
    }
 	
 	public function setupThemes()
 	{
+      // Add all the themes in the themes directory.
 		$themesDir = dir($this->get_setting('server_path') ."themes");
 		while(false !== ($theme = $themesDir->read()))
          if($theme != "." && $theme != "..")
             $this->addTheme($theme);
+      // Then resolve their superthemes lists. Theme->resolveSuperthemes() calls MeLeeCMS->addTheme() as needed, but since we just added them all, it shouldn't be... unless there are invalid themes in a superthemes list, in which case you'll see some errors.
+      foreach($this->themes as $theme)
+         $theme->resolveSuperthemes();
 		$this->setTheme($this->get_setting('default_theme'));
 		return count($this->themes)>0;
 	}
@@ -343,20 +366,18 @@ class MeLeeCMS
 			unset($_SESSION['form_response']);
 		}
 		if($this->get_setting('user_system') == "")
-			$user_class = "User";
+			$user_class = "\\MeLeeCMS\\User";
 		else
-			$user_class = $this->get_setting('user_system');
-		try
-		{
-			$this->user = new $user_class($this);
-			return true;
-		}
-		catch(Exception $x)
-		{
-			trigger_error("Unable to create user object using the '". $this->get_setting('user_system') ."' user system.", E_USER_WARNING);
-			$this->user = new User($this);
-			return false;
-		}
+			$user_class = "\\MeLeeCMS\\". $this->get_setting('user_system');
+      
+      $this->user = new $user_class($this);
+      if(!empty($this->user))
+         return true;
+      else
+      {
+			trigger_error("Unable to create user object using the '". $this->get_setting('user_system') ."' user system.", E_USER_ERROR);
+         return false;
+      }
 	}
 	
 	public function setupForms()
@@ -522,7 +543,7 @@ class MeLeeCMS
 			if(!empty(current($this->themes)))
 				$this->page_theme = $this->themes;
 			else
-            throw new Exception("Page has no valid themes.");
+            throw new \Exception("Page has no valid themes.");
 		}
 		return $this->page_theme;
 	}
@@ -582,7 +603,7 @@ class MeLeeCMS
 			$x = "__". $x;
 		else if($x == "")
 			$x = "__". count($this->page_content);
-		if(is_subclass_of($content, "Content"))
+		if(is_subclass_of($content, "MeLeeCMS\\Content"))
 		{
 			return $this->page_content[$x] = $content->set_cms($this);
 		}
@@ -659,17 +680,12 @@ class MeLeeCMS
 
 	public function render($subtheme="")
 	{
-		if(!is_file("config.php"))
-		{
-			echo("No configuration file. MeLeeCMS may not have been installed. Refer to the installation instructions.");
-			return false;
-		}
 		if(isset($this->refresh_requested['url']))
 		{
 			$this->refreshPage();
 			return false;
 		}
-		register_shutdown_function("print_load_statistics");
+		register_shutdown_function("MeLeeCMS\\print_load_statistics");
 		if($subtheme == "")
 			$subtheme = $this->page->subtheme;
 		if($subtheme == "")
@@ -693,10 +709,10 @@ class MeLeeCMS
 		
 		if($subtheme == "__xml") // also check if xml output is allowed
 			foreach($this->page_content as $tag=>$content)
-				$params['content@class='.get_class($content).($tag?'@id='.$tag:'')][] = $content->build_params();
+				$params['content@class='.$content->getContentClass().($tag?'@id='.$tag:'')][] = $content->build_params();
 		else
 			foreach($this->page_content as $tag=>$content)
-				$params['content@class='.get_class($content).($tag?'@id='.$tag:'')][] = $content->render($subtheme);
+				$params['content@class='.$content->getContentClass().($tag?'@id='.$tag:'')][] = $content->render($subtheme);
 		foreach($this->page_css as $css)
 			$params['css'][] = [
 				'href' => ($css['fromtheme'] ? $this->getTheme()->resolveFile("css", $css['href']) : $css['href']),
@@ -731,6 +747,7 @@ class MeLeeCMS
 			else
 				echo($html);
 		}
+      //$this->debugLog($_SERVER);
 		return true;
 	}
 }

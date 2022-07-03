@@ -1,4 +1,10 @@
 <?php
+/*
+ * You should declare the MeLeeCMS namespace in every single PHP file that is going to use MeLeeCMS.
+ * Review how to use namespaces at https://www.php.net/manual/en/language.namespaces.php
+ * The most important thing to keep in mind is that, after this namespace declaration, all class names that you use will be expected to be in the MeLeeCMS namespace. If you need a class from outside the MeLeeCMS namespace, you must prepend a \ to the class name every single time you refer to it.
+ */
+namespace MeLeeCMS;
 
 $builder->set_title("Test Page");
 

@@ -1,4 +1,5 @@
 <?php
+namespace MeLeeCMS;
 
 if(version_compare(PHP_VERSION, "5.6.0beta1", "<"))
 {
