@@ -56,8 +56,9 @@ class TwitchUser extends User
 				// At this point, either $this->user_info will be our account data, or $user_data will be a response from the API with basic user data.
 				if(!empty($user_data->id))
 				{
-					// We have a response, which means we need to use it to update the account data from the API and use the updated data.
+					// We have a response, which means we need to create an entry for it in the users database.
 					$this->cms->database->insert("users", ['twitch_id'=>$user_data->id, 'jointime'=>time(), 'permission'=>1], false);
+               // Also update the user cache since we have the freshest data.
                if(!empty($user_data->email))
                   unset($user_data->email);
                $mysql_data = [
@@ -67,6 +68,7 @@ class TwitchUser extends User
                   'last_api_query' => time(),
                ];
 					$this->cms->database->insert("custom_twitchusercache", $mysql_data, true);
+               // And finally, use the data we just stored.
 					$this->user_info = $this->cms->database->query("SELECT * FROM `users` WHERE `twitch_id`=". (int)$user_data->id, Database::RETURN_ROW);
 				}
             
@@ -124,10 +126,10 @@ class TwitchUser extends User
 				{
 					case OAuth2Client::E_STATE_MISMATCH:
 						$sessions = $this->cms->database->query("SELECT `session_id` FROM sessions WHERE `ip`=". $this->cms->database->quote($_SERVER['REMOTE_ADDR']), Database::RETURN_COLUMN);
-						trigger_error("State mismatch during login from \"". $_SERVER['REMOTE_ADDR'] ."\". Expected \"". $this->user_api->error['expected'] ."\" but got \"". $this->user_api->error['got'] ."\". Either someone is trying to break something, or two different sessions were created for this person during the login attempt. Current session is \"". session_id() ."\". That IP has the following sessions currently open:\n". implode("\n", $sessions), E_USER_WARNING);
+						trigger_error("State mismatch during login from \"". $_SERVER['REMOTE_ADDR'] ."\". Expected \"". $this->user_api->error['expected'] ."\" but got \"". $this->user_api->error['got'] ."\". Either someone is trying to break something, or two different sessions were created for this person during the login attempt. Current session is \"". session_id() ."\". That IP has the following sessions currently open:\n". implode("\n", $sessions), E_USER_ERROR);
 						break;
 					case OAuth2Client::E_FAILED_LOGIN:
-						trigger_error("Login failed after code was obtained from OAuth2. Response from server: ". print_r($this->user_api->error['token'],true) ."\n Header from that response: \n". $this->user_api->error['lastheader'], E_USER_WARNING);
+						trigger_error("Login failed after code was obtained from OAuth2. Response from server: ". print_r($this->user_api->error['token'],true) ."\n Header from that response: \n". $this->user_api->error['lastheader'], E_USER_ERROR);
 						break;
 				}
 			}
@@ -139,9 +141,9 @@ class TwitchUser extends User
 		global $GlobalConfig;
 		$headers = array_merge($headers, ["Client-ID: {$GlobalConfig['twitch_client_id']}"]);
 		if(substr($url, 0, 8) == "/kraken/")
-			$headers = array_merge($headers, ["Accept: application/vnd.twitchtv.v5+json", "Authorization: OAuth ". $this->user_api->token->access_token]);
+			trigger_error("Attempted to send request '{$url}' to the old Twitch API which has been turned off.", E_USER_WARNING);
 		else if(substr($url, 0, 7) == "/helix/")
-			$headers = array_merge($headers, ["Authorization: Bearer ". $this->user_api->token->access_token]);
+			$headers = array_merge($headers, ["Authorization: Bearer {$this->user_api->token->access_token}"]);
 		return $this->user_api->api_request($url, $request, $data, $headers);
 	}
 	
@@ -150,13 +152,6 @@ class TwitchUser extends User
 		$this->user_info['follows'] = $this->getPagedResponse("/helix/users/follows?first=100&from_id={$this->user_info['twitch_id']}");
 		$this->cms->database->insert("users", ['index'=>$this->user_info['index'], 'follows'=>json_encode($this->user_info['follows'])], true, ['index']);
 	}
-   
-   public function getUser($updateAge=86400)
-   {
-      if(!empty($this->user_info['twitch_id']))
-      {
-      }
-   }
    
    public function getUsers($users=[], $updateAge=86400)
    {
@@ -238,14 +233,14 @@ class TwitchUser extends User
       $mysqlResult = $this->cms->database->query("SELECT * FROM custom_twitchusercache WHERE `last_api_query`>". (time()-(int)$updateAge) . (count($where) ? " AND (".implode(" OR ", $where).")" : ""), Database::RETURN_ALL);
       
       $output = [];
-      // Build a list of user to query the API for, from the users that were either not in MySQL or had not been queried in a day.
+      // Build a list of user to query the API for, from the users that were either not in MySQL or had not been queried in $updateAge.
       $usersToFetch = [];
       foreach($userArrs as $user)
       {
          $found = false;
          foreach($mysqlResult as $row)
          {
-            if($user['id'] == $row['id'] || $user['login'] == $row['login'])
+            if($user['id'] === $row['id'] || $user['login'] === $row['login'])
             {
                $found = true;
                $output[] = json_decode($row['data']);
@@ -283,6 +278,8 @@ class TwitchUser extends User
                   {
                      if(!empty($user->email))
                         unset($user->email);
+                     if(!empty($user->stream))
+                        unset($user->stream);
                      $mysql_data[] = [
                         'id' => $user->id,
                         'login' => $user->login,
@@ -301,15 +298,71 @@ class TwitchUser extends User
          else
             trigger_error("Response from API query to get users (page {$i}) is not an object, it is: ". print_r($responseUsers, true));
       }
+      
+      // Check to see if we actually fetched all the users we wanted. Maybe a user was specified multiple times, but maybe the API did not return them at all, as is the case if they were banned. All these lines of code because Twitch can't be F'd to mark banned users in the API, instead of just pretending they don't exist.
+      if(count($mysql_data) != count($usersToFetch))
+      {
+         $notFetched = array_filter($usersToFetch, function($val) use($mysql_data){
+            foreach($mysql_data as $row)
+            {
+               if($row['id'] === $val['id'] || $row['login'] === $val['login'])
+                  return false;
+            }
+            return true;
+         });
+         foreach($notFetched as $nf)
+         {
+            $newRow = $this->cms->database->query("SELECT * FROM `custom_twitchusercache` WHERE ". (!empty($nf['id']) ? "`id`=".$this->cms->database->quote($nf['id']) : "`login`=".$this->cms->database->quote($nf['login'])), Database::RETURN_ROW);
+            if(empty($newRow))
+            {
+               $newRow = ['last_api_query' => time()];
+               $data = [];
+               if(!empty($nf['id']))
+               {
+                  $newRow['id'] = $nf['id'];
+                  $data['id'] = $nf['id'];
+               }
+               if(!empty($nf['login']))
+               {
+                  $newRow['login'] = $nf['login'];
+                  $data['login'] = $nf['login'];
+               }
+            }
+            else
+            {
+               $newRow['last_api_query'] = time();
+               $data = json_decode($newRow['data'], true);
+            }
+            if(empty($data))
+               $data = [];
+            $data['type'] = "missing";
+            $newRow['data'] = json_encode($data);
+            $mysql_data[] = $newRow;
+            $output[] = json_decode($newRow['data']);
+         }
+         if(count($notFetched))
+         {
+            foreach($notFetched as $k=>$v)
+            {
+               if(!empty($v['login']))
+                  $notFetched[$k] = $v['login'];
+               else if(!empty($v['id']))
+                  $notFetched[$k] = $v['id'];
+            }
+            trigger_error("User(s) '". implode("', '", $notFetched) ."' failed to query from the Twitch API. Either invalid user IDs were specified, or the user was removed from Twitch (possiblity temporarily, as in a ban)", E_USER_NOTICE);
+         }
+      }
+      
       if(count($mysql_data))
          $this->cms->database->insert("custom_twitchusercache", $mysql_data, true);
+      
       return $output;
    }
 	
    // TODO: Could maybe move the below paged queries to OAuth2Client
-	// For a typical Twitch API query where the API returns up to 100 results, and gives you a cursor to retreive additional results if there are more than 100.
 	public function getPagedResponse($endpoint="/", $containerKey="data")
 	{
+      // For a typical Twitch API query where the API returns up to 100 results, and gives you a cursor to retreive additional results if there are more than 100.
 		$hasParams = (strpos($endpoint, "?") !== false);
 		$results = [];
 		$currentCount = 0;
@@ -359,9 +412,9 @@ class TwitchUser extends User
 		return $results;
 	}
 	
-	// For a more advanced Twitch API query where you need to specify a huge list of parameters, and must split them between multiple different queries because of the parameter limit. Additionally, each one of those queries could potentially return multiple pages as above.
 	public function getMultiPagedResponse($endpoint="/", $repeatedParam="", $paramValues=[], $paramLimit=100)
 	{
+      // For a more advanced Twitch API query where you need to specify a huge list of parameters, and must split them between multiple different queries because of the parameter limit. Additionally, each one of those queries could potentially return multiple pages as above.
 		$hasParams = (strpos($endpoint, "?") !== false);
 		$results = [];
 		$paramBlocks = [];

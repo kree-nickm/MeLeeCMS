@@ -58,7 +58,7 @@ class User
 		{
 			$const = "self::". (substr($perm,0,5)=="PERM_" ? "" : "PERM_") . $perm;
 			if(defined($const))
-				$perm = constant("self::". (substr($perm,0,5)=="PERM_" ? "" : "PERM_") . $perm);
+				$perm = constant($const);
 			else
 				$perm = 0;
 		}
@@ -149,7 +149,7 @@ class User
 		}
 		self::$permissions = [];
 		// Note: Don't know if we should care about this, but using class member access on instantiation here means we require PHP>=5.4.0
-		foreach((new ReflectionClass($class))->getConstants() as $con=>$val)
+		foreach((new \ReflectionClass($class))->getConstants() as $con=>$val)
 			if(substr($con, 0, 5) == "PERM_")
 				self::$permissions[$val] = substr($con, 5);
 		ksort(self::$permissions);

@@ -150,15 +150,14 @@ if(is_file("includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR ."test-
    ];
 }
 
-/*************************** HTML Source Includes *****************************
- * List of external JS/CSS to include into the site's HTML. Use this to specify
- * if you want jQuery, Bootstrap, FontAwesome, etc. as well as what versions.
- * These will be used on all pages of the site. NOTE: These don't work yet.
- * Still figuring out how I want them to work.
+/******************************************************************************
+ * Permission group definitions for various site pages and features. Most secured pages and features will specify a permission (eg. "view_errors") that is required to use it. However, most users will possess a set of permission groups (eg. "ADMIN") to define what they are allowed to do. The below array is where you define which permission groups (the capitalized array keys) contain which permissions (the array of lowercase strings). This file should list every single permission available in default MeLeeCMS under the ADMIN group, which you can use to create your own groups. Also, permission groups can contain other permission groups. When you copy this array into your own config.php, be very careful that you are only adding to these arrays and not overwriting them with your changes. TODO: Actually implement this.
 ******************************************************************************/
 
-$GlobalConfig['html_css'] = [
-];
-
-$GlobalConfig['html_scripts'] = [
+$GlobalConfig['permissions'] = [
+   'VIEW' => [
+   ],
+   'ADMIN' => [
+      "view_errors",
+   ],
 ];

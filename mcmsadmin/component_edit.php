@@ -1,4 +1,6 @@
 <?php
+namespace MeLeeCMS;
+
 require_once("load_page.php");
 
 if(isset($_GET['confirmdelete']) && !empty($_GET['compId']) && is_numeric($_GET['compId']))

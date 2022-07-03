@@ -1,4 +1,6 @@
 <?php
+namespace MeLeeCMS;
+
 require_once("load_page.php");
 
 $components = $builder->database->query("SELECT * FROM `page_components`");

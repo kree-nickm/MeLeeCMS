@@ -66,6 +66,7 @@ class MeLeeCMS
    const SETUP_DATABASE = 1;
    const SETUP_SETTINGS = 2;
    const SETUP_THEMES = 4;
+   const SETUP_THEME = 128;
    const SETUP_USER = 8;
    const SETUP_FORMS = 32;
    const SETUP_PAGES = 64;
@@ -73,7 +74,7 @@ class MeLeeCMS
    
    const MODE_AUTH = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_USER;
    const MODE_FORM = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_USER | self::SETUP_FORMS;
-   const MODE_PAGE = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_THEMES | self::SETUP_USER | self::SETUP_PAGE;
+   const MODE_PAGE = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_THEME | self::SETUP_USER | self::SETUP_PAGE;
    const MODE_ALL  = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_THEMES | self::SETUP_USER | self::SETUP_FORMS | self::SETUP_PAGES | self::SETUP_PAGE;
    
 	protected $mode;
@@ -85,6 +86,7 @@ class MeLeeCMS
 	protected $page_js = [];
 	protected $page_xsl = [];
 	protected $page_content = [];
+	protected $debug_log = [];
 	
 	public $class_paths = [];
 	public $path_info;
@@ -148,6 +150,8 @@ class MeLeeCMS
          $this->setupSettings();
 		if(($this->mode & self::SETUP_THEMES) > 0)
          $this->setupThemes();
+		else if(($this->mode & self::SETUP_THEME) > 0)
+         $this->setupTheme();
 		if(($this->mode & self::SETUP_USER) > 0)
          $this->setupUser();
 		if(($this->mode & self::SETUP_FORMS) > 0)
@@ -177,7 +181,7 @@ class MeLeeCMS
 		//register_shutdown_function([$this, "refreshPage"]);
 	}
 	
-	public function refreshPage()
+	protected function refreshPage()
 	{
 		if(isset($this->refresh_requested['url']))
 		{
@@ -191,16 +195,10 @@ class MeLeeCMS
 		}
 	}
    
-	public function debugLog(...$input)
+	public function debugLog($permission, ...$input)
    {
-      foreach($input as $in)
-      {
-         echo("<!--");
-         //echo("<pre>");
-         print_r($in);
-         //echo("</pre>");
-         echo("-->");
-      }
+      if(!empty($this->user) && $this->user->has_permission($permission))
+         $this->debug_log[] = $input;
    }
    
 	public function errorHandler($level, $message, $file, $line, $context)
@@ -293,7 +291,7 @@ class MeLeeCMS
       }
 	}
 	
-	public function setupDatabase()
+	protected function setupDatabase()
 	{
 		global $GlobalConfig;
 		try
@@ -308,7 +306,7 @@ class MeLeeCMS
 		}
 	}
 	
-	public function setupSettings()
+	protected function setupSettings()
 	{
       $settings = is_object($this->database) ? $this->database->query("SELECT `setting`,`value` FROM `settings`", Database::RETURN_ALL) : null;
 		if(is_array($settings))
@@ -341,7 +339,14 @@ class MeLeeCMS
       }
    }
 	
-	public function setupThemes()
+	protected function setupTheme()
+	{
+      $this->addTheme($this->get_setting('default_theme'))->resolveSuperthemes();
+		$this->setTheme($this->get_setting('default_theme'));
+		return count($this->themes)>0;
+	}
+	
+	protected function setupThemes()
 	{
       // Add all the themes in the themes directory.
 		$themesDir = dir($this->get_setting('server_path') ."themes");
@@ -355,7 +360,7 @@ class MeLeeCMS
 		return count($this->themes)>0;
 	}
 	
-	public function setupUser()
+	protected function setupUser()
 	{
 		session_set_save_handler(new MeLeeSessionHandler($this), true);
 		session_name($this->get_setting('cookie_prefix') ."sessid");
@@ -380,14 +385,14 @@ class MeLeeCMS
       }
 	}
 	
-	public function setupForms()
+	protected function setupForms()
 	{
       global $GlobalConfig;
       if(isset($GlobalConfig['forms']) && is_array($GlobalConfig['forms']))
          $this->forms = $GlobalConfig['forms'];
 	}
 	
-	public function setupSpecialPages()
+	protected function setupSpecialPages()
 	{
       global $GlobalConfig;
       // I'm not sure if it's worth it to isolate only the special pages from $GlobalConfig.
@@ -396,7 +401,7 @@ class MeLeeCMS
             $this->addPage($page);
 	}
 	
-	public function setupPages()
+	protected function setupPages()
 	{
 		if(is_object($this->database))
 		{
@@ -438,7 +443,7 @@ class MeLeeCMS
       }
    }
 	
-	public function setupPage()
+	protected function setupPage()
 	{
       global $GlobalConfig;
       // Special case for viewing/debugging the special pages.
@@ -747,7 +752,17 @@ class MeLeeCMS
 			else
 				echo($html);
 		}
-      //$this->debugLog($_SERVER);
+      $this->debugLog("ADMIN", "API requests:", $this->user->user_api->getReport());
+      foreach($this->debug_log as $input)
+      {
+         echo("<!--\n");
+         foreach($input as $in)
+         {
+            print_r($in);
+            echo("\n");
+         }
+         echo("-->\n");
+      }
 		return true;
 	}
 }

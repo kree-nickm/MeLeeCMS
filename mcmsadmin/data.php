@@ -1,4 +1,6 @@
 <?php
+namespace MeLeeCMS;
+
 require_once("load_page.php");
 
 /*if(!empty($_GET['perPage']) && is_numeric($_GET['perPage']))

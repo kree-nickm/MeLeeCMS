@@ -31,7 +31,12 @@ class OAuth2Client
 		$this->grant_type = $grant_type;
 		if($this->grant_type === "authorization_code")
 		{
-			$this->parameters['scope'] = $parameters['scope'];
+         // scope is required
+         if(isset($parameters['scope']) && is_array($parameters['scope']))
+            $this->parameters['scope'] = $parameters['scope'];
+         else
+            $this->parameters['scope'] = [];
+         // redirect_uri is required
 			if(!empty($parameters['redirect_uri']))
 				$this->parameters['redirect_uri'] = $parameters['redirect_uri'];
 			else
@@ -42,6 +47,7 @@ class OAuth2Client
 					$uri = $_SERVER['REQUEST_URI'];
 				$this->parameters['redirect_uri'] = (!empty($_SERVER['HTTPS']) ? "https" : "http") ."://". $_SERVER['HTTP_HOST'] . $uri;
 			}
+         // state is not usually required but we are going to use it
 			if(!empty($parameters['state']))
 				$this->parameters['state'] = $parameters['state'];
 			else
@@ -100,7 +106,7 @@ class OAuth2Client
 			];
 		}
 		
-		if(!empty($_SESSION[$this->client_id."_token"]) && is_object($_SESSION[$this->client_id."_token"]))
+		if(isset($_SESSION[$this->client_id."_token"]) && is_object($_SESSION[$this->client_id."_token"]))
 			$this->token = $_SESSION[$this->client_id."_token"];
 		
 		if(!empty($this->token->instance_url))
@@ -225,7 +231,7 @@ class OAuth2Client
    // TODO: Check rate limits and handle it. Different APIs do it different though, unfortunately.
 	public function api_request($url="", $request="GET", $data="", $headers=[])
 	{
-		if(!empty($this->token->expires_in) && ($_SESSION[$this->client_id."_token_time"] + $this->token->expires_in) >= time())
+		if(!empty($this->token->expires_in) && ($_SESSION[$this->client_id."_token_time"] + $this->token->expires_in) <= time())
 			$this->refresh();
 		if($this->login_attempted && !$this->login_succeeded) // If we failed to login, let's not send more failed API queries.
 			return $this->token;
@@ -270,4 +276,13 @@ class OAuth2Client
 	{
 		return $this->auth_url ."/oauth2/authorize?response_type=code&client_id=". urlencode($this->client_id) ."&scope=". urlencode(implode(" ", $this->parameters['scope'])) ."&redirect_uri=". urlencode($this->parameters['redirect_uri']) . "&state=". urlencode($this->parameters['state']);
 	}
+   
+   public function getReport()
+   {
+      return [
+         'request_count' => count($this->curl->request_info),
+         'total_request_time' => array_sum(array_column($this->curl->request_info, 'total_time')),
+         'request_list' => array_column($this->curl->request_info, 'url'),
+      ];
+   }
 }

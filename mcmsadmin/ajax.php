@@ -1,4 +1,6 @@
 <?php
+namespace MeLeeCMS;
+
 require_once("../includes/MeLeeCMS.php");
 
 if(!empty($_REQUEST['ContentClass']))

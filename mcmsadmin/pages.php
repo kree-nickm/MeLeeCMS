@@ -1,4 +1,6 @@
 <?php
+namespace MeLeeCMS;
+
 require_once("load_page.php");
 
 // Page List

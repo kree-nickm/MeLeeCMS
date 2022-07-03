@@ -1,4 +1,6 @@
 <?php
+namespace MeLeeCMS;
+
 require_once("load_page.php");
 
 $page = $builder->add_content(new Container(), "themes-list");

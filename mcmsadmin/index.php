@@ -1,4 +1,6 @@
 <?php
+namespace MeLeeCMS;
+
 require_once("load_page.php");
 
 $settings = $builder->database->query("SELECT * FROM `settings` ORDER BY `setting` ASC");
