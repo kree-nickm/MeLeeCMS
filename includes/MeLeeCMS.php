@@ -1,13 +1,20 @@
 <?php
+/**
+The code for the MeLeeCMS class, as well as some initial setup before the application is loaded.
+In addition to the MeLeeCMS class definition, this file also does the following things immediately upon execution, before the class is instantiated or even defined:
+- Changes the INI settings for how errors are logged; `display_errors` off, `log_errors` on, and `error_log` set to a directory and file in `includes/logs/` based on today's date.
+- Records the current system time and memory before MeLeeCMS runs, so that usage data can be calculated later.
+- Defines a function that performs said calculation.
+*/
 namespace MeLeeCMS;
 
 /*
  * TODO: Guilty admission: This project has inconsistent indentations and naming conventions. This is a consequence of being developed over more than a decade, and my preferences and text editors/settings changing over that time period. So, to clarify the project's conventions in the hope of eventually making every file conform to them:
- * * Indentations should be 3 spaces.
- * * Class names should be PascalCase
- * * Constants should be CAPITAL_UNDER_SCORED
- * * Class methods should be camelCase()
- * * All other variables and functions should be under_scored
+ * - Indentations should be 3 spaces.
+ * - Class names should be PascalCase
+ * - Constants should be CAPITAL_UNDER_SCORED
+ * - Class methods should be camelCase()
+ * - All other variables and functions should be under_scored
  * The naming conventions are my best attempt to conform to PHP's own naming conventions, which are themselves inconsistent.
  */
 ini_set("display_errors", 0);
@@ -30,11 +37,15 @@ ini_set("error_log", $error_file);
 /** Define these for PHP<5.3.0, just in case we ever care about backwards-compatibility. */
 defined("E_DEPRECATED") OR define("E_DEPRECATED", 8192);
 defined("E_USER_DEPRECATED") OR define("E_USER_DEPRECATED", 16384);
-/** The current memory usage at the time the page starts loading. */
+/** @var int The current memory usage at the time the page starts loading. */
 define("START_MEMORY", memory_get_usage());
-/** The current microsecond timestamp at the time the page starts loading. */
+/** @var float The current microsecond timestamp at the time the page starts loading. */
 define("START_TIME", microtime(true));
-/** Prints out the time elapsed and net memory usage since the page first started loading, in the form of an HTML comment. */
+/**
+Prints out the time elapsed and net memory usage since the page first started loading, in the form of an HTML comment.
+@source
+@return void
+*/
 function print_load_statistics()
 {
 	$time = (round((microtime(true) - START_TIME)*1000000)/1000) ." ms";
@@ -63,44 +74,129 @@ function print_load_statistics()
  */
 class MeLeeCMS
 {
+   /** @var int Bit for loading the MySQL database. */
    const SETUP_DATABASE = 1;
+   /** @var int Bit for loading site settings from the MySQL database to overwrite specific `config.php` settings. */
    const SETUP_SETTINGS = 2;
+   /** @var int Bit for loading all themes from the `themes/` directory. */
    const SETUP_THEMES = 4;
+   /** @var int Bit for loading only the `default_theme` as specifid in the settings, plus its superthemes. */
    const SETUP_THEME = 128;
+   /** @var int Bit for loading the user class specified in the settings and attempting to authenticate the user. */
    const SETUP_USER = 8;
+   /** @var int Bit for loading all forms so that POST requests can be handled. */
    const SETUP_FORMS = 32;
+   /** @var int Bit for loading all pages and special pages. */
    const SETUP_PAGES = 64;
+   /** @var int Bit for loading only the page specified in the URL, plus all special pages. */
    const SETUP_PAGE = 16;
    
+   /** @var int Bit union for loading only the features needed to authenticate a user. */
    const MODE_AUTH = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_USER;
+   /** @var int Bit union for loading only the features needed to handle a POST request. */
    const MODE_FORM = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_USER | self::SETUP_FORMS;
+   /** @var int Bit union for loading only the features needed to display a page. */
    const MODE_PAGE = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_THEME | self::SETUP_USER | self::SETUP_PAGE;
+   /** @var int Bit union for loading all MeLeeCMS features. This is the default. */
    const MODE_ALL  = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_THEMES | self::SETUP_USER | self::SETUP_FORMS | self::SETUP_PAGES | self::SETUP_PAGE;
    
+   /** @var int The bit union used in the MeLeeCMS constructor. */
 	protected $mode;
+   /** @var string[] Array of key/value pairs for all loaded MeLeeCMS settings. */
 	protected $settings = [];
+   /** @var boolean Whether to load the control panel instead of a normal page. */
 	protected $cpanel;
+   /**
+   @var string The full title that will appear on the browser window.
+   @see MeLeeCMS::set_title() The method that defines this property.
+   */
 	protected $page_title = "";
-	protected $page_theme = "";
+   /**
+   @var Theme The Theme that will be used to render the page and resolve JS and CSS files.
+   @see MeLeeCMS::setTheme() The setter for this property.
+   @see MeLeeCMS::getTheme() The getter for this property.
+   */
+	protected $page_theme;
+   /**
+   @var array[] The CSS that the page will use, including files, code, and whether to load a file from the Theme or externally.
+   @see MeLeeCMS::attach_css() The method that populates this array.
+   */
 	protected $page_css = [];
+   /**
+   @var array[] The JavaScript that the page will use, including files, code, and whether to load a file from the Theme or externally.
+   @see MeLeeCMS::attach_js() The method that populates this array.
+   */
 	protected $page_js = [];
+   /**
+   @var string[] The XSL files that the page will use.
+   @see MeLeeCMS::attach_xsl() The method that populates this array.
+   */
 	protected $page_xsl = [];
+   /**
+   @var Content[] The various objects that are subclasses of Content, which will be used to display the page content.
+   @see MeLeeCMS::add_content() The method that populates this array.
+   */
 	protected $page_content = [];
+   /**
+   @var array[] Arrays of mixed types containing debug output, which will be printed in HTML comments at the bottom of the page source.
+   @see MeLeeCMS::debugLog() The method that populates this array.
+   */
 	protected $debug_log = [];
 	
+   /** @var string[] The system file paths from which MeLeeCMS will attempt to autoload classes. */
 	public $class_paths = [];
+   /** @var string The parsed and calculated `$_SERVER['PATH_INFO']` that MeLeeCMS will use to determine what page to load. */
 	public $path_info;
+   /**
+   @var Database The loaded database that all MeLeeCMS components will use to make MySQL queries.
+   @see MeLeeCMS::setupDatabase() The method that defines this property.
+   */
 	public $database;
+   /**
+   @var User The object representing the current user, including any authentication and external APIs (such as OAuth) used to identify them.
+   @see MeLeeCMS::setupUser() The method that defines this property.
+   */
 	public $user;
+   /**
+   @var Page The page that MeLeeCMS will render on this request.
+   @see MeLeeCMS::setupPage() The method that defines this property.
+   */
 	public $page;
+   /**
+   @var Theme[] All of the currently loaded themes.
+   @see MeLeeCMS::addTheme() The method that populates this array.
+   */
 	public $themes = [];
+   /**
+   @var Page[] All of the currently loaded pages.
+   @see MeLeeCMS::addPage() The method that populates this array.
+   */
 	public $pages = [];
+   /**
+   @var Page[] All of the currently loaded special pages.
+   Special pages are pages not selected by a URL, but rather by certain conditions (such as error codes) if no page was selected by the URL.
+   @see MeLeeCMS::addPage() The method that populates this array.
+   */
 	public $special_pages = [];
+   /** @var array[] All of the currently loaded forms. */
 	public $forms = [];
+   /**
+   @var array[] All arbitrary non-content data that MeLeeCMS is to include with the page, which will be sent to the user in the `window.MeLeeCMS` JavaScript object, as well as provided to XSLT.
+   @see MeLeeCMS::addData() The method that populates this array.
+   */
 	public $temp_data = [];
+   /** @var string[] PHP files to include between the instantiation of MeLeeCMS and the final page render. Mostly used when you want to have a PHP file construct the page, as opposed to the control panel building the page. */
 	public $include_later = [];
+   /**
+   @var mixed[] Stores the parameters of the last refresh request.
+   @see MeLeeCMS::requestRefresh() The method that determines this property's value.
+   */
 	public $refresh_requested = ['strip'=>[]];
 
+   /**
+   Loads MeLeeCMS.
+   @param int $mode A bitwise union of all features to load. You can use one of the predefined MODE_* constants or create a union of SETUP_* constants yourself.
+   */
 	public function __construct($mode=self::MODE_ALL)
 	{
 		$this->mode = $mode;
@@ -168,12 +264,25 @@ class MeLeeCMS
 			$this->refreshPage();
 	}
 	
+   /**
+   Informs MeLeeCMS that the current page needs to reload before the user can view the site properly.
+   Allows for a few parameters to be set that will change the full URL query string, rather than a plain refresh. The request is delayed so that the page can finish any important processing before exiting and reloading.
+   @see MeLeeCMS::refreshPage() Page isn't reloaded until the linked method is called.
+   @param string|null $destination The URL to load instead of refreshing the current one. If null, defaults to `$_SERVER['REQUEST_URI']`.
+   @param string|string[] $strip_query An array of query parameters to strip from the current URL before loading the page again. The strings must match the full parameter name and value, not just the name. A string will be treated as a single-element array containing that string.
+   @return void
+   */
 	public function requestRefresh($destination=null, $strip_query=[])
 	{
 		if($destination === null)
 			$destination = $_SERVER['REQUEST_URI'];
-		if(empty($this->refresh_requested['url']) || $destination !== $_SERVER['REQUEST_URI'] && ($destination !== $_SERVER['HTTP_REFERER'] || $this->refresh_requested['url'] === $_SERVER['REQUEST_URI']))
+		if(
+         empty($this->refresh_requested['url']) ||
+            $destination !== $_SERVER['REQUEST_URI'] &&
+            ($destination !== $_SERVER['HTTP_REFERER'] || $this->refresh_requested['url'] === $_SERVER['REQUEST_URI'])
+      )
 			$this->refresh_requested['url'] = $destination;
+         
 		if(is_array($strip_query))
 			$this->refresh_requested['strip'] = array_merge($this->refresh_requested['strip'], $strip_query);
 		else if(!empty($strip_query))
@@ -181,6 +290,12 @@ class MeLeeCMS
 		//register_shutdown_function([$this, "refreshPage"]);
 	}
 	
+   /**
+   Sends the Location header prepared by a previous method call and exits the application.
+   The URL that is loaded and how the query string is altered depend on the previous call to `MeLeeCMS->requestRefresh()`.
+   @see MeLeeCMS::requestRefresh() Linked method must be called before this method will reload the page.
+   @return void
+   */
 	protected function refreshPage()
 	{
 		if(isset($this->refresh_requested['url']))
@@ -188,10 +303,12 @@ class MeLeeCMS
 			$url = $this->refresh_requested['url'];
 			foreach($this->refresh_requested['strip'] as $param)
 			{
+            // TODO: Why do we need both? Check it out.
 				$url = str_replace("?".$param."&", "?", $url);
 				$url = preg_replace("/[?&]". $param ."\\b/i", "", $url);
 			}
 			header("Location: ". $url);
+         exit;
 		}
 	}
    
@@ -546,7 +663,7 @@ class MeLeeCMS
 		{
 			reset($this->themes);
 			if(!empty(current($this->themes)))
-				$this->page_theme = $this->themes;
+				$this->page_theme = current($this->themes);
 			else
             throw new \Exception("Page has no valid themes.");
 		}

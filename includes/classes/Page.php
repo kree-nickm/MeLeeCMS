@@ -64,7 +64,7 @@ class Page
          if(!empty($page_data['file']) && is_file($cms->get_setting("server_path") ."includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR . $page_data['file']))
          {
             $this->file = $page_data['file'];
-            $this->subtheme = $page_data['subtheme'] ?? "";
+            $this->subtheme = !empty($page_data['subtheme']) ? $page_data['subtheme'] : "";
             $check = ["title","css","js","xsl","permission","content"];
             $check = array_filter($check, function($val) use($page_data){ return !empty($page_data[$val]); });
             if(count($check))
@@ -76,10 +76,10 @@ class Page
             // TODO: Maybe throw an exception if an invalid file was provided?
             if(!empty($page_data['file']))
                trigger_error("File '{$page_data['file']}' was provided for the page, but it was invalid. Content was also provided, so using that instead.", E_USER_WARNING);
-            $this->title = $page_data['title'] ?? $page_data['url'] ?? $page_data['id'];
-            $this->subtheme = $page_data['subtheme'] ?? "";
-            $this->permission = $page_data['permission'] ?? 1;
-            $this->content_serialized = $page_data['content'] ?? "";
+            $this->title = !empty($page_data['title']) ? $page_data['title'] : (!empty($page_data['url']) ? $page_data['url'] : $page_data['id']);
+            $this->subtheme = !empty($page_data['subtheme']) ? $page_data['subtheme'] : "";
+            $this->permission = !empty($page_data['permission']) ? $page_data['permission'] : 1;
+            $this->content_serialized = !empty($page_data['content']) ? $page_data['content'] : "";
             // Verify that css, js, and xsl and properly defined.
             foreach(['css','js','xsl'] as $type)
             {

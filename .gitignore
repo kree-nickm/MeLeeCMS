@@ -1,9 +1,9 @@
 # User-Specific Files
 /includes/pages/*
-!test-page.php
+!test-page.php*
 
 /includes/forms/*
-!test-form.php
+!test-form.php*
 
 /themes/*
 !default/
@@ -12,10 +12,8 @@
 /addons/*
 
 # Private User Files
-**/config.php*
+/includes/config.php*
 /includes/logs/*
 
 # Documentation
 /documentation/
-/.phpdoc/
-/phpdox.xml
