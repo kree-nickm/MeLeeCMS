@@ -39,9 +39,9 @@ class MeLeeSessionHandler implements \SessionHandlerInterface
 			'time' => time(),
 			'ip' => $_SERVER['REMOTE_ADDR'],
 			'user_agent' => $_SERVER['HTTP_USER_AGENT'],
+         // TODO: below setting does not seem to be working.
+			'session_indefinite' => (int)!empty($this->cms->session_expiration),
 		];
-		if(isset($_POST['remember_me']))
-			$mysql_data['session_indefinite'] = !empty($_POST['remember_me']);
 		$this->cms->database->insert("sessions", $mysql_data);
 		return true;
 	}
@@ -73,7 +73,7 @@ class MeLeeSessionHandler implements \SessionHandlerInterface
 	
 	public function gc($maxlifetime)
 	{
-		$this->cms->database->query("DELETE FROM sessions WHERE `time`<". (int)(time()-$maxlifetime) ." AND (`user`=0 OR `session_indefinite`=0)");
-		return true;
+		$count = $this->cms->database->query("DELETE FROM sessions WHERE `time`<". (int)(time()-$maxlifetime) ." AND (`user`=0 OR `session_indefinite`=0)", Database::RETURN_COUNT);
+		return $count;
 	}
 }

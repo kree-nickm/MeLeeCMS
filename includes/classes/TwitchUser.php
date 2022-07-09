@@ -30,9 +30,12 @@ class TwitchUser extends User
             [
                'scope' => $GlobalConfig['twitch_scope'],
                'redirect_uri' => $GlobalConfig['twitch_redirect_uri']
-            ]
+            ],
+            null,
+            true
          );
 			$this->api->api_url = "https://api.twitch.tv";
+         // TODO: Twitch API mentions something about validating tokens periodically even while the app is not in use, which I haven't been doing.
          
          // Check if we have a valid access token from the API.
 			if(!empty($this->api->token->access_token))
@@ -104,6 +107,13 @@ class TwitchUser extends User
 				else
 					$this->user_info['follows'] = [];
             
+            if(!empty($user_data))
+					$this->user_info['twitch_data'] = $user_data;
+            else
+            {
+               $this->user_info['twitch_data'] = json_decode($this->cms->database->query("SELECT `data` FROM `custom_twitchusercache` WHERE `id`=". $this->cms->database->quote($this->user_info['twitch_id']), Database::RETURN_FIELD));
+            }
+            
             $tzset = date_default_timezone_set($this->user_info['timezone']);
             if(!$tzset)
             {
@@ -139,11 +149,7 @@ class TwitchUser extends User
 	public function api_request($url="", $request="GET", $data="", $headers=[])
 	{
 		global $GlobalConfig;
-		$headers = array_merge($headers, ["Client-ID: {$GlobalConfig['twitch_client_id']}"]);
-		if(substr($url, 0, 8) == "/kraken/")
-			trigger_error("Attempted to send request '{$url}' to the old Twitch API which has been turned off.", E_USER_WARNING);
-		else if(substr($url, 0, 7) == "/helix/")
-			$headers = array_merge($headers, ["Authorization: Bearer {$this->api->token->access_token}"]);
+		$headers = array_merge($headers, ["Client-Id: {$GlobalConfig['twitch_client_id']}"]);
 		return $this->api->api_request($url, $request, $data, $headers);
 	}
 	

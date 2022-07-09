@@ -9,14 +9,14 @@ In addition to the MeLeeCMS class definition, this file also does the following 
 namespace MeLeeCMS;
 
 /*
- * TODO: Guilty admission: This project has inconsistent indentations and naming conventions. This is a consequence of being developed over more than a decade, and my preferences and text editors/settings changing over that time period. So, to clarify the project's conventions in the hope of eventually making every file conform to them:
- * - Indentations should be 3 spaces.
- * - Class names should be PascalCase
- * - Constants should be CAPITAL_UNDER_SCORED
- * - Class methods should be camelCase()
- * - All other variables and functions should be under_scored
- * The naming conventions are my best attempt to conform to PHP's own naming conventions, which are themselves inconsistent.
- */
+TODO: Guilty admission: This project has inconsistent indentations and naming conventions. This is a consequence of being developed over more than a decade, and my preferences and text editors/settings changing over that time period. So, to clarify the project's conventions in the hope of eventually making every file conform to them:
+- Indentations should be 3 spaces.
+- Class names should be PascalCase
+- Constants should be CAPITAL_UNDER_SCORED
+- Class methods should be camelCase()
+- All other variables and functions should be under_scored
+The naming conventions are my best attempt to conform to PHP's own naming conventions, which are themselves inconsistent.
+*/
 ini_set("display_errors", 0);
 ini_set("log_errors", 1);
 // Note: Don't know if we should care about this, but using __DIR__ means we require PHP>=5.3.0, and it appears in multiple files.
@@ -142,6 +142,8 @@ class MeLeeCMS
    @see MeLeeCMS::debugLog() The method that populates this array.
    */
 	protected $debug_log = [];
+   /** @var int Expiration time of the session cookie. */
+	protected $session_expiration = 86400*30;
 	
    /** @var string[] The system file paths from which MeLeeCMS will attempt to autoload classes. */
 	public $class_paths = [];
@@ -361,7 +363,7 @@ class MeLeeCMS
 		{
 			$mysql_data = [
 				'time' => time(),
-				'user' => !empty($this->user->get_property('index')) ? (int)$this->user->get_property('index') : 0,
+				'user' => !empty($this->user) ? (int)$this->user->get_property('index') : 0,
 				'level' => $level,
 				'type' => $type,
 				'message' => $message,
@@ -403,10 +405,28 @@ class MeLeeCMS
       }
       else
       {
-         trigger_error("Unable to load class '". $class ."'. Class is outside MeLeeCMS namespace.", E_USER_WARNING);
+         trigger_error("Unable to load class '". $class ."'. Class is outside MeLeeCMS namespace.\n". $this->implodeBacktrace(debug_backtrace(0)), E_USER_WARNING);
          return false;
       }
 	}
+   
+   public function implodeBacktrace($backtrace)
+   {
+      $result = "Backtrace:\n";
+      foreach($backtrace as $i=>$step)
+      {
+         $result .= "\tStep #{$i}\n";
+         if(!empty($step['file']))
+            $result .= "\t\tFile: {$step['file']}\n";
+         if(!empty($step['line']))
+            $result .= "\t\tLine: {$step['line']}\n";
+         if(!empty($step['class']))
+            $result .= "\t\tClass: {$step['class']}\n";
+         if(!empty($step['function']))
+            $result .= "\t\tFunction: {$step['function']}\n";
+      }
+      return $result;
+   }
 	
 	protected function setupDatabase()
 	{
@@ -479,9 +499,18 @@ class MeLeeCMS
 	
 	protected function setupUser()
 	{
+      global $GlobalConfig;
+      // TODO: Need to figure out when we are allowed to set cookie expiration. A not-logged-in user can't set the "remember me" flag, so their session cookie will expire with the browser window. However they retain the same session ID after logging in, so the cookie will need to be updated with a new expiration if they want to be remembered.
+      //$this->session_expiration = (!empty($_POST['remember_me']) && is_numeric($_POST['remember_me'])) ? (int)$_POST['remember_me'] : 0;
 		session_set_save_handler(new MeLeeSessionHandler($this), true);
 		session_name($this->get_setting('cookie_prefix') ."sessid");
-		session_start();
+      $session_options = [
+         'cookie_lifetime' => $this->session_expiration,
+         'cookie_secure' => empty($GlobalConfig['force_https']) ? 0 : 1,
+         'cookie_httponly' => 1,
+         //'cookie_samesite' => "strict", // only works in PHP>=7.3.0
+      ];
+		session_start($session_options);
 		if(isset($_SESSION['form_response']))
 		{
 			$this->addDataProtected('form_response', $_SESSION['form_response'], false);
@@ -797,6 +826,7 @@ class MeLeeCMS
 	
 	public function parse_template($data, $class, $subtheme)
 	{
+      // TODO: For classes other than MeLeeCMS, this shouldn't run their stylesheet by itself. It should collect all such stylesheets, then include them in the MeLeeCMS stylesheet when it runs along with $this->page_xsl.
       return $this->getTheme()->parseTemplate($data, $class, $subtheme, $this->page_xsl);
 	}
 

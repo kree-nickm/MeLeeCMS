@@ -97,12 +97,13 @@ if(is_file("includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR ."test-
       'file' => "test-page.php", // Specify the file name that contains the page logic in place of test-page.php
    ];
 }
+// TODO: These error pages have no way of including a navbar. Need to figure out how to implement a navbar in a way that any site can use, such that it appears on these generic error pages.
 // These are special pages, like the 404 page, etc. You can overwrite them in your config.php if you follow the same format.
 $GlobalConfig['pages']['404'] = [ // Arbitrary array key, '404' in this case. Only useful if you want to overwrite this definition in your own config.php.
    'id' => "404", // A unique ID for the special page.
    'select' => function($cms){ return http_response_code()==404; }, // A function that returns true if this page should load, or false if not. A normal page that matches the requested URL will load first if possible. If that load fails, then, special pages are checked in the order they are defined, and the first matching page is displayed. A reference to the MeLeeCMS instance is provided in case you need it.
    'subtheme' => "default", // See above.
-   'content' => "a:1:{s:7:\"content\";O:9:\"Container\":3:{s:5:\"title\";s:14:\"Page Not Found\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:4:\"Text\":2:{s:4:\"text\";s:45:\"The page you are looking for cannot be found.\";s:5:\"attrs\";a:0:{}}}}}", // Serialized PHP data. Not recommended that you do this if you are defining your own special pages; just use a file instead.
+   'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:14:\"Page Not Found\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:45:\"The page you are looking for cannot be found.\";s:5:\"attrs\";a:0:{}}}}}", // Serialized PHP data. Not recommended that you do this if you are defining your own special pages; just use a file instead.
    'title' => "Page Not Found",
    'css' => [], // List of CSS files to include on this page, relative to the theme's CSS directory.
    'js' => [], // List of JS files to include on this page, relative to the theme's JS directory.
@@ -113,7 +114,7 @@ $GlobalConfig['pages']['403'] = [
    'id' => "403",
    'select' => function($cms){ return http_response_code()==403; },
    'subtheme' => "default",
-   'content' => "a:1:{s:7:\"content\";O:9:\"Container\":3:{s:5:\"title\";s:13:\"Access Denied\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:4:\"Text\":2:{s:4:\"text\";s:45:\"You do not have permission to view this page.\";s:5:\"attrs\";a:0:{}}}}}",
+   'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:13:\"Access Denied\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:45:\"You do not have permission to view this page.\";s:5:\"attrs\";a:0:{}}}}}",
    'title' => "Access Denied",
    'css' => [],
    'js' => [],
@@ -123,7 +124,7 @@ $GlobalConfig['pages']['401'] = [
    'id' => "401",
    'select' => function($cms){ return http_response_code()==401; },
    'subtheme' => "default",
-   'content' => "a:1:{s:7:\"content\";O:9:\"Container\":3:{s:5:\"title\";s:14:\"Login Required\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:4:\"Text\":2:{s:4:\"text\";s:40:\"You must be logged in to view this page.\";s:5:\"attrs\";a:0:{}}}}}",
+   'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:14:\"Login Required\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:40:\"You must be logged in to view this page.\";s:5:\"attrs\";a:0:{}}}}}",
    'title' => "Login Required",
    'css' => [],
    'js' => [],

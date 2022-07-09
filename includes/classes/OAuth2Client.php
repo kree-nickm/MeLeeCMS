@@ -1,6 +1,16 @@
 <?php
+/** The code for the OAuth2Client class. */
 namespace MeLeeCMS;
 
+/**
+An additional wrapper class for the CURLWrapper class, to make cURL requests even easier in the case of interacting with an OAuth 2.0 API.
+APIs currently supported:
+- Twitch
+APIs with support pending:
+- Discord
+- YouTube
+- Salesforce (maybe)
+*/
 class OAuth2Client
 {
 	const E_STATE_MISMATCH = 1;
@@ -16,9 +26,12 @@ class OAuth2Client
 	public $login_attempted = false;
 	public $login_succeeded = false;
 	public $token;
+	public $implicit_token;
 	public $error = [];
+	public $rate_limit;
+	public $get_implicit;
 	
-	public function __construct($url, $client_id, $client_secret, $grant_type, $parameters=[])
+	public function __construct($url, $client_id, $client_secret, $grant_type, $parameters=[], $rate_limit=null, $get_implicit=false)
 	{
 		// Setup the properties that we'll need.
 		if(is_array($url))
@@ -52,15 +65,23 @@ class OAuth2Client
 				$this->parameters['state'] = $parameters['state'];
 			else
 				$this->parameters['state'] = md5(session_id());
+         $implicit_relog_state = "implicit_relog";
 		}
 		else if($this->grant_type === "password")
 		{
 			$this->parameters['username'] = $parameters['username'];
 			$this->parameters['password'] = $parameters['password'];
 		}
+      
+      if(empty($rate_limit))
+         $this->rate_limit = new OAuth2ClientRateLimit();
+      else
+         $this->rate_limit = $rate_limit;
+      
+      $this->get_implicit = $get_implicit;
 		
 		// Begin the login process.
-		$this->curl = new CURLWrapper();
+		$this->curl = new CURLWrapper([], true, false);
 		
 		// W-I-P code for password logins.
 		if($this->grant_type === "password")
@@ -81,9 +102,14 @@ class OAuth2Client
 		{
 			if($this->login($_REQUEST['code']))
 			{
-				// Reload to get rid of the REQUEST stuff.
-				// Note: MeLeeCMS has its own method for requesting a page refresh, but I think it's fine to do this here.
-				header("Location: ". $this->parameters['redirect_uri']);
+            // Note: MeLeeCMS has its own method for requesting a page "refresh", but I think it's fine to do this here.
+            if($get_implicit)
+            {
+               header("Location: ". $this->auth_url ."/oauth2/authorize?response_type=token&client_id=". urlencode($this->client_id) ."&scope=". urlencode(implode(" ", $this->parameters['scope'])) ."&redirect_uri=". urlencode($this->parameters['redirect_uri']) . "&state=". urlencode($this->parameters['state']));
+            }
+            else
+               // Reload to get rid of the REQUEST stuff.
+               header("Location: ". $this->parameters['redirect_uri']);
 			}
 			else
 			{
@@ -105,9 +131,36 @@ class OAuth2Client
 				'got' => $_REQUEST['state'],
 			];
 		}
+      // TODO: We can have a session var update on every page load with a new state and send it to JavaScript for implicit grant relog states
+		else if($get_implicit && !empty($_REQUEST['implicit_grant']) && !empty($_REQUEST['access_token']) && !empty($_REQUEST['token_type']) && ($_REQUEST['state'] == $this->parameters['state'] || substr($_REQUEST['state'], 0, strlen($implicit_relog_state)) == $implicit_relog_state))
+		{
+         // Implicit code granted.
+         $this->implicit_token = [
+            'access_token' => $_REQUEST['access_token'],
+            'token_type' => $_REQUEST['token_type'],
+         ];
+         $_SESSION[$this->client_id."_implicit_token"] = $this->implicit_token;
+         // Reload to get rid of the REQUEST stuff.
+         if(substr($_REQUEST['state'], 0, strlen($implicit_relog_state)) == $implicit_relog_state)
+            header("Location: ". substr($_REQUEST['state'], strlen($implicit_relog_state)));
+         else
+            header("Location: ". $this->parameters['redirect_uri']);
+		}
+		else if($get_implicit && !empty($_REQUEST['implicit_grant']) && !empty($_REQUEST['access_token']) && !empty($_REQUEST['token_type']))
+		{
+			// Someone tried to log in, but there was a state mismatch.
+			$this->error = [
+				'code' => self::E_STATE_MISMATCH,
+				'expected' => $this->parameters['state'],
+				'got' => $_REQUEST['state'],
+			];
+		}
 		
 		if(isset($_SESSION[$this->client_id."_token"]) && is_object($_SESSION[$this->client_id."_token"]))
 			$this->token = $_SESSION[$this->client_id."_token"];
+		
+		if($get_implicit && isset($_SESSION[$this->client_id."_implicit_token"]) && is_array($_SESSION[$this->client_id."_implicit_token"]))
+			$this->implicit_token = $_SESSION[$this->client_id."_implicit_token"];
 		
 		if(!empty($this->token->instance_url))
 		{
@@ -124,6 +177,7 @@ class OAuth2Client
 		$this->token = null;
 		unset($_SESSION[$this->client_id."_token"]);
 		unset($_SESSION[$this->client_id."_token_time"]);
+		unset($_SESSION[$this->client_id."_implicit_token"]);
 		$this->login_attempted = false;
 		$this->login_succeeded = false;
 	}
@@ -253,8 +307,10 @@ class OAuth2Client
 			CURLOPT_CUSTOMREQUEST => $request,
 			CURLOPT_POSTFIELDS => $data,
 			CURLOPT_HTTPHEADER => $headers,
+         // TODO: Cookie access token might be redundant now with most APIs.
 			CURLOPT_COOKIE => "ACCESS_TOKEN=". $this->token->access_token,
 		];
+      // If the caller didn't provide these required headers, set them now with OAuth2 defaults.
 		$hasAuth = false;
 		$hasCType = false;
 		foreach($options[CURLOPT_HTTPHEADER] as $head)
@@ -265,7 +321,13 @@ class OAuth2Client
 				$hasCType = true;
 		}
 		if(!$hasAuth)
-			$options[CURLOPT_HTTPHEADER][] = "Authorization: Bearer ". $this->token->access_token;
+      {
+         if(!empty($this->token->token_type))
+            // Note: ucfirst() is because Twitch sends "bearer" in lowercase, but requires it to be sent capitalized. Leave it to Twitch to be stupid literally all the time.
+            $options[CURLOPT_HTTPHEADER][] = "Authorization: ". ucfirst($this->token->token_type) ." {$this->token->access_token}";
+         else
+            throw new \Exception("No token type provided by either the calling class or the OAuth 2.0 token.");
+      }
 		if(!$hasCType)
 			$options[CURLOPT_HTTPHEADER][] = "Content-Type: application/json";
 		$raw = $this->curl->request($this->api_url . $url, $options);
@@ -279,10 +341,23 @@ class OAuth2Client
    
    public function getReport()
    {
+      $request_info = array_column($this->curl->log, 'request_info');
       return [
-         'request_count' => count($this->curl->request_info),
-         'total_request_time' => array_sum(array_column($this->curl->request_info, 'total_time')),
-         'request_list' => array_column($this->curl->request_info, 'url'),
+         'request_count' => count($this->curl->log),
+         'total_request_time' => array_sum(array_column($request_info, 'total_time')),
+         'request_log' => $this->curl->log,
+      ];
+   }
+   
+   public function getJSONData()
+   {
+      return [
+         'auth_url' => $this->auth_url,
+         'api_url' => $this->api_url,
+         'client_id' => $this->client_id,
+         'scope' => $this->parameters['scope'],
+         'redirect_uri' => $this->parameters['redirect_uri'],
+         'token' => $this->implicit_token,
       ];
    }
 }

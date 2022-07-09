@@ -5,12 +5,15 @@ class CURLWrapper
 {
 	public $curl;
 	public $default_options;
-	public $response_headers = [];
-	public $request_info = [];
+	public $log = [];
+	public $log_postdata;
+	public $log_responses;
 	
-	public function __construct($options=[])
+	public function __construct($options=[], $log_postdata=false, $log_responses=false)
 	{
 		$this->curl = curl_init();
+      $this->log_postdata = $log_postdata;
+      $this->log_responses = $log_responses;
 		$default_options = [
 			CURLOPT_FRESH_CONNECT => true,
 			CURLOPT_HEADER => true,
@@ -55,6 +58,8 @@ class CURLWrapper
 				case "data":
 				case CURLOPT_POSTFIELDS:
 					$curl_options[CURLOPT_POSTFIELDS] = $val;
+               if($this->log_postdata)
+                  $post_data = $val;
 					break;
 				default:
 					$curl_options[$opt] = $val;
@@ -81,7 +86,6 @@ class CURLWrapper
 			// Note: Don't know if we should care about this, but using curl_strerror() means we require PHP>=5.5.0
 			$raw = ['type'=>curl_strerror(curl_errno($this->curl)), 'message'=>curl_error($this->curl)];
 		}
-		$this->response_headers[] = $response_headers;
       
       // Parse the request_header field into an array before storing it.
 		$request_info = curl_getinfo($this->curl);
@@ -107,7 +111,14 @@ class CURLWrapper
          }
          $request_info['request_header'] = $request_headers;
       }
-		$this->request_info[] = $request_info;
+      $this->log[] = [
+         'request_info' => $request_info,
+         'response_headers' => $response_headers,
+      ];
+      if($this->log_postdata)
+         $this->log[count($this->log)-1]['post_data'] = !empty($post_data) ? $post_data : "";
+      if($this->log_responses)
+         $this->log[count($this->log)-1]['response'] = $raw;
       
 		// Note: Don't know if we should care about this, but using curl_reset() means we require PHP>=5.5.0
 		curl_reset($this->curl);
@@ -115,13 +126,13 @@ class CURLWrapper
 		return $raw;
 	}
    
-   public function getLastHeaders()
-   {
-      return $this->response_headers[count($this->response_headers)-1];
-   }
-   
    public function getLastRequestInfo()
    {
-      return $this->request_info[count($this->request_info)-1];
+      return $this->log[count($this->log)-1]['request_info'];
+   }
+   
+   public function getLastHeaders()
+   {
+      return $this->log[count($this->log)-1]['response_headers'];
    }
 }
