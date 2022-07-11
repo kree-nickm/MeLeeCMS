@@ -870,12 +870,15 @@ class MeLeeCMS
 				'href' => ($css['fromtheme'] ? $this->getTheme()->resolveFile("css", $css['href']) : $css['href']),
 				'code' => $css['code'],
 			];
+      $data_json = json_encode($this->temp_data, JSON_PARTIAL_OUTPUT_ON_ERROR);
+      if($json_err = json_last_error())
+         trigger_error("Error code '{$json_err}' triggered when encoding MeLeeCMS data to JSON.", E_USER_WARNING);
 		$params['js'] = [[
 			'code' => 
             "window.MeLeeCMS = new (function MeLeeCMS(){".
                "this.url_path=\"". addslashes($this->get_setting('url_path')) ."\";".
                "this.theme=\"". addslashes($this->getTheme()->name) ."\";".
-               "this.data=". json_encode($this->temp_data).
+               "this.data=". (!empty($data_json) ? $data_json : "{}").
             "})();",
 		]];
 		foreach($this->page_js as $js)
@@ -900,7 +903,9 @@ class MeLeeCMS
 				echo($html);
 		}
       if(!empty($this->user->api))
+      {
          $this->debugLog("ADMIN", "API requests:", $this->user->api->getReport());
+      }
       foreach($this->debug_log as $input)
       {
          echo("<!--\n");

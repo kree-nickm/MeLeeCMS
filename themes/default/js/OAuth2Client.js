@@ -34,6 +34,16 @@ class OAuth2Client
       }
    }
    
+   static objectToPostData(object)
+   {
+      let out = "";
+      for(let key in object)
+      {
+         out = out + "&" + encodeURIComponent(key) + "=" + encodeURIComponent(object[key]);
+      }
+      return out.slice(1);
+   }
+   
    constructor(options)
    {
       this.auth_url = options.auth_url;
@@ -54,7 +64,7 @@ class OAuth2Client
       // Option A is to go through the implicit grant process again with the current page. Downside is the user will notice the big multi-page request chain as their user-token refreshes. Since this is being called without warning when the access token expires, it might take them by surprise.
       location.href = url;
       
-      // Option B is to use AJAX to go through the process, which should redirect back to this site. Then this site can update the implicit token session var, and then once that's done we can reload the current page, which should have that new token because of the session. But some APIs don't seem to like that this is happening and are returning errors, so maybe it's not possible?
+      // Option B is to use AJAX to go through the process, which should redirect back to this site. Then this site can update the implicit token session var, and then once that's done we can reload the current page, which should have that new token because of the session. Upside is it would generally happen seamlessly without the user noticing, but some APIs don't seem to like that this is happening and are returning errors, so maybe it's not possible?
       /*return fetch(url, {mode:"no-cors"}).then(response => {
          console.log("Login request response:", response);
       }, response => {
@@ -68,14 +78,20 @@ class OAuth2Client
       headers['Authorization'] = this.token_type +" "+ this.access_token;
       let fetchInit = {
          method: method,
-         body: data,
+         // TODO: Not sure OAuth2 APIs want JSON, might have to convert to application/x-www-form-urlencoded
+         body: JSON.stringify(data),
          headers: headers,
+         //mode: "no-cors",
       };
       if(method=="GET" || method=="HEAD")
          delete fetchInit.body;
+      else
+         headers['Content-Type'] = "application/json";
       return fetch(this.api_url + url, fetchInit).then(response => {
-         // TODO: These tokens expire without warning. Add code to refresh them.
+         // TODO: These tokens expire without warning. Add code to refresh them when that happens.
          console.log("API request response:", response);
+         // Cannot get rate limits in JavaScript because of Twitch's incompetence (what else is new), so just have to hope we don't hit it.
+         //console.log("Rate limit:", response.headers.get('ratelimit-remaining'), response.headers.get('ratelimit-limit'), response.headers.get('ratelimit-reset'));
          this.log.push(response);
          return response.json();
       }, response => {
