@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", function(event){
    MeLeeCMS.ajaxXSLT = async function(process, inputs={}, xsl=[])
    {
-      let ajaxXSLT = await fetch("ajaxXSLT.php", {
+      let ajaxXSLT = await fetch("", {
          method: "POST",
          body: JSON.stringify({
             process,

@@ -31,8 +31,8 @@ class TwitchUser extends User
                'scope' => $GlobalConfig['twitch_scope'],
                'redirect_uri' => $GlobalConfig['twitch_redirect_uri']
             ],
-            null,
-            true
+            new OAuth2ClientRateLimit("Ratelimit-Remaining", "Ratelimit-Reset", "timestamp", "Ratelimit-Limit"),
+            $GlobalConfig['twitch_implicit_enabled']
          );
 			$this->api->api_url = "https://api.twitch.tv";
          // TODO: Twitch API mentions something about validating tokens periodically even while the app is not in use, which I haven't been doing.

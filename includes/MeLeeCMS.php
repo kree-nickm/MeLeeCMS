@@ -316,7 +316,7 @@ class MeLeeCMS
    
 	public function debugLog($permission, ...$input)
    {
-      if(!empty($this->user) && $this->user->has_permission($permission))
+      if(empty($permission) || !empty($this->user) && $this->user->has_permission($permission))
          $this->debug_log[] = $input;
    }
    
@@ -902,10 +902,13 @@ class MeLeeCMS
 			else
 				echo($html);
 		}
+      
+      // TODO: Remove this. It's just here for OAuth testing.
       if(!empty($this->user->api))
       {
          $this->debugLog("ADMIN", "API requests:", $this->user->api->getReport());
       }
+      
       foreach($this->debug_log as $input)
       {
          echo("<!--\n");

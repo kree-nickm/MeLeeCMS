@@ -1,4 +1,10 @@
-# User-Specific Files
+# Common Site-Specific files
+/android-chrome*.png
+/apple-touch-icon.png
+/favicon*.*
+/site.webmanifest
+
+# MeLeeCMS Site-Specific Files
 /includes/pages/*
 !test-page.php*
 
@@ -11,7 +17,7 @@
 
 /addons/*
 
-# Private User Files
+# MeLeeCMS Private Files
 /includes/config.php*
 /includes/logs/*
 
