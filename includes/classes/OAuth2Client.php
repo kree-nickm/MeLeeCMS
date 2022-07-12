@@ -250,6 +250,7 @@ class OAuth2Client
 			'client_secret' => $this->client_secret,
 		];
 		$raw = $this->curl->request($this->auth_url ."/oauth2/token", [CURLOPT_POSTFIELDS => $post]);
+      $this->rate_limit->loadHeaders($this->curl->getLastHeaders());
 		if(is_object($json = json_decode($raw)))
 		{
 			if(!empty($json->access_token))
@@ -282,7 +283,6 @@ class OAuth2Client
 		}
 	}
 	
-   // TODO: Check rate limits and handle it. Different APIs do it different though, unfortunately.
 	public function api_request($url="", $request="GET", $data="", $headers=[])
 	{
 		if(!empty($this->token->expires_in) && ($_SESSION[$this->client_id."_token_time"] + $this->token->expires_in) <= time())
@@ -293,8 +293,18 @@ class OAuth2Client
 		{
 			$response = $this->perform_api_request($url, $request, $data, $headers);
 			if(!empty($response->status) && $response->status == 401) // Allegedly supposed to use this, but I don't know that it is reliable: strpos($this->curl->response_headers_raw, "\nWWW-Authenticate:") !== false
+         {
+            trigger_error("User OAuth2 access token needed a refresh even though it wasn't detected by the automatic refresh.", E_USER_NOTICE);
 				if($this->refresh())
 					$response = $this->perform_api_request($url, $request, $data, $headers);
+         }
+         else if($this->rate_limit->isHit())
+         {
+            // TODO: Maybe do more than this. If the reset is in a while, this could be rough.
+            $wait = $this->rate_limit->waitFor();
+            trigger_error("User exceeded the OAuth2 API's rate limit and needed to wait {$wait} seconds.", E_USER_NOTICE);
+            $response = $this->perform_api_request($url, $request, $data, $headers);
+         }
 			return $response;
 		}
 		else
@@ -331,6 +341,7 @@ class OAuth2Client
 		if(!$hasCType)
 			$options[CURLOPT_HTTPHEADER][] = "Content-Type: application/json";
 		$raw = $this->curl->request($this->api_url . $url, $options);
+      $this->rate_limit->loadHeaders($this->curl->getLastHeaders());
 		return json_decode($raw);
 	}
 	
