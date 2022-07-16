@@ -4,12 +4,16 @@ namespace MeLeeCMS;
 
 /**
 An additional wrapper class for the CURLWrapper class, to make cURL requests even easier in the case of interacting with an OAuth 2.0 API.
+This class should theoretically work for any OAuth 2.0 API, but only a small number are fully supported by MeLeeCMS.
 APIs currently supported:
 - Twitch
+
 APIs with support pending:
 - Discord
 - YouTube
 - Salesforce (maybe)
+@uses CURLWrapper Server-to-server API requests are done through the cURL wrapper.
+@uses OAuth2ClientRateLimit Separate class for handling rate limits imposed by certain APIs.
 */
 class OAuth2Client
 {

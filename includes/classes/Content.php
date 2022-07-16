@@ -1,17 +1,26 @@
 <?php
+/**
+The code for the abstract {@see Content} class.
+*/
 namespace MeLeeCMS;
 
 /**
  * Superclass of all classes that can be added to a page as content.
  * 
- * Any subclass of `Content` must be declared in a file with the same name as the class and end in `.php`, ie. `Text.php` for the `Text` class. Additionally, the class declaration within that file must match the following regex: `/\bclass\s+ClassName\s+extends\s+Content\b/i`.
- * In addition to implementing the abstract functions of Content, the subclass should have a constructor that can be called with no parameters. In other words, make sure every parameter of the constructor has a default value specified.
- * Immediately after any object that extends Content is created, you should call `set_cms()` on it with a reference to the active MeLeeCMS object, so that the `render()` function will work, among other reasons. Adding such an object to MeLeeCMS with add_content will do this automatically.
+ * Any subclass of `Content` must be declared in a file with the same name as the class and end in `.php`, ie. `Text.php` for the {@see Text} class. Additionally, the class declaration within that file must match the following regex: `/\bclass\s+ClassName\s+extends\s+Content\b/i`.
+ * In addition to implementing the abstract functions of `Content`, the subclass should have a constructor that can be called with no parameters. In other words, make sure every parameter of the constructor has a default value specified.
+ * Immediately after any object that extends `Content` is created, you should call {@see Content::set_cms()} on it with a reference to the active {@see MeLeeCMS} object, so that the {@see Content::render()} method will work, among other reasons. Adding such an object to MeLeeCMS with {@see MeLeeCMS::add_content()} will do this automatically.
  */
 abstract class Content
 {
+   /** @var MeLeeCMS A reference to the {@see MeLeeCMS} instance that this object is used by. */
 	protected $cms;
 	
+   /**
+   Converts the properties of the object into a multidimensional array for use by {@see Theme::parseTemplate()}.
+   Each subclass must implement this method in order for MeLeeCMS to be able to render it onto the page.
+   @return array[] This object's properties in array form.
+   */
 	public abstract function build_params();
 	
 	/**
@@ -29,16 +38,20 @@ abstract class Content
 		return $result;
 	}
 
+   /**
+   Converts the object into HTML to be rendered onto the page.
+   @return string HTML representation of this object as transformed by the current theme.
+   */
 	public function render($subtheme="default")
 	{
 		return $this->cms->parse_template($this->build_params(), $this->getContentClass(), $subtheme);
 	}
 	
 	/**
-	 * Sets the internal reference to the active MeLeeCMS object.
+	 * Sets the internal reference to the active {@see MeLeeCMS} instance.
 	 *
-	 * The MeLeeCMS object reference must be set with this function before render() will work.
-	 * @return Content A reference to this Content object.
+	 * The {@see MeLeeCMS} object reference must be set with this function before {@see MeLeeCMS::render()} will work.
+	 * @return Content A reference to this `Content` object.
 	 */
 	public function set_cms($cms)
 	{
@@ -72,8 +85,8 @@ abstract class Content
 	protected static $subclasses;
 	
 	/**
-	 * @param MeLeeCMS $cms A reference to the MeLeeCMS object.
-	 * @return string[] A list of all includeable classes that extend Content, and thus are valid classes to add to a page as content.
+	 * @param MeLeeCMS $cms A reference to the {@see MeLeeCMS} object.
+	 * @return string[] A list of all includeable classes that extend `Content`, and thus are valid classes to add to a page as content.
 	 */
 	public static function get_subclasses($cms)
 	{

@@ -1,6 +1,6 @@
 <?php
 /**
-The code for the MeLeeCMS class, as well as some initial setup before the application is loaded.
+The code for the {@see MeLeeCMS} class, as well as some initial setup before the application is loaded.
 In addition to the MeLeeCMS class definition, this file also does the following things immediately upon execution, before the class is instantiated or even defined:
 - Changes the INI settings for how errors are logged; `display_errors` off, `log_errors` on, and `error_log` set to a directory and file in `includes/logs/` based on today's date.
 - Records the current system time and memory before MeLeeCMS runs, so that usage data can be calculated later.
@@ -43,7 +43,6 @@ define("START_MEMORY", memory_get_usage());
 define("START_TIME", microtime(true));
 /**
 Prints out the time elapsed and net memory usage since the page first started loading, in the form of an HTML comment.
-@source
 @return void
 */
 function print_load_statistics()
@@ -189,10 +188,7 @@ class MeLeeCMS
 	public $temp_data = [];
    /** @var string[] PHP files to include between the instantiation of MeLeeCMS and the final page render. Mostly used when you want to have a PHP file construct the page, as opposed to the control panel building the page. */
 	public $include_later = [];
-   /**
-   @var mixed[] Stores the parameters of the last refresh request.
-   @see MeLeeCMS::requestRefresh() The method that determines this property's value.
-   */
+   /** @var mixed[] Stores the parameters of the last call to {@see MeLeeCMS::requestRefresh()}. */
 	public $refresh_requested = ['strip'=>[]];
 
    /**
@@ -269,7 +265,7 @@ class MeLeeCMS
    /**
    Informs MeLeeCMS that the current page needs to reload before the user can view the site properly.
    Allows for a few parameters to be set that will change the full URL query string, rather than a plain refresh. The request is delayed so that the page can finish any important processing before exiting and reloading.
-   @see MeLeeCMS::refreshPage() Page isn't reloaded until the linked method is called.
+   @see MeLeeCMS::refreshPage() The method that actually causes the page to refresh.
    @param string|null $destination The URL to load instead of refreshing the current one. If null, defaults to `$_SERVER['REQUEST_URI']`.
    @param string|string[] $strip_query An array of query parameters to strip from the current URL before loading the page again. The strings must match the full parameter name and value, not just the name. A string will be treated as a single-element array containing that string.
    @return void
@@ -294,8 +290,7 @@ class MeLeeCMS
 	
    /**
    Sends the Location header prepared by a previous method call and exits the application.
-   The URL that is loaded and how the query string is altered depend on the previous call to `MeLeeCMS->requestRefresh()`.
-   @see MeLeeCMS::requestRefresh() Linked method must be called before this method will reload the page.
+   The URL that is loaded and how the query string is altered depend on the previous call to {@see MeLeeCMS::requestRefresh()}.
    @return void
    */
 	protected function refreshPage()

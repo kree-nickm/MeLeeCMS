@@ -1,6 +1,9 @@
 <?php
 namespace MeLeeCMS;
 
+/**
+Manages all of the data that a page needs in order to be rendered to the user.
+*/
 class Page
 {
    public $cms;

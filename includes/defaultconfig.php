@@ -1,15 +1,13 @@
 <?php
-/********************** MeLeeCMS Default Configuration ************************
- * This file provides descriptions of various configuration options that you
- * can use to setup and modify the way MeLeeCMS works. This file is loaded by
- * the CMS to provide default values for these options where applicable. To use
- * your own configuration options, copy this file into this same directory and
- * rename it to config.php, and make your changes there. If you edit this file
- * without first copying it, your changes will be overwritten when MeLeeCMS is
- * updated.
- *****************************************************************************/
+/**
+Specifies default values for the various configuration options of MeLeeCMS.
+This file provides descriptions of various configuration options that you can use to setup and modify the way MeLeeCMS works. This file is loaded by the CMS to provide default values for these options where applicable. To use your own configuration options, copy this file into this same directory and rename it to config.php, and make your changes there. If you edit this file without first copying it, your changes will be overwritten when MeLeeCMS is updated.
+@filesource
+*/
 
-// The array that contains all of the settings that the site needs to function. All of the elements are described below.
+/**
+@var array<string,mixed> The array that contains all of the settings that the site needs to function. All of the elements are described below.
+*/
 $GlobalConfig = [];
 
 /****************************** MySQL Settings ********************************
