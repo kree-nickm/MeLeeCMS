@@ -26,14 +26,14 @@ else
       else
       {
          http_response_code(415);
-         trigger_error("User attempted a POST request of type '{$content_type}'.", E_USER_NOTICE);
+         trigger_error("User attempted a POST request of type '{$content_type}'.", E_USER_WARNING);
          echo("Post data of type '{$content_type}' is not allowed.");
       }
    }
    else
    {
       http_response_code(405);
-      trigger_error("User attempted a {$_SERVER['REQUEST_METHOD']} request.", E_USER_NOTICE);
+      trigger_error("User attempted a {$_SERVER['REQUEST_METHOD']} request.", E_USER_WARNING);
       echo($_SERVER['REQUEST_METHOD'] ." requests are not allowed.");
    }
 }

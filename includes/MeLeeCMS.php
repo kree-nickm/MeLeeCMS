@@ -714,22 +714,22 @@ class MeLeeCMS
 		return $this->page_title = $title ." - ". $this->get_setting('site_title');
 	}
 
-	public function attach_css($href="", $code="", $fromtheme=false)
+	public function attach_css($href="", $code="", $fromtheme=false, $attrs=[])
 	{
 		if($href != "" || $code != "")
 		{
-			$this->page_css[] = array('href'=>$href, 'code'=>$code, 'fromtheme'=>$fromtheme);
+			$this->page_css[] = array('href'=>$href, 'code'=>$code, 'fromtheme'=>$fromtheme, 'attrs'=>$attrs);
 			return true;
 		}
 		else
 			return false;
 	}
 
-	public function attach_js($src="", $code="", $fromtheme=false)
+	public function attach_js($src="", $code="", $fromtheme=false, $attrs=[])
 	{
 		if($src != "" || $code != "")
 		{
-			$this->page_js[] = array('src'=>$src, 'code'=>$code, 'fromtheme'=>$fromtheme);
+			$this->page_js[] = array('src'=>$src, 'code'=>$code, 'fromtheme'=>$fromtheme, 'attrs'=>$attrs);
 			return true;
 		}
 		else
@@ -869,12 +869,13 @@ class MeLeeCMS
 			$params['css'][] = [
 				'href' => ($css['fromtheme'] ? $this->getTheme()->resolveFile("css", $css['href']) : $css['href']),
 				'code' => $css['code'],
+				'attrs' => $css['attrs'],
 			];
       $data_json = json_encode($this->temp_data, JSON_PARTIAL_OUTPUT_ON_ERROR);
       if($json_err = json_last_error())
          trigger_error("Error code '{$json_err}' triggered when encoding MeLeeCMS data to JSON.", E_USER_WARNING);
 		$params['js'] = [[
-			'code' => 
+			'code' =>
             "window.MeLeeCMS = new (function MeLeeCMS(){".
                "this.url_path=\"". addslashes($this->get_setting('url_path')) ."\";".
                "this.theme=\"". addslashes($this->getTheme()->name) ."\";".
@@ -885,6 +886,7 @@ class MeLeeCMS
 			$params['js'][] = [
 				'src' => ($js['fromtheme'] ? $this->getTheme()->resolveFile("js", $js['src']) : $js['src']),
 				'code' => $js['code'],
+				'attrs' => $js['attrs'],
 			];
 		// TODO: This won't include errors during XSLT conversion. Don't know how to fix that.
 		$params['data'] = $this->temp_data;
