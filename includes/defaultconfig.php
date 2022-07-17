@@ -78,7 +78,7 @@ $GlobalConfig['default_theme'] = "bootstrap4";
 $GlobalConfig['cpanel_theme'] = "bootstrap4";
 
 // Page that will load if someone visits your website but doesn't specify a page. For example, if they visit the URL www.yourdomain.com/, with nothing after the slash. This value can be overwritten by the MeLeeCMS control panel.
-$GlobalConfig['index_page'] = "";
+$GlobalConfig['index_page'] = "test-page";
 
 /******************************* Page Handlers ********************************
  * Defines some of the pages the site can load. These can be defined in the control panel for simpler pages, but if you want to manually write PHP code to display your page, the control panel can't really help you. Define such pages in your config.php using the below format.
