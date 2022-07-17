@@ -29,7 +29,7 @@
 	<style><xsl:value-of select="code"/></style>
 </xsl:for-each>
 </head>
-<body id="MeLeeCMSBody" class="">
+<body id="MeLeeCMS" class="MeLeeCMS">
 
 <xsl:if test="content[@id='branding'] or content[@id='nav']">
 <nav class="shadow navbar navbar-expand-sm navbar-dark">
@@ -127,7 +127,7 @@
 <xsl:for-each select="js">
 	<xsl:element name="script">
 		<xsl:attribute name="type">text/javascript</xsl:attribute>
-		<xsl:if test="src and src!=''"><xsl:attribute name="src"><xsl:value-of select="src"/></xsl:attribute></xsl:if>
+		<xsl:if test="src!=''"><xsl:attribute name="src"><xsl:value-of select="src"/></xsl:attribute></xsl:if>
       <xsl:for-each select="attrs/*">
          <xsl:attribute name="{@original_tag}"><xsl:value-of select="."/></xsl:attribute>
       </xsl:for-each>

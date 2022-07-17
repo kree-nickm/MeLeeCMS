@@ -1,15 +1,13 @@
 <?php
-/********************** MeLeeCMS Default Configuration ************************
- * This file provides descriptions of various configuration options that you
- * can use to setup and modify the way MeLeeCMS works. This file is loaded by
- * the CMS to provide default values for these options where applicable. To use
- * your own configuration options, copy this file into this same directory and
- * rename it to config.php, and make your changes there. If you edit this file
- * without first copying it, your changes will be overwritten when MeLeeCMS is
- * updated.
- *****************************************************************************/
+/**
+Specifies default values for the various configuration options of MeLeeCMS.
+This file provides descriptions of various configuration options that you can use to setup and modify the way MeLeeCMS works. This file is loaded by the CMS to provide default values for these options where applicable. To use your own configuration options, copy this file into this same directory and rename it to config.php, and make your changes there. If you edit this file without first copying it, your changes will be overwritten when MeLeeCMS is updated.
+@filesource
+*/
 
-// The array that contains all of the settings that the site needs to function. All of the elements are described below.
+/**
+@var array<string,mixed> The array that contains all of the settings that the site needs to function. All of the elements are described below.
+*/
 $GlobalConfig = [];
 
 /****************************** MySQL Settings ********************************
@@ -80,7 +78,7 @@ $GlobalConfig['default_theme'] = "bootstrap4";
 $GlobalConfig['cpanel_theme'] = "bootstrap4";
 
 // Page that will load if someone visits your website but doesn't specify a page. For example, if they visit the URL www.yourdomain.com/, with nothing after the slash. This value can be overwritten by the MeLeeCMS control panel.
-$GlobalConfig['index_page'] = "";
+$GlobalConfig['index_page'] = "test-page";
 
 /******************************* Page Handlers ********************************
  * Defines some of the pages the site can load. These can be defined in the control panel for simpler pages, but if you want to manually write PHP code to display your page, the control panel can't really help you. Define such pages in your config.php using the below format.
