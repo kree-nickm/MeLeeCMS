@@ -20,15 +20,16 @@
 		<xsl:attribute name="type">text/css</xsl:attribute>
 		<xsl:attribute name="rel">stylesheet</xsl:attribute>
 		<xsl:attribute name="href"><xsl:value-of select="href"/></xsl:attribute>
-		<xsl:if test="integrity"><xsl:attribute name="integrity"><xsl:value-of select="integrity"/></xsl:attribute></xsl:if>
-		<xsl:if test="crossorigin"><xsl:attribute name="crossorigin"><xsl:value-of select="crossorigin"/></xsl:attribute></xsl:if>
+      <xsl:for-each select="attrs/*">
+         <xsl:attribute name="{@original_tag}"><xsl:value-of select="."/></xsl:attribute>
+      </xsl:for-each>
 	</xsl:element>
 </xsl:for-each>
 <xsl:for-each select="css[code!='']">
 	<style><xsl:value-of select="code"/></style>
 </xsl:for-each>
 </head>
-<body id="MeLeeCMSBody" class="">
+<body id="MeLeeCMS" class="MeLeeCMS">
 
 <xsl:if test="content[@id='branding'] or content[@id='nav']">
 <nav class="shadow navbar navbar-expand-sm navbar-dark">
@@ -126,9 +127,10 @@
 <xsl:for-each select="js">
 	<xsl:element name="script">
 		<xsl:attribute name="type">text/javascript</xsl:attribute>
-		<xsl:if test="src and src!=''"><xsl:attribute name="src"><xsl:value-of select="src"/></xsl:attribute></xsl:if>
-		<xsl:if test="integrity"><xsl:attribute name="integrity"><xsl:value-of select="integrity"/></xsl:attribute></xsl:if>
-		<xsl:if test="crossorigin"><xsl:attribute name="crossorigin"><xsl:value-of select="crossorigin"/></xsl:attribute></xsl:if>
+		<xsl:if test="src!=''"><xsl:attribute name="src"><xsl:value-of select="src"/></xsl:attribute></xsl:if>
+      <xsl:for-each select="attrs/*">
+         <xsl:attribute name="{@original_tag}"><xsl:value-of select="."/></xsl:attribute>
+      </xsl:for-each>
 		<xsl:value-of select="code"/>
 	</xsl:element>
 </xsl:for-each>
