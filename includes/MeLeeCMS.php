@@ -107,7 +107,7 @@ class MeLeeCMS
 	protected $cpanel;
    /**
    @var string The full title that will appear on the browser window.
-   @see MeLeeCMS::set_title() The method that defines this property.
+   @see MeLeeCMS::setTitle() The method that defines this property.
    */
 	protected $page_title = "";
    /**
@@ -118,22 +118,22 @@ class MeLeeCMS
 	protected $page_theme;
    /**
    @var array[] The CSS that the page will use, including files, code, and whether to load a file from the Theme or externally.
-   @see MeLeeCMS::attach_css() The method that populates this array.
+   @see MeLeeCMS::attachCSS() The method that populates this array.
    */
 	protected $page_css = [];
    /**
    @var array[] The JavaScript that the page will use, including files, code, and whether to load a file from the Theme or externally.
-   @see MeLeeCMS::attach_js() The method that populates this array.
+   @see MeLeeCMS::attachJS() The method that populates this array.
    */
 	protected $page_js = [];
    /**
    @var string[] The XSL files that the page will use.
-   @see MeLeeCMS::attach_xsl() The method that populates this array.
+   @see MeLeeCMS::attachXSL() The method that populates this array.
    */
 	protected $page_xsl = [];
    /**
    @var Content[] The various objects that are subclasses of Content, which will be used to display the page content.
-   @see MeLeeCMS::add_content() The method that populates this array.
+   @see MeLeeCMS::addContent() The method that populates this array.
    */
 	protected $page_content = [];
    /**
@@ -371,6 +371,12 @@ class MeLeeCMS
 	}
 	
 	public function get_setting($key)
+   {
+      trigger_error("MeLeeCMS->get_setting() is deprecated; use MeLeeCMS->getSetting() instead.", E_USER_DEPRECATED);
+      return $this->getSetting($key);
+   }
+
+	public function getSetting($key)
 	{
 		return $this->settings[$key];
 	}
@@ -458,7 +464,7 @@ class MeLeeCMS
    {
       if(!empty($this->themes[$directory]))
          return $this->themes[$directory];
-      else if($directory == "." || $directory == ".." || !is_dir($this->get_setting('server_path') ."themes". DIRECTORY_SEPARATOR . $directory))
+      else if($directory == "." || $directory == ".." || !is_dir($this->getSetting('server_path') ."themes". DIRECTORY_SEPARATOR . $directory))
       {
          trigger_error("Tried to add '{$directory}' as a theme, but it is not a valid directory.", E_USER_NOTICE);
          return null;
@@ -473,22 +479,22 @@ class MeLeeCMS
 	
 	protected function setupTheme()
 	{
-      $this->addTheme($this->get_setting('default_theme'))->resolveSuperthemes();
-		$this->setTheme($this->get_setting('default_theme'));
+      $this->addTheme($this->getSetting('default_theme'))->resolveSuperthemes();
+		$this->setTheme($this->getSetting('default_theme'));
 		return count($this->themes)>0;
 	}
 	
 	protected function setupThemes()
 	{
       // Add all the themes in the themes directory.
-		$themesDir = dir($this->get_setting('server_path') ."themes");
+		$themesDir = dir($this->getSetting('server_path') ."themes");
 		while(false !== ($theme = $themesDir->read()))
          if($theme != "." && $theme != "..")
             $this->addTheme($theme);
       // Then resolve their superthemes lists. Theme->resolveSuperthemes() calls MeLeeCMS->addTheme() as needed, but since we just added them all, it shouldn't be... unless there are invalid themes in a superthemes list, in which case you'll see some errors.
       foreach($this->themes as $theme)
          $theme->resolveSuperthemes();
-		$this->setTheme($this->get_setting('default_theme'));
+		$this->setTheme($this->getSetting('default_theme'));
 		return count($this->themes)>0;
 	}
 	
@@ -498,7 +504,7 @@ class MeLeeCMS
       // TODO: Need to figure out when we are allowed to set cookie expiration. A not-logged-in user can't set the "remember me" flag, so their session cookie will expire with the browser window. However they retain the same session ID after logging in, so the cookie will need to be updated with a new expiration if they want to be remembered.
       //$this->session_expiration = (!empty($_POST['remember_me']) && is_numeric($_POST['remember_me'])) ? (int)$_POST['remember_me'] : 0;
 		session_set_save_handler(new MeLeeSessionHandler($this), true);
-		session_name($this->get_setting('cookie_prefix') ."sessid");
+		session_name($this->getSetting('cookie_prefix') ."sessid");
       $session_options = [
          'cookie_lifetime' => $this->session_expiration,
          'cookie_secure' => empty($GlobalConfig['force_https']) ? 0 : 1,
@@ -511,17 +517,17 @@ class MeLeeCMS
 			$this->addDataProtected('form_response', $_SESSION['form_response'], false);
 			unset($_SESSION['form_response']);
 		}
-		if($this->get_setting('user_system') == "")
+		if($this->getSetting('user_system') == "")
 			$user_class = "\\MeLeeCMS\\User";
 		else
-			$user_class = "\\MeLeeCMS\\". $this->get_setting('user_system');
+			$user_class = "\\MeLeeCMS\\". $this->getSetting('user_system');
       
       $this->user = new $user_class($this);
       if(!empty($this->user))
          return true;
       else
       {
-			trigger_error("Unable to create user object using the '". $this->get_setting('user_system') ."' user system.", E_USER_ERROR);
+			trigger_error("Unable to create user object using the '". $this->getSetting('user_system') ."' user system.", E_USER_ERROR);
          return false;
       }
 	}
@@ -596,7 +602,7 @@ class MeLeeCMS
       // Normal page request.
       if(empty($this->page))
       {
-         $pageId = !empty($this->path_info) ? $this->path_info : $this->get_setting('index_page');
+         $pageId = !empty($this->path_info) ? $this->path_info : $this->getSetting('index_page');
          // See if the page is already stored in $this->pages.
          if(!empty($this->pages[$pageId]))
             $this->page = $this->pages[$pageId];
@@ -677,10 +683,10 @@ class MeLeeCMS
 	{
 		if(!empty($this->themes[$theme]))
 			$this->page_theme = $this->themes[$theme];
-		else if($this->cpanel && !empty($this->themes[$this->get_setting('cpanel_theme')]))
-			$this->page_theme = $this->themes[$this->get_setting('cpanel_theme')];
-		else if(!empty($this->themes[$this->get_setting('default_theme')]))
-			$this->page_theme = $this->themes[$this->get_setting('default_theme')];
+		else if($this->cpanel && !empty($this->themes[$this->getSetting('cpanel_theme')]))
+			$this->page_theme = $this->themes[$this->getSetting('cpanel_theme')];
+		else if(!empty($this->themes[$this->getSetting('default_theme')]))
+			$this->page_theme = $this->themes[$this->getSetting('default_theme')];
 		else if(!empty($this->themes["default"]))
 			$this->page_theme = $this->themes["default"];
 		else
@@ -699,17 +705,24 @@ class MeLeeCMS
 		return $this->page_theme;
 	}
 
-	public function set_subtheme($subtheme)
-	{
-		return $this->page->subtheme = $subtheme;
-	}
-
 	public function set_title($title)
+   {
+      trigger_error("MeLeeCMS->set_title() is deprecated; use MeLeeCMS->setTitle() instead.", E_USER_DEPRECATED);
+      return $this->setTitle($title);
+   }
+   
+	public function setTitle($title)
 	{
-		return $this->page_title = $title ." - ". $this->get_setting('site_title');
+		return $this->page_title = $title ." - ". $this->getSetting('site_title');
 	}
 
 	public function attach_css($href="", $code="", $fromtheme=false, $attrs=[])
+   {
+      trigger_error("MeLeeCMS->attach_css() is deprecated; use MeLeeCMS->attachCSS() instead.", E_USER_DEPRECATED);
+      return $this->attachCSS($href, $code, $fromtheme, $attrs);
+   }
+   
+	public function attachCSS($href="", $code="", $fromtheme=false, $attrs=[])
 	{
 		if($href != "" || $code != "")
 		{
@@ -721,6 +734,12 @@ class MeLeeCMS
 	}
 
 	public function attach_js($src="", $code="", $fromtheme=false, $attrs=[])
+   {
+      trigger_error("MeLeeCMS->attach_js() is deprecated; use MeLeeCMS->attachJS() instead.", E_USER_DEPRECATED);
+      return $this->attachJS($src, $code, $fromtheme, $attrs);
+   }
+   
+	public function attachJS($src="", $code="", $fromtheme=false, $attrs=[])
 	{
 		if($src != "" || $code != "")
 		{
@@ -732,8 +751,14 @@ class MeLeeCMS
 	}
 
 	public function attach_xsl($href="", $code="", $fromtheme=false)
+   {
+      trigger_error("MeLeeCMS->attach_xsl() is deprecated; use MeLeeCMS->attachXSL() instead.", E_USER_DEPRECATED);
+      return $this->attachXSL($href, $code, $fromtheme);
+   }
+   
+	public function attachXSL($href="", $code="", $fromtheme=false)
 	{
-		// TODO: $fromtheme doesn't currently do anything, but it might be totally unnecessary. When would you ever include an XSL stylesheet from outside the theme?
+		// TODO: $fromtheme doesn't currently do anything.
 		if($href != "" || $code != "")
 		{
 			$this->page_xsl[] = array('href'=>$href, 'code'=>$code, 'fromtheme'=>$fromtheme);
@@ -744,6 +769,12 @@ class MeLeeCMS
 	}
 
 	public function add_content($content, $x="")
+   {
+      trigger_error("MeLeeCMS->add_content() is deprecated; use MeLeeCMS->addContent() instead.", E_USER_DEPRECATED);
+      return $this->addContent($content, $x);
+   }
+   
+	public function addContent($content, $x="")
 	{
 		if(is_numeric($x))
 			$x = "__". $x;
@@ -820,6 +851,12 @@ class MeLeeCMS
 	}
 	
 	public function parse_template($data, $class, $subtheme)
+   {
+      trigger_error("MeLeeCMS->parse_template() is deprecated; use MeLeeCMS->parseTemplate() instead.", E_USER_DEPRECATED);
+      return $this->parseTemplate($data, $class, $subtheme);
+   }
+   
+	public function parseTemplate($data, $class, $subtheme)
 	{
       // TODO: For classes other than MeLeeCMS, this shouldn't run their stylesheet by itself. It should collect all such stylesheets, then include them in the MeLeeCMS stylesheet when it runs along with $this->page_xsl.
       return $this->getTheme()->parseTemplate($data, $class, $subtheme, $this->page_xsl);
@@ -840,7 +877,7 @@ class MeLeeCMS
 		
 		$params = [
 			'title' => $this->page_title,
-			'url_path' => $this->get_setting('url_path'),
+			'url_path' => $this->getSetting('url_path'),
 			'theme' => $this->getTheme()->name,
 			'content' => [],
 			'css' => [],
@@ -872,7 +909,7 @@ class MeLeeCMS
 		$params['js'] = [[
 			'code' =>
             "window.MeLeeCMS = new (function MeLeeCMS(){".
-               "this.url_path=\"". addslashes($this->get_setting('url_path')) ."\";".
+               "this.url_path=\"". addslashes($this->getSetting('url_path')) ."\";".
                "this.theme=\"". addslashes($this->getTheme()->name) ."\";".
                "this.data=". (!empty($data_json) ? $data_json : "{}").
             "})();",
@@ -893,7 +930,7 @@ class MeLeeCMS
 		}
 		else
 		{
-			$html = $this->parse_template($params, "MeLeeCMS", $subtheme);
+			$html = $this->parseTemplate($params, "MeLeeCMS", $subtheme);
 			if(is_array($html))
 				echo("No theme was loaded. There may be an error in the MeLeeCMS setup for this page.");
 			else

@@ -37,7 +37,7 @@ class Component extends Container
 			$content = unserialize($component['content']);
 			if(is_array($content))
 				foreach($content as $x=>$object)
-					$this->add_content($object, $x);
+					$this->addContent($object, $x);
 			$page_js = json_decode($component['js'], true);
 			if(is_array($page_js)) foreach($page_js as $js)
 				$this->cms->attach_js($js['file'], "", $js['fromtheme']);

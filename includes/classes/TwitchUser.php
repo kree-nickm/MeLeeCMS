@@ -18,7 +18,7 @@ class TwitchUser extends User
 		if(isset($_REQUEST['logout']))
 		{
 			session_destroy();
-			$this->cms->requestRefresh($cms->get_setting('url_path'), "logout");
+			$this->cms->requestRefresh($cms->getSetting('url_path'), "logout");
 		}
 		else
 		{

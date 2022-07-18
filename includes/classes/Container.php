@@ -56,7 +56,7 @@ class Container extends Content
 		$params = $this->getSimpleArray();
 		foreach($this->content as $c=>$content)
 			$params['content@class='.$content->getContentClass().($c?'@id='.$c:'')][] = $content->render($subtheme);
-		return $this->cms->parse_template($params, $this->getContentClass(), $subtheme);
+		return $this->cms->parseTemplate($params, $this->getContentClass(), $subtheme);
 	}
 	
 	public function set_cms($cms)
@@ -68,6 +68,12 @@ class Container extends Content
 	}
 	
 	public function add_content($content, $x="")
+   {
+      trigger_error("Container->add_content() is deprecated; use Container->addContent() instead.", E_USER_DEPRECATED);
+      return $this->addContent($content, $x);
+   }
+   
+	public function addContent($content, $x="")
 	{
 		if(is_numeric($x))
 			$x = "__". $x;

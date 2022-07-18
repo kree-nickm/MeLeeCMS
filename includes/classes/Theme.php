@@ -27,8 +27,8 @@ class Theme
       
       // TODO: Validate $directory just in case something other than MeLeeCMS sent it in.
       $this->name = $directory;
-      $this->server_path = $this->cms->get_setting('server_path') ."themes". DIRECTORY_SEPARATOR . $directory . DIRECTORY_SEPARATOR;
-      $this->url_path = $this->cms->get_setting('url_path') ."themes/". $directory ."/";
+      $this->server_path = $this->cms->getSetting('server_path') ."themes". DIRECTORY_SEPARATOR . $directory . DIRECTORY_SEPARATOR;
+      $this->url_path = $this->cms->getSetting('url_path') ."themes/". $directory ."/";
       
       if(is_file($description_file = $this->server_path ."description.txt"))
          $this->description = file_get_contents($description_file);
@@ -36,7 +36,7 @@ class Theme
       if(is_file($this->server_path . "thumbnail.png"))
          $this->thumbnail = $this->url_path ."thumbnail.png";
       else
-         $this->thumbnail = $this->cms->get_setting('url_path') ."themes/default/thumbnail.png";
+         $this->thumbnail = $this->cms->getSetting('url_path') ."themes/default/thumbnail.png";
       
       if(is_file($superthemes_file = $this->server_path ."superthemes.txt"))
          $this->superthemes_raw = file($superthemes_file, FILE_IGNORE_NEW_LINES|FILE_SKIP_EMPTY_LINES);

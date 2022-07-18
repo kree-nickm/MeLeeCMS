@@ -13,7 +13,7 @@ if(!empty($input->process))
    $class = empty($input->class) ? "MeLeeCMS" : preg_replace("/[^a-zA-Z0-9]/", "", $input->class);
    $subtheme = empty($input->subtheme) ? "default" : preg_replace("/[^a-zA-Z0-9]/", "", $input->subtheme);
    $process = empty($input->process) ? "" : preg_replace("/[^a-zA-Z0-9]/", "", $input->process);
-   $process_file = $builder->get_setting('server_path') ."includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR ."includes". DIRECTORY_SEPARATOR . $process .".php";
+   $process_file = $builder->getSetting('server_path') ."includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR ."includes". DIRECTORY_SEPARATOR . $process .".php";
    $xsl_files = [];
    if(isset($input->xsl) && is_array($input->xsl))
    {
@@ -21,10 +21,10 @@ if(!empty($input->process))
       {
          if(!empty($xsl->href))
             //$xsl_files[] = $xsl;
-            $builder->attach_xsl($xsl->href);
+            $builder->attachXSL($xsl->href);
          else if(is_string($xsl))
             //$xsl_files[] = ['href'=>$xsl];
-            $builder->attach_xsl($xsl);
+            $builder->attachXSL($xsl);
       }
    }
    if(is_file($process_file))
@@ -49,7 +49,7 @@ if(!empty($input->process))
             $content->set_cms($builder);
             $result_content['content@class='.$content->getContentClass().($tag?'@id='.$tag:'')][] = $content->render($subtheme);
          }
-      $response = $builder->parse_template($result_content, $class, $subtheme);
+      $response = $builder->parseTemplate($result_content, $class, $subtheme);
    }
    else
       http_response_code(406);

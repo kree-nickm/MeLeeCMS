@@ -20,7 +20,7 @@ class MeLeeCMSUser extends User
 			$_SESSION['username'] = "";
 			$_SESSION['password'] = "";
 			// This isn't enough, close session entirely.
-			$this->cms->requestRefresh($cms->get_setting('url_path'), "logout");
+			$this->cms->requestRefresh($cms->getSetting('url_path'), "logout");
 		}
 		else
 		{

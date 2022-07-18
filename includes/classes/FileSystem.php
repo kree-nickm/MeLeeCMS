@@ -13,7 +13,7 @@ class FileSystem
       $this->cms = $cms;
       $this->userId = getmyuid();
       $this->phpUserId = posix_geteuid();
-      $this->processDir($cms->get_setting('server_path'));
+      $this->processDir($cms->getSetting('server_path'));
    }
    
    private function processDir($dirStr)
@@ -26,7 +26,7 @@ class FileSystem
          $fullpath = $dir->path . DIRECTORY_SEPARATOR . $entry;
          $this->files[$fullpath] = [
             'filename' => $entry,
-            'relpath' => substr($fullpath, strlen($this->cms->get_setting('server_path'))),
+            'relpath' => substr($fullpath, strlen($this->cms->getSetting('server_path'))),
          ];
          $this->getStats($fullpath);
          if(is_file($fullpath))

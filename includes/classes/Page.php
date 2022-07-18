@@ -64,7 +64,7 @@ class Page
          }
          
          // Now figure out if it's a hard-coded PHP file or a file built with the control panel.
-         if(!empty($page_data['file']) && is_file($cms->get_setting("server_path") ."includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR . $page_data['file']))
+         if(!empty($page_data['file']) && is_file($cms->getSetting("server_path") ."includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR . $page_data['file']))
          {
             $this->file = $page_data['file'];
             $this->subtheme = !empty($page_data['subtheme']) ? $page_data['subtheme'] : "";
@@ -129,7 +129,7 @@ class Page
    {
 		if(!empty($this->file))
 		{
-			$file = $this->cms->get_setting("server_path") ."includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR . $this->file;
+			$file = $this->cms->getSetting("server_path") ."includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR . $this->file;
 			if(is_file($file))
             // Note: Has to be included later, because the file is going to expect a MeLeeCMS instance to be initilized, but it is not at this point, because this function is called during the MeLeeCMS constructor.
 				$this->cms->include_later[] = $file;
@@ -138,17 +138,17 @@ class Page
 		}
 		else
 		{
-			$this->cms->set_title($this->title);
+			$this->cms->setTitle($this->title);
 			$this->unserializeContent();
 			if(is_array($this->content))
 				foreach($this->content as $x=>$object)
-					$this->cms->add_content($object, $x);
+					$this->cms->addContent($object, $x);
 			foreach($this->js as $js)
-				$this->cms->attach_js($js['file'], "", $js['fromtheme']);
+				$this->cms->attachJS($js['file'], "", $js['fromtheme']);
 			foreach($this->css as $css)
-				$this->cms->attach_css($css['file'], "", $css['fromtheme']);
+				$this->cms->attachCSS($css['file'], "", $css['fromtheme']);
 			foreach($this->xsl as $xsl)
-				$this->cms->attach_xsl($xsl);
+				$this->cms->attachXSL($xsl);
 		}
    }
 }

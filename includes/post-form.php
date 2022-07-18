@@ -10,7 +10,7 @@ $response = [];
 
 foreach($builder->forms as $formId=>$form)
 {
-   if(is_callable($form['select']) && is_file($filepath = $builder->get_setting('server_path') ."includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR . $form['file']))
+   if(is_callable($form['select']) && is_file($filepath = $builder->getSetting('server_path') ."includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR . $form['file']))
    {
       if($form['select']($builder))
       {

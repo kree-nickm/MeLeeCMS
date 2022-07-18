@@ -26,21 +26,21 @@ class DatabaseView extends Content
 	
 	public function processFilters($filters)
 	{
-		//$this->cms->add_content(new Text("<pre>". print_r(array_keys($filters),true) ."</pre>"));
+		//$this->cms->addContent(new Text("<pre>". print_r(array_keys($filters),true) ."</pre>"));
 		$where = [];
 		$conj = " AND ";
 		foreach($filters as $i=>$filter)
 		{
-			//$this->cms->add_content(new Text("<pre>". $i ." => ". print_r($filter,true) ."</pre>"));
+			//$this->cms->addContent(new Text("<pre>". $i ." => ". print_r($filter,true) ."</pre>"));
 			if((string)$i == "subgroup")
 			{
-				//$this->cms->add_content(new Text("conj"));
+				//$this->cms->addContent(new Text("conj"));
 				if($filter == "or")
 					$conj = " OR ";
 			}
 			else if(is_array($filter) && isset($filter['value']) && $filter['column'] != "index " && is_array($this->cms->database->metadata[$this->table][$filter['column']]))
 			{
-				//$this->cms->add_content(new Text("filter"));
+				//$this->cms->addContent(new Text("filter"));
 				$type = $this->cms->database->metadata[$this->table][$filter['column']]['type_basic'];
 				if(
 					//($type == "integer" || $type == "decimal") && in_array($filter['comparator'], [])
@@ -85,13 +85,13 @@ class DatabaseView extends Content
 			}
 			else if(is_array($filter) && !empty($filter['subgroup']))
 			{
-				//$this->cms->add_content(new Text("subgroup"));
+				//$this->cms->addContent(new Text("subgroup"));
 				if(!empty($processed = $this->processFilters($filter)))
 					$where[] = $processed;
 			}
 			else
 			{
-				//$this->cms->add_content(new Text("nothing"));
+				//$this->cms->addContent(new Text("nothing"));
 			}
 		}
 		return count($where) ? "(". implode($conj, $where) .")" : "";
