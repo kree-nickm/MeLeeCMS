@@ -40,13 +40,13 @@ class Component extends Container
 					$this->addContent($object, $x);
 			$page_js = json_decode($component['js'], true);
 			if(is_array($page_js)) foreach($page_js as $js)
-				$this->cms->attach_js($js['file'], "", $js['fromtheme']);
+				$this->cms->attachJS($js['file'], "", $js['fromtheme']);
 			$page_css = json_decode($component['css'], true);
 			if(is_array($page_css)) foreach($page_css as $css)
-				$this->cms->attach_css($css['file'], "", $css['fromtheme']);
+				$this->cms->attachCSS($css['file'], "", $css['fromtheme']);
 			$page_xsl = json_decode($component['xsl'], true);
 			if(is_array($page_xsl)) foreach($page_xsl as $xsl)
-				$this->cms->attach_xsl($xsl);
+				$this->cms->attachXSL($xsl);
 		}
 	}
 	

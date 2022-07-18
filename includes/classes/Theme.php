@@ -132,7 +132,7 @@ class Theme
          $recursion[] = $this->name;
       
 		$path = $this->server_path . $type . DIRECTORY_SEPARATOR;
-      if($type == "templates")
+      if($type == "templates" && substr($name, -4) != ".xsl")
       {
          $fileA = "{$name}-{$name_extra}.xsl";
          $fileB = "{$name}-default.xsl";
@@ -158,7 +158,11 @@ class Theme
 		$path = $this->server_path . $type . DIRECTORY_SEPARATOR;
 		if(is_file($path . $name))
       {
-         return $this->url_path . $type ."/". $name;
+         // Since XSLT is all done internally within PHP, we need server path instead of URL path.
+         if($type == "templates")
+            return $path . $name;
+         else
+            return $this->url_path . $type ."/". $name;
       }
 		else
       {

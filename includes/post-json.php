@@ -37,18 +37,11 @@ if(!empty($input->process))
       }
       $result = require($process_file);
       $result_content = [];
-      if($subtheme == "__xml")
-         foreach($result as $tag=>$content)
-         {
-            $content->set_cms($builder);
-            $result_content['content@class='.$content->getContentClass().($tag?'@id='.$tag:'')][] = $content->build_params();
-         }
-      else
-         foreach($result as $tag=>$content)
-         {
-            $content->set_cms($builder);
-            $result_content['content@class='.$content->getContentClass().($tag?'@id='.$tag:'')][] = $content->render($subtheme);
-         }
+      foreach($result as $tag=>$content)
+      {
+         $content->set_cms($builder);
+         $result_content['content@class='.$content->getContentClass().($tag?'@id='.$tag:'')][] = $content->build_params();
+      }
       $response = $builder->parseTemplate($result_content, $class, $subtheme);
    }
    else

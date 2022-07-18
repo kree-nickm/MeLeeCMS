@@ -50,14 +50,6 @@ class Container extends Content
 			$result['content@class='.$content->getContentClass().($c?'@id='.$c:'')][] = $content->build_params();
 		return $result;
 	}
-
-	public function render($subtheme="default")
-	{
-		$params = $this->getSimpleArray();
-		foreach($this->content as $c=>$content)
-			$params['content@class='.$content->getContentClass().($c?'@id='.$c:'')][] = $content->render($subtheme);
-		return $this->cms->parseTemplate($params, $this->getContentClass(), $subtheme);
-	}
 	
 	public function set_cms($cms)
 	{

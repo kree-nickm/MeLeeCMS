@@ -51,7 +51,6 @@ class Transformer
 	public function transform($data, $root="DATA", $includes=[])
 	{
 		$xmlcode = self::array_to_xml($root, $data);
-		//print_r($xmlcode);
 		$xml = new \DOMDocument();
 		$xml->loadXML($xmlcode);
 		$xsl = new \DOMDocument();
@@ -61,11 +60,21 @@ class Transformer
 			$xsl->loadXML($this->stylesheets['raw']);
 		if(is_array($includes)) foreach($includes as $inc)
 		{
-			$node = $xsl->createElementNS($xsl->documentElement->namespaceURI, $xsl->documentElement->prefix .":include");
-			$attr = $xsl->createAttribute("href");
-			$attr->value = $inc['href'];
-			$node->appendChild($attr);
-			$xsl->documentElement->appendChild($node);
+         if(is_array($inc) && !empty($inc['href']))
+         {
+            $node = $xsl->createElementNS($xsl->documentElement->namespaceURI, $xsl->documentElement->prefix .":include");
+            $attr = $xsl->createAttribute("href");
+            $attr->value = $inc['href'];
+            $node->appendChild($attr);
+            $xsl->documentElement->appendChild($node);
+            global $builder;
+            if(!empty($builder))
+               $builder->debugLog("ADMIN", $node, $node->attributes->item(0));
+         }
+         else
+         {
+            trigger_error("Invalid include files sent to Transformer: ". print_r($includes, true), E_USER_ERROR);
+         }
 		}
 		$proc = new \XSLTProcessor();
 		$proc->importStyleSheet($xsl);

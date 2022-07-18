@@ -9,10 +9,11 @@ namespace MeLeeCMS;
  * 
  * Any subclass of `Content` must be declared in a file with the same name as the class and end in `.php`, ie. `Text.php` for the {@see Text} class. Additionally, the class declaration within that file must match the following regex: `/\bclass\s+ClassName\s+extends\s+Content\b/i`.
  * In addition to implementing the abstract functions of `Content`, the subclass should have a constructor that can be called with no parameters. In other words, make sure every parameter of the constructor has a default value specified.
- * Immediately after any object that extends `Content` is created, you should call {@see Content::set_cms()} on it with a reference to the active {@see MeLeeCMS} object, so that the {@see Content::render()} method will work, among other reasons. Adding such an object to MeLeeCMS with {@see MeLeeCMS::addContent()} will do this automatically.
+ * Immediately after any object that extends `Content` is created, you should call {@see Content::set_cms()} on it with a reference to the active {@see MeLeeCMS} object. Adding such an object to MeLeeCMS with {@see MeLeeCMS::addContent()} will do this automatically.
  */
 abstract class Content
 {
+   // TODO: MeLeeCMS reference might not be necessary anymore now that page rendering is handled differently.
    /** @var MeLeeCMS A reference to the {@see MeLeeCMS} instance that this object is used by. */
 	protected $cms;
 	
@@ -36,15 +37,6 @@ abstract class Content
 			if($p != "cms")
 				$result[$p] = [];
 		return $result;
-	}
-
-   /**
-   Converts the object into HTML to be rendered onto the page.
-   @return string HTML representation of this object as transformed by the current theme.
-   */
-	public function render($subtheme="default")
-	{
-		return $this->cms->parseTemplate($this->build_params(), $this->getContentClass(), $subtheme);
 	}
 	
 	/**
