@@ -58,6 +58,9 @@ class Transformer
 			$xsl->load($this->stylesheets['file']);
 		else
 			$xsl->loadXML($this->stylesheets['raw']);
+      //global $builder;
+      //if(!empty($builder))
+      //   $builder->debugLog("ADMIN", $includes);
 		if(is_array($includes)) foreach($includes as $inc)
 		{
          if(is_array($inc) && !empty($inc['href']))
@@ -67,9 +70,8 @@ class Transformer
             $attr->value = $inc['href'];
             $node->appendChild($attr);
             $xsl->documentElement->appendChild($node);
-            global $builder;
-            if(!empty($builder))
-               $builder->debugLog("ADMIN", $node, $node->attributes->item(0));
+            //if(!empty($builder))
+            //   $builder->debugLog("ADMIN", $node->nodeName, $node->attributes->item(0)->nodeName, $node->attributes->item(0)->nodeValue);
          }
          else
          {

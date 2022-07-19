@@ -6,11 +6,8 @@ namespace MeLeeCMS;
  */
 class MeLeeCMSUser extends User
 {
-	const PERM_VIEW = 1;
-	const PERM_ADMIN = 2;
-	
 	public $error = "";
-	protected $obscured_cols = ["password", "permission", "token", "custom_data", "custom_data_keys"];
+	protected $obscured_cols = ["password", "permissions", "token", "custom_data", "custom_data_keys"];
 
 	public function __construct($cms)
 	{
@@ -38,6 +35,7 @@ class MeLeeCMSUser extends User
 					{
 						$this->logged_in = true;
 						$this->user_info = $user;
+						$this->user_info['permissions'] = json_decode($this->user_info['permissions'], true);
 						$this->user_info['ip'] = $_SERVER['REMOTE_ADDR'];
 						$this->user_info['custom_data_keys'] = [];
 						$custom_data = json_decode($this->user_info['custom_data'], true);
@@ -124,7 +122,7 @@ class MeLeeCMSUser extends User
 		$this->cms->database->insert("users", ['index'=>$this->user_info['index'],'custom_data'=>json_encode($custom_data)], true, ['index'], true);
 	}
 	
-	public function register($username, $password1, $password2, $permission=MeLeeCMSUser::PERM_VIEW, $custom_data=[])
+	public function register($username, $password1, $password2, $permissions=["VIEW"], $custom_data=[])
 	{
 		$this->error = [];
 		if(empty($username))
@@ -148,7 +146,7 @@ class MeLeeCMSUser extends User
 			// Note: Don't know if we should care about this, but using password_hash() or PASSWORD_DEFAULT means we require PHP>=5.5.0
 			'password' => password_hash($password1, PASSWORD_DEFAULT),
 			'jointime' => time(),
-			'permission' => $permission,
+			'permissions' => json_encode($permissions),
 			'custom_data' => json_encode($custom_data),
 		];
 		$result = $this->cms->database->insert("users", $mysql_array, false);

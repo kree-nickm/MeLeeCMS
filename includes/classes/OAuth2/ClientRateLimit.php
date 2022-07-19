@@ -1,13 +1,13 @@
 <?php
-/** The code for the OAuth2ClientRateLimit class. */
-namespace MeLeeCMS;
+/** The code for the OAuth2\ClientRateLimit class. */
+namespace MeLeeCMS\OAuth2;
 
 /**
 Handles checks and other logic with OAuth 2.0 API rate limits.
 
-Consolodates the handling of rate limits to a separate class in order to keep the {@see OAuth2Client} class more tidy.
+Consolodates the handling of rate limits to a separate class in order to keep the {@see Client} class more tidy.
 */
-class OAuth2ClientRateLimit
+class ClientRateLimit
 {
    /** @var string The name of the response header containing the number of remaining requests in the current bucket for this API. */
    public $remaining_header;
@@ -20,15 +20,15 @@ class OAuth2ClientRateLimit
    
    /** @var bool Whether or not rate limits are being used by the API. If false, all rate limit checking will be bypassed. */
    protected $has_limits;
-   /** @var int The HTTP response code of the last API query loaded by {@see OAuth2ClientRateLimit::loadHeaders()}. */
+   /** @var int The HTTP response code of the last API query loaded by {@see ClientRateLimit::loadHeaders()}. */
    protected $response_code;
-   /** @var int The number of remaining requests in this bucket, as reported by the last API query loaded by {@see OAuth2ClientRateLimit::loadHeaders()}. */
+   /** @var int The number of remaining requests in this bucket, as reported by the last API query loaded by {@see ClientRateLimit::loadHeaders()}. */
    protected $requests_remaining;
-   /** @var int The UNIX epoch timestamp when the rate limit resets, as reported by the last API query loaded by {@see OAuth2ClientRateLimit::loadHeaders()}. Will be calculated if the response header did not report a timestamp. */
+   /** @var int The UNIX epoch timestamp when the rate limit resets, as reported by the last API query loaded by {@see ClientRateLimit::loadHeaders()}. Will be calculated if the response header did not report a timestamp. */
    protected $reset_timestamp;
-   /** @var int The number of seconds until the rate limit resets, as reported by the last API query loaded by {@see OAuth2ClientRateLimit::loadHeaders()}. Will be calculated if the response header did not report a countdown. */
+   /** @var int The number of seconds until the rate limit resets, as reported by the last API query loaded by {@see ClientRateLimit::loadHeaders()}. Will be calculated if the response header did not report a countdown. */
    protected $reset_countdown;
-   /** @var int The maximum number of requests in this bucket, as reported by the last API query loaded by {@see OAuth2ClientRateLimit::loadHeaders()}. */
+   /** @var int The maximum number of requests in this bucket, as reported by the last API query loaded by {@see ClientRateLimit::loadHeaders()}. */
    protected $requests_limit;
    
    /**
@@ -58,7 +58,7 @@ class OAuth2ClientRateLimit
       else
       {
          $this->has_limits = false;
-         trigger_error("Invalid arguments given to OAuth2ClientRateLimit constructor. Must provide either 0 arguments (or a null first argument), or 4 non-empty arguments. Only ". explode(", ", array_keys(array_filter(func_get_args()))) ." arguments provided.", E_USER_ERROR);
+         trigger_error("Invalid arguments given to OAuth2\ClientRateLimit constructor. Must provide either 0 arguments (or a null first argument), or 4 non-empty arguments. Only ". explode(", ", array_keys(array_filter(func_get_args()))) ." arguments provided.", E_USER_ERROR);
       }
    }
    
@@ -74,7 +74,7 @@ class OAuth2ClientRateLimit
       if(!empty($headers['code']))
          $this->response_code = $headers['code'];
       else
-         trigger_error("OAuth2ClientRateLimit->loadHeaders() was not provided a valid array. Argument must be the parsed headers from a cURL response, with the HTTP status code in the 'code' index.", E_USER_ERROR);
+         trigger_error("OAuth2\ClientRateLimit->loadHeaders() was not provided a valid array. Argument must be the parsed headers from a cURL response, with the HTTP status code in the 'code' index.", E_USER_ERROR);
       
       if(!empty($headers[$this->remaining_header]) && !empty($headers[$this->reset_header]) && !empty($headers[$this->limit_header]))
       {
@@ -93,7 +93,7 @@ class OAuth2ClientRateLimit
       }
       else
       {
-         trigger_error("Array provided to OAuth2ClientRateLimit->loadHeaders() did not have the specified rate limit headers.", E_USER_WARNING);
+         trigger_error("Array provided to OAuth2\ClientRateLimit->loadHeaders() did not have the specified rate limit headers.", E_USER_NOTICE);
       }
       return $this;
    }
@@ -123,8 +123,8 @@ class OAuth2ClientRateLimit
    
    /**
    The number of remaining requests in this bucket.
-   @see OAuth2ClientRateLimit::loadHeaders() Must be called before this object has the appropriate data.
-   @uses OAuth2ClientRateLimit::$requests_remaining The getter for this property.
+   @see ClientRateLimit::loadHeaders() Must be called before this object has the appropriate data.
+   @uses ClientRateLimit::$requests_remaining The getter for this property.
    @return int The number of remaining requests in this bucket.
    */
    public function getRemaining()
@@ -134,8 +134,8 @@ class OAuth2ClientRateLimit
    
    /**
    The UNIX epoch timestamp when the rate limit resets.
-   @see OAuth2ClientRateLimit::loadHeaders() Must be called before this object has the appropriate data.
-   @uses OAuth2ClientRateLimit::$reset_timestamp The getter for this property.
+   @see ClientRateLimit::loadHeaders() Must be called before this object has the appropriate data.
+   @uses ClientRateLimit::$reset_timestamp The getter for this property.
    @return int The UNIX epoch timestamp when the rate limit resets.
    */
    public function getResetTimestamp()
@@ -145,8 +145,8 @@ class OAuth2ClientRateLimit
    
    /**
    The number of seconds until the rate limit resets.
-   @see OAuth2ClientRateLimit::loadHeaders() Must be called before this object has the appropriate data.
-   @uses OAuth2ClientRateLimit::$reset_countdown The getter for this property.
+   @see ClientRateLimit::loadHeaders() Must be called before this object has the appropriate data.
+   @uses ClientRateLimit::$reset_countdown The getter for this property.
    @return int The number of seconds until the rate limit resets.
    */
    public function getResetCountdown()
@@ -156,8 +156,8 @@ class OAuth2ClientRateLimit
    
    /**
    The maximum number of requests in this bucket.
-   @see OAuth2ClientRateLimit::loadHeaders() Must be called before this object has the appropriate data.
-   @uses OAuth2ClientRateLimit::$requests_limit The getter for this property.
+   @see ClientRateLimit::loadHeaders() Must be called before this object has the appropriate data.
+   @uses ClientRateLimit::$requests_limit The getter for this property.
    @return int The maximum number of requests in this bucket.
    */
    public function getLimit()

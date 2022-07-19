@@ -157,6 +157,7 @@ $GlobalConfig['permissions'] = [
    'VIEW' => [
    ],
    'ADMIN' => [
+      "view_xml",
       "view_errors",
    ],
 ];

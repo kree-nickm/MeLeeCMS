@@ -1,6 +1,6 @@
 <?php
 /**
-The code for the {@see MeLeeCMS} class, as well as some initial setup before the application is loaded.
+The code for the MeLeeCMS class, as well as some initial setup before the application is loaded.
 In addition to the MeLeeCMS class definition, this file also does the following things immediately upon execution, before the class is instantiated or even defined:
 - Changes the INI settings for how errors are logged; `display_errors` off, `log_errors` on, and `error_log` set to a directory and file in `includes/logs/` based on today's date.
 - Records the current system time and memory before MeLeeCMS runs, so that usage data can be calculated later.
@@ -101,14 +101,11 @@ class MeLeeCMS
    
    /** @var int The bit union used in the MeLeeCMS constructor. */
 	protected $mode;
-   /** @var string[] Array of key/value pairs for all loaded MeLeeCMS settings. */
+   /** @var array<string,mixed> Array of key/value pairs for all loaded MeLeeCMS settings. */
 	protected $settings = [];
    /** @var boolean Whether to load the control panel instead of a normal page. */
 	protected $cpanel;
-   /**
-   @var string The full title that will appear on the browser window.
-   @see MeLeeCMS::setTitle() The method that defines this property.
-   */
+   /** @var string The full title that will appear on the browser window, can be set by {@see MeLeeCMS::setTitle()}. */
 	protected $page_title = "";
    /**
    @var Theme The Theme that will be used to render the page and resolve JS and CSS files.
@@ -116,35 +113,23 @@ class MeLeeCMS
    @see MeLeeCMS::getTheme() The getter for this property.
    */
 	protected $page_theme;
-   /**
-   @var array[] The CSS that the page will use, including files, code, and whether to load a file from the Theme or externally.
-   @see MeLeeCMS::attachCSS() The method that populates this array.
-   */
+   /** @var array<int,array> The CSS that the page will use, including files, code, and whether to load a file from the Theme or externally. Generally added by {@see MeLeeCMS::attachCSS()}. */
 	protected $page_css = [];
-   /**
-   @var array[] The JavaScript that the page will use, including files, code, and whether to load a file from the Theme or externally.
-   @see MeLeeCMS::attachJS() The method that populates this array.
-   */
+   /** @var array<int,array> The JavaScript that the page will use, including files, code, and whether to load a file from the Theme or externally. Generally added by {@see MeLeeCMS::attachJS()}. */
 	protected $page_js = [];
-   /**
-   @var string[] The XSL files that the page will use.
-   @see MeLeeCMS::attachXSL() The method that populates this array.
-   */
+   /** @var array<int,array> The XSL files that the page will use. Generally added by {@see MeLeeCMS::attachXSL()}. */
 	protected $page_xsl = [];
-   /**
-   @var Content[] The various objects that are subclasses of Content, which will be used to display the page content.
-   @see MeLeeCMS::addContent() The method that populates this array.
-   */
+   /** @var array<string,Content> The various objects that are subclasses of Content, which will be used to display the page content. Generally added by {@see MeLeeCMS::addContent()}. */
 	protected $page_content = [];
-   /**
-   @var array[] Arrays of mixed types containing debug output, which will be printed in HTML comments at the bottom of the page source.
-   @see MeLeeCMS::debugLog() The method that populates this array.
-   */
+   /** @var array<int,array> Arrays of mixed types containing debug output, which will be printed in HTML comments at the bottom of the page source. Added by {@see MeLeeCMS::debugLog()}. */
 	protected $debug_log = [];
-   /** @var int Expiration time of the session cookie. */
+   /**
+   @var int Expiration time of the session cookie.
+   @todo Include some way for the user to specify how long they want this to be, even something as simple as a "remember me" checkbox.
+   */
 	protected $session_expiration = 86400*30;
 	
-   /** @var string[] The system file paths from which MeLeeCMS will attempt to autoload classes. */
+   /** @var array<int,string> The system file paths from which MeLeeCMS will attempt to autoload classes. */
 	public $class_paths = [];
    /** @var string The parsed and calculated `$_SERVER['PATH_INFO']` that MeLeeCMS will use to determine what page to load. */
 	public $path_info;
@@ -182,10 +167,10 @@ class MeLeeCMS
    /** @var array[] All of the currently loaded forms. */
 	public $forms = [];
    /**
-   @var array[] All arbitrary non-content data that MeLeeCMS is to include with the page, which will be sent to the user in the `window.MeLeeCMS` JavaScript object, as well as provided to XSLT.
-   @see MeLeeCMS::addData() The method that populates this array.
+   @var CMSData All arbitrary non-content data that MeLeeCMS is to include with the page, which will be sent to the user in the `window.MeLeeCMS` JavaScript object, as well as provided to XSLT, unless instructed otherwise.
+   @see MeLeeCMS::addData() The method that can be used to add data. Forwards the call to {@see CMSData::add()}.
    */
-	public $temp_data = [];
+	public $out_data;
    /** @var string[] PHP files to include between the instantiation of MeLeeCMS and the final page render. Mostly used when you want to have a PHP file construct the page, as opposed to the control panel building the page. */
 	public $include_later = [];
    /** @var mixed[] Stores the parameters of the last call to {@see MeLeeCMS::requestRefresh()}. */
@@ -228,12 +213,14 @@ class MeLeeCMS
 		$this->settings['index_page'] = $GlobalConfig['index_page'];
       
 		// Setup the load paths for classes.
+      // 1. Start with 'classes/' in the same location as this MeLeeCMS.php file.
 		array_unshift($this->class_paths, __DIR__ . DIRECTORY_SEPARATOR ."classes". DIRECTORY_SEPARATOR);
+      // 2. Then add 'includes/classes/' in the web root directory of this site to the front of the list, if it's not the same.
 		if(substr(__DIR__, 0, strlen($this->settings['server_path'])) != $this->settings['server_path'])
 			array_unshift($this->class_paths, $this->settings['server_path'] ."includes". DIRECTORY_SEPARATOR ."classes". DIRECTORY_SEPARATOR);
 		spl_autoload_register(array($this, "loadClass"), true);
       
-      // Detmine if we are in the control panel.
+      // Determine if we are in the control panel.
       $this->cpanel = (dirname($_SERVER['SCRIPT_FILENAME']) == $this->settings['server_path'] . $this->settings['cpanel_dir']);
       
 		// Setup the rest of MeLeeCMS based on the $mode.
@@ -244,6 +231,7 @@ class MeLeeCMS
          $this->setupSettings();
 		if(($this->mode & self::SETUP_THEMES) > 0)
          $this->setupThemes();
+      // Note: This is 'else if' because setupThemes() does everything that setupTheme() does.
 		else if(($this->mode & self::SETUP_THEME) > 0)
          $this->setupTheme();
 		if(($this->mode & self::SETUP_USER) > 0)
@@ -256,6 +244,7 @@ class MeLeeCMS
          $this->setupPages();
 		if(($this->mode & self::SETUP_PAGE) > 0)
          $this->setupPage();
+      $this->out_data = new CMSData($this);
       
       // If a refresh was requested at some point during initialization, do it now.
 		if(isset($this->refresh_requested['url']))
@@ -315,7 +304,7 @@ class MeLeeCMS
          $this->debug_log[] = $input;
    }
    
-	public function errorHandler($level, $message, $file, $line, $context)
+	public function errorHandler($level, $message, $file, $line)
 	{
       // TODO: We ignore error_reporting() right now. In the future I think a better approach would be letting the owner set what errors they want reported in config.php, perhaps even three separate times for the three different logs (file, database, XML output).
       // Convert the error level to a string.
@@ -340,16 +329,18 @@ class MeLeeCMS
 		}
       
       // Write the error to a log file.
-		error_log($type .": ". $message ." in ". $file ." on line ". $line);
+		error_log($type .": ". $message ."\n". $this->implodeBacktrace(1));
+      $backtrace = array_slice(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), 1);
       
       // Send the error to the XML output if the user has permission to view errors.
-		if(is_object($this->user) && $this->user->has_permission("ADMIN"))
+		if(is_object($this->user) && $this->user->has_permission("view_errors"))
 		{
 			$this->addDataProtected('errors', [
 				'type' => $type,
 				'message' => $message,
 				'file' => $file,
 				'line' => $line,
+				'stack' => $backtrace,
 			]);
 		}
       
@@ -364,6 +355,7 @@ class MeLeeCMS
 				'message' => $message,
 				'file' => $file,
 				'line' => $line,
+				'stack' => $backtrace,
 			];
 			$this->database->insert("error_log", $mysql_data, false);
 		}
@@ -391,10 +383,13 @@ class MeLeeCMS
 	{
       $parts = explode("\\", $class);
       $classname = array_pop($parts);
-      if(count($parts) == 1 && $parts[0] == __namespace__)
+      $namespace = array_shift($parts);
+      if($namespace == __namespace__)
       {
          foreach($this->class_paths as $path)
          {
+            foreach($parts as $dir)
+               $path .= $dir . DIRECTORY_SEPARATOR;
             if(is_file($path . $classname .".php"))
             {
                require_once($path . $classname .".php");
@@ -402,29 +397,72 @@ class MeLeeCMS
             }
          }
          throw new \Exception("Unable to load class '". $class ."' in MeLeeCMS namespace. Class file not found.");
-         // TODO: Somehow check if it's a core class that breaks the entire page, or some less important custom one that only breaks part of the page.
       }
       else
       {
-         trigger_error("Unable to load class '". $class ."'. Class is outside MeLeeCMS namespace.\n". $this->implodeBacktrace(debug_backtrace(0)), E_USER_WARNING);
+         trigger_error("Unable to load class '". $class ."'. Class is outside MeLeeCMS namespace.", E_USER_WARNING);
          return false;
       }
 	}
    
-   public function implodeBacktrace($backtrace)
+   public function implodeBacktrace($start=0, $steps=0, $multiline=false)
    {
-      $result = "Backtrace:\n";
-      foreach($backtrace as $i=>$step)
+      if($start < 0)
+         $start = 0;
+      // Start at 1, because 0 is literally just this method.
+      $start += 1;
+      $result = ($multiline ? "Backtrace:\n" : "");
+      foreach(debug_backtrace(0) as $i=>$step)
       {
-         $result .= "\tStep #{$i}\n";
-         if(!empty($step['file']))
-            $result .= "\t\tFile: {$step['file']}\n";
-         if(!empty($step['line']))
-            $result .= "\t\tLine: {$step['line']}\n";
+         if($i < $start)
+            continue;
+         if($steps > 0 && $i == $start + $steps)
+            break;
+         $result .=     ($multiline ? "\tStep #{$i}\n"                  : "\tStack-{$i}: ");
          if(!empty($step['class']))
-            $result .= "\t\tClass: {$step['class']}\n";
+            $result .=  ($multiline ? "\t\tClass: {$step['class']}\n"   : $step['class']);
+         if(!empty($step['type']))
+            $result .=  ($multiline ? ""                                : $step['type']);
          if(!empty($step['function']))
-            $result .= "\t\tFunction: {$step['function']}\n";
+            $result .=  ($multiline ? "\t\tFunc: {$step['function']}\n" : $step['function']);
+         if(!empty($step['args']))
+         {
+            if($multiline)
+            {
+               $result .=  "\t\tArgs:\n";
+               foreach($step['args'] as $arg=>$val)
+                  if(is_array($val))
+                     $result .=  "\t\t\t{$arg} => array[". count($val) ."]\n";
+                  else if(is_object($val))
+                     $result .=  "\t\t\t{$arg} => ". get_class($val) ."\n";
+                  else if(is_string($val))
+                     $result .=  "\t\t\t{$arg} => \"{$val}\"\n";
+                  else
+                     $result .=  "\t\t\t{$arg} => {$val}\n";
+            }
+            else
+            {
+               $result .=  "(";
+               foreach($step['args'] as $arg=>$val)
+                  if(is_array($val))
+                     $result .=  "array[". count($val) ."],";
+                  else if(is_object($val))
+                     $result .=  get_class($val) .",";
+                  else if(is_string($val))
+                     $result .=  "\"{$val}\",";
+                  else
+                     $result .=  "{$val},";
+               $result =  substr($result,0,-1) .")";
+            }
+         }
+         else if(!$multiline && !empty($step['function']))
+            $result .= "()";
+         if(!empty($step['file']))
+            $result .=  ($multiline ? "\t\tFile: {$step['file']}\n"     : " in {$step['file']}");
+         if(!empty($step['line']))
+            $result .=  ($multiline ? "\t\tLine: {$step['line']}\n"     : " at line {$step['line']}");
+         if(!$multiline)
+            $result .= "\n";
       }
       return $result;
    }
@@ -514,7 +552,7 @@ class MeLeeCMS
 		session_start($session_options);
 		if(isset($_SESSION['form_response']))
 		{
-			$this->addDataProtected('form_response', $_SESSION['form_response'], false);
+			$this->addDataProtected('form_response', $_SESSION['form_response'], CMSData::NO_AUTO_ARRAY);
 			unset($_SESSION['form_response']);
 		}
 		if($this->getSetting('user_system') == "")
@@ -789,64 +827,15 @@ class MeLeeCMS
 			return null;
 		}
 	}
-	
-   // $allowArray will cause the data at $index to be converted to an array if it isn't already, then add $data to it.
-   // $allowOverwrite is only checked if $allowArray is false. Determines whether to overwrite the old data or ignore the new data.
-   // $errorIfExists is only checked if $allowArray is false. If the data exists and this is non-zero, an error will be reported at the specified level of this argument.
-	protected function addDataProtected($index, $data, $allowArray=true, $notCustom=true, $allowOverwrite=true, $errorIfExists=E_USER_NOTICE)
+   
+	protected function addDataProtected($index, $data, $flags=0, $errorIfExists=E_USER_NOTICE)
 	{
-      if(empty($index) || empty($data))
-         return false;
-      
-      // Determine where to store the data ($target)
-		if($notCustom)
-			$target =& $this->temp_data;
-		else
-		{
-			if(!isset($this->temp_data['custom']) || !is_array($this->temp_data['custom']))
-				$this->temp_data['custom'] = [];
-			$target =& $this->temp_data['custom'];
-		}
-      
-      // If $data is an array, make sure it is not numerically indexed, as that messes everything up.
-      if(is_array($data))
-         foreach(array_keys($data) as $key)
-            if(is_numeric($key))
-            {
-               $data["__".$key] = $data[$key];
-               unset($data[$key]);
-            }
-      
-		if(empty($target[$index]))
-      {
-			$target[$index] = $data;
-         return true;
-      }
-		else if($allowArray)
-		{
-			if(is_array($target[$index]) && !empty($target[$index][0]))
-				$target[$index][] = $data;
-			else
-				$target[$index] = [$target[$index], $data];
-         return true;
-		}
-		else
-		{
-			if(!empty($errorIfExists))
-				trigger_error("Attempting to set MeLeeCMS ". ($notCustom ? "" : "custom ") ."data with index '". $index ."', but it is already set and isn't allowing an array. ". ($allowOverwrite ? "Overwriting previous data." : "Ignoring new data."), $errorIfExists);
-			if($allowOverwrite)
-         {
-				$target[$index] = $data;
-            return true;
-         }
-         else
-            return false;
-		}
+      return $this->out_data->add($index, $data, $flags, $errorIfExists);
 	}
 
-	public function addData($index, $data, $allowArray=true, $allowOverwrite=true, $errorIfExists=E_USER_NOTICE)
+	public function addData($index, $data, $flags=CMSData::CUSTOM, $errorIfExists=E_USER_NOTICE)
 	{
-		return $this->addDataProtected($index, $data, $allowArray, false, $allowOverwrite, $errorIfExists);
+      return $this->out_data->add($index, $data, $flags|CMSData::CUSTOM, $errorIfExists);
 	}
 	
 	public function parse_template($data, $class, $subtheme)
@@ -871,12 +860,15 @@ class MeLeeCMS
       {
          if(!$xsl['fromtheme'])
             $page_xsl[] = ['href'=>$xsl['href'], 'code'=>$xsl['code']];
-         else if(!empty($xsl_filepath = $this->getTheme()->resolveFile("templates", $xsl['href'])))
+         else if($xsl_filepath = $this->getTheme()->resolveFile("templates", $xsl['href']))
+         {
+            //$this->debugLog("ADMIN", $xsl_filepath);
             $page_xsl[] = ['href'=>$xsl_filepath];
+         }
          else
             trigger_error("Invalid XSL file '{$xsl['href']}' (Has code? ". !empty($xsl['code']) .". From theme? ". !empty($xsl['fromtheme']) .") has been attached to the page.", E_USER_WARNING);
       }
-      return $this->getTheme()->parseTemplate($data, $class, $subtheme, $xsl_includes + $page_xsl);
+      return $this->getTheme()->parseTemplate($data, $class, $subtheme, array_merge($xsl_includes, $page_xsl));
 	}
 
 	public function render($subtheme="")
@@ -902,11 +894,11 @@ class MeLeeCMS
 			//'data' => [],
 		];
 		if(!empty($this->user))
-			$this->addDataProtected('user', $this->user->myInfo(), false);
+			$this->addDataProtected('user', $this->user->myInfo(), CMSData::NO_AUTO_ARRAY);
 		if(!empty($_POST))
-			$this->addDataProtected('post', $_POST, false);
+			$this->addDataProtected('post', $_POST, CMSData::NO_AUTO_ARRAY);
 		if(!empty($_GET))
-			$this->addDataProtected('get', $_GET, false);
+			$this->addDataProtected('get', $_GET, CMSData::NO_AUTO_ARRAY);
 		
       $content_xsl = [];
       foreach($this->page_content as $tag=>$content)
@@ -921,15 +913,12 @@ class MeLeeCMS
 				'code' => $css['code'],
 				'attrs' => $css['attrs'],
 			];
-      $data_json = json_encode($this->temp_data, JSON_PARTIAL_OUTPUT_ON_ERROR);
-      if($json_err = json_last_error())
-         trigger_error("Error code '{$json_err}' triggered when encoding MeLeeCMS data to JSON.", E_USER_WARNING);
 		$params['js'] = [[
 			'code' =>
             "window.MeLeeCMS = new (function MeLeeCMS(){".
                "this.url_path=\"". addslashes($this->getSetting('url_path')) ."\";".
                "this.theme=\"". addslashes($this->getTheme()->name) ."\";".
-               "this.data=". (!empty($data_json) ? $data_json : "{}").
+               "this.data=". $this->out_data->toJSON().
             "})();",
 		]];
 		foreach($this->page_js as $js)
@@ -939,8 +928,8 @@ class MeLeeCMS
 				'attrs' => $js['attrs'],
 			];
 		// TODO: This won't include errors during XSLT conversion. Don't know how to fix that.
-		$params['data'] = $this->temp_data;
-		if($subtheme == "__xml"/* && $this->user->has_permission("view_xml") */)
+		$params['data'] = $this->out_data->toXMLArray();
+		if($subtheme == "__xml" && $this->user->has_permission("view_xml"))
 		{
 			header("Content-type: text/xml");
 			echo("<?xml version=\"1.0\"?>");
@@ -954,12 +943,6 @@ class MeLeeCMS
 			else
 				echo($html);
 		}
-      
-      // TODO: Remove this. It's just here for OAuth testing.
-      if(!empty($this->user->api))
-      {
-         $this->debugLog("ADMIN", "API requests:", $this->user->api->getReport());
-      }
       
       foreach($this->debug_log as $input)
       {

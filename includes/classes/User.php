@@ -4,22 +4,21 @@ namespace MeLeeCMS;
 /**
  * Superclass of all classes that can be used to hold user properties.
  * 
- * Any subclass of `User` must be declared in a file with the same name as the class and end in `.php`, ie. `User_MeLeeCMS.php` for the `User_MeLeeCMS` class. Additionally, the class declaration within that file must match the following regex: `/\bclass\s+ClassName\s+extends\s+User\b/i`. Any subclass can be in place of `User`, as long as it extends from `User` and each ancestor follows the same declaration rules.
- * MeLeeCMS also expects that you have a permission constant defined in your class called `PERM_ADMIN`. This is used to determine which users have access to the control panel. Otherwise, the control panel will be entirely unprotected by MeLeeCMS and you must protect it yourself with another method.
- * All permissions must be constants that begin with `PERM_`.
+ * Any subclass of `User` must be declared in a file with the same name as the class and end in `.php`, ie. `MeLeeCMSUser.php` for the `MeLeeCMSUser` class. Additionally, the class declaration within that file must match the following regex: `/\bclass\s+ClassName\s+extends\s+User\b/i`. Any subclass can be in place of `User`, as long as it extends from `User` and each ancestor follows the same declaration rules.
  * Other features of MeLeeCMS, such as the database changelog, require that users can be uniquely identified by the 'index' element of the `$user_info` array. If a user cannot be uniquely identified with said index, then leave the 'index' element empty and the feature in question will use something else.
  */
 class User
 {
-	const PERM_VIEW = 1;
-	
 	protected $cms;
 	protected $logged_in;
+	protected $permission_defs;
 	public $user_info;
-	protected $obscured_cols = ["permission"];
+	protected $obscured_cols = ["permissions"];
 
 	public function __construct($cms)
 	{
+      global $GlobalConfig;
+      $this->permission_defs = $GlobalConfig['permissions'];
 		$this->cms = $cms;
 		$this->logged_in = false;
 		$this->user_info = self::default_user();
@@ -30,7 +29,7 @@ class User
 		$result['ip'] = $_SERVER['REMOTE_ADDR'];
 		$result['username'] = "guest". rand(1000,9999);
 		$result['jointime'] = time();
-		$result['permission'] = self::PERM_VIEW;
+		$result['permissions'] = ["VIEW"];
 		return $result;
 	}
 
@@ -52,20 +51,23 @@ class User
 		return $info;
 	}
 
-	public function has_permission($perm)
+	public function has_permission($permission)
 	{
-		if(is_string($perm))
-		{
-			$const = "self::". (substr($perm,0,5)=="PERM_" ? "" : "PERM_") . $perm;
-			if(defined($const))
-				$perm = constant($const);
-			else
-				$perm = 0;
-		}
-		if(is_int($perm))
-			return ($this->get_property('permission') & $perm) == $perm;
-		else
-			return false;
+      if(in_array($permission, $this->user_info['permissions']))
+      {
+         return true;
+      }
+      else
+      {
+         foreach($this->user_info['permissions'] as $perm)
+         {
+            if(!empty($this->permission_defs[$perm]) && in_array($permission, $this->permission_defs[$perm]))
+            {
+               return true;
+            }
+         }
+      }
+		return false;
 	}
 
 	public function is_logged()
@@ -126,33 +128,5 @@ class User
 		self::$subclasses = array_unique(self::$subclasses);
 		sort(self::$subclasses);
 		return self::$subclasses;
-	}
-	
-	/** @var string[] Stores the last result of {@see User::get_permissions()} so that it won't be run more than once per page load. */
-	protected static $permissions;
-	
-	/**
-	 * @param MeLeeCMS $cms A reference to the MeLeeCMS object.
-	 * @return array An associative array of all permissions defined in the class of the CMS's User handler, or this class if no CMS is given. The keys are the integer representations of the bits that define the permission (powers of 2), and the values are the names of the `PERM_*` constants in the class, with the `PERM_` portion removed.
-	 */
-	public static function get_permissions($cms)
-	{
-      // TODO: Test this with the new namespaces. Might even just remove it after I implement a new permissions feature
-		if(is_array(self::$permissions))
-			return self::$permissions;
-		if(is_object($cms) && is_object($cms->user))
-			$class = get_class($cms->user);
-		else
-		{
-			$class = self::class;
-			trigger_error("User has been loaded without MeLeeCMS.", E_USER_NOTICE);
-		}
-		self::$permissions = [];
-		// Note: Don't know if we should care about this, but using class member access on instantiation here means we require PHP>=5.4.0
-		foreach((new \ReflectionClass($class))->getConstants() as $con=>$val)
-			if(substr($con, 0, 5) == "PERM_")
-				self::$permissions[$val] = substr($con, 5);
-		ksort(self::$permissions);
-		return self::$permissions;
 	}
 }

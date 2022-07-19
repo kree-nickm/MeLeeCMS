@@ -120,8 +120,9 @@ class Theme
       }
    }
 	
-	public function hasFile($type, $name, $name_extra="default", $recursion=[])
+	public function resolveFile($directory, $name, $name_extra="default", $recursion=[])
 	{
+      //$this->cms->debugLog("ADMIN", $this->cms->implodeBacktrace(0,2), $added_xsl);
       if(in_array($this->name, $recursion))
       {
          // Note: Maybe we don't need a warning here? What if ThemeA implements some unique stuff and wants to use ThemeB for the rest, but ThemeB also implements some unique stuff and wants to use ThemeA for the rest. Using one or the other would be different in the cases where they overlap, but the same everywhere else. It's a valid use case in my opinion, but would start logging these errors.
@@ -131,8 +132,8 @@ class Theme
       else
          $recursion[] = $this->name;
       
-		$path = $this->server_path . $type . DIRECTORY_SEPARATOR;
-      if($type == "templates" && substr($name, -4) != ".xsl")
+		$path = $this->server_path . $directory . DIRECTORY_SEPARATOR;
+      if($directory == "templates" && substr($name, -4) != ".xsl")
       {
          $fileA = "{$name}-{$name_extra}.xsl";
          $fileB = "{$name}-default.xsl";
@@ -141,43 +142,33 @@ class Theme
          $fileA = $name;
       
 		if(is_file($path . $fileA))
-			return true;
+      {
+         // Since XSLT is all done internally within PHP, we need server path instead of URL path.
+         if($directory == "templates")
+            return $path . $fileA;
+         else
+            return $this->url_path . $directory ."/". $fileA;
+      }
 		else if(!empty($fileB) && is_file($path . $fileB))
-			return true;
+      {
+         // Since XSLT is all done internally within PHP, we need server path instead of URL path.
+         if($directory == "templates")
+            return $path . $fileB;
+         else
+            return $this->url_path . $directory ."/". $fileB;
+      }
 		else
       {
          foreach($this->superthemes as $supertheme)
-            if($supertheme->hasFile($type, $name, $name_extra, $recursion))
-               return true;
+            if($result = $supertheme->resolveFile($directory, $name, $name_extra, $recursion))
+               return $result;
 			return false;
       }
 	}
-   
-   public function resolveFile($type, $name)
-   {
-		$path = $this->server_path . $type . DIRECTORY_SEPARATOR;
-		if(is_file($path . $name))
-      {
-         // Since XSLT is all done internally within PHP, we need server path instead of URL path.
-         if($type == "templates")
-            return $path . $name;
-         else
-            return $this->url_path . $type ."/". $name;
-      }
-		else
-      {
-         foreach($this->superthemes as $supertheme)
-            if($supertheme->hasFile($type, $name, "", [$this->name]))
-               return $supertheme->resolveFile($type, $name);
-         if(!empty($this->cms->themes['default']))
-            if($this->cms->themes['default']->hasFile($type, $name, "", [$this->name]))
-               return $this->cms->themes['default']->resolveFile($type, $name);
-			return "";
-      }
-   }
 	
-	public function parseTemplate($data, $class, $subtheme="default", $added_xsl=[], $transformer=null)
+	public function parseTemplate($data, $class="MeLeeCMS", $subtheme="default", $added_xsl=[], $transformer=null)
 	{
+      //$this->cms->debugLog("ADMIN", $this->cms->implodeBacktrace(0,2), $added_xsl);
       if(empty($transformer))
          $transformer = new Transformer();
 		$path = $this->server_path ."templates". DIRECTORY_SEPARATOR;
@@ -194,10 +185,10 @@ class Theme
 		else
       {
          foreach($this->superthemes as $supertheme)
-            if($supertheme->hasFile("templates", $class, $subtheme, [$this->name]))
+            if($supertheme->resolveFile("templates", $class, $subtheme, [$this->name]))
                return $supertheme->parseTemplate($data, $class, $subtheme, $added_xsl, $transformer);
          if(!empty($this->cms->themes['default']))
-            if($this->cms->themes['default']->hasFile("templates", $class, $subtheme, [$this->name]))
+            if($this->cms->themes['default']->resolveFile("templates", $class, $subtheme, [$this->name]))
                return $this->cms->themes['default']->parseTemplate($data, $class, $subtheme, $added_xsl, $transformer);
 			return $data;
       }

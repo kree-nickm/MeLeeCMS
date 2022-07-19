@@ -1,6 +1,6 @@
 <?php
-/** The code for the OAuth2Client class. */
-namespace MeLeeCMS;
+/** The code for the OAuth2\Client class. */
+namespace MeLeeCMS\OAuth2;
 
 /**
 An additional wrapper class for the CURLWrapper class, to make cURL requests even easier in the case of interacting with an OAuth 2.0 API.
@@ -12,10 +12,10 @@ APIs with support pending:
 - Discord
 - YouTube
 - Salesforce (maybe)
-@uses CURLWrapper Server-to-server API requests are done through the cURL wrapper.
-@uses OAuth2ClientRateLimit Separate class for handling rate limits imposed by certain APIs.
+@uses \MeLeeCMS\CURLWrapper Server-to-server API requests are done through the cURL wrapper.
+@uses ClientRateLimit Separate class for handling rate limits imposed by certain APIs.
 */
-class OAuth2Client
+class Client
 {
 	const E_STATE_MISMATCH = 1;
 	const E_FAILED_LOGIN = 2;
@@ -78,14 +78,14 @@ class OAuth2Client
 		}
       
       if(empty($rate_limit))
-         $this->rate_limit = new OAuth2ClientRateLimit();
+         $this->rate_limit = new ClientRateLimit();
       else
          $this->rate_limit = $rate_limit;
       
       $this->get_implicit = $get_implicit;
 		
 		// Begin the login process.
-		$this->curl = new CURLWrapper([], true, false);
+		$this->curl = new \MeLeeCMS\CURLWrapper([], true, false);
 		
 		// W-I-P code for password logins.
 		if($this->grant_type === "password")

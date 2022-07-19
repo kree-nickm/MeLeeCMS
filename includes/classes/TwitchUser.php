@@ -3,13 +3,10 @@ namespace MeLeeCMS;
 
 class TwitchUser extends User
 {
-	const PERM_VIEW = 1;
-	const PERM_ADMIN = 2;
-	
 	public $api;
 	public $login_error = false;
 
-	protected $obscured_cols = ["permission"];
+	protected $obscured_cols = ["permissions"];
 	
 	public function __construct($cms)
 	{
@@ -22,7 +19,7 @@ class TwitchUser extends User
 		}
 		else
 		{
-			$this->api = new OAuth2Client(
+			$this->api = new OAuth2\Client(
             "https://id.twitch.tv",
             $GlobalConfig['twitch_client_id'],
             $GlobalConfig['twitch_client_secret'],
@@ -31,7 +28,7 @@ class TwitchUser extends User
                'scope' => $GlobalConfig['twitch_scope'],
                'redirect_uri' => $GlobalConfig['twitch_redirect_uri']
             ],
-            new OAuth2ClientRateLimit("Ratelimit-Remaining", "Ratelimit-Reset", "timestamp", "Ratelimit-Limit"),
+            new OAuth2\ClientRateLimit("Ratelimit-Remaining", "Ratelimit-Reset", "timestamp", "Ratelimit-Limit"),
             $GlobalConfig['twitch_implicit_enabled']
          );
 			$this->api->api_url = "https://api.twitch.tv";
@@ -60,7 +57,7 @@ class TwitchUser extends User
 				if(!empty($user_data->id))
 				{
 					// We have a response, which means we need to create an entry for it in the users database.
-					$this->cms->database->insert("users", ['twitch_id'=>$user_data->id, 'jointime'=>time(), 'permission'=>1], false);
+					$this->cms->database->insert("users", ['twitch_id'=>$user_data->id, 'jointime'=>time(), 'permissions'=>["VIEW"]], false);
                // Also update the user cache since we have the freshest data.
                if(!empty($user_data->email))
                   unset($user_data->email);
@@ -114,6 +111,8 @@ class TwitchUser extends User
                $this->user_info['twitch_data'] = json_decode($this->cms->database->query("SELECT `data` FROM `custom_twitchusercache` WHERE `id`=". $this->cms->database->quote($this->user_info['twitch_id']), Database::RETURN_FIELD));
             }
             
+				$this->user_info['permissions'] = json_decode($this->user_info['permissions'], true);
+            
             $tzset = date_default_timezone_set($this->user_info['timezone']);
             if(!$tzset)
             {
@@ -123,22 +122,23 @@ class TwitchUser extends User
 			else
 			{
 				$this->user_info = [];
-				$this->user_info['permission'] = self::PERM_VIEW;
+				$this->user_info['permissions'] = ["VIEW"];
 				$this->user_info['custom_data'] = [];
 				$this->user_info['follows'] = [];
 				$this->logged_in = false;
 			}
+         $this->permission_defs = $GlobalConfig['permissions'];
 			
 			$this->user_info['ip'] = $_SERVER['REMOTE_ADDR'];
 			if(!empty($this->api->error['code']))
 			{
 				switch($this->api->error['code'])
 				{
-					case OAuth2Client::E_STATE_MISMATCH:
+					case OAuth2\Client::E_STATE_MISMATCH:
 						$sessions = $this->cms->database->query("SELECT `session_id` FROM sessions WHERE `ip`=". $this->cms->database->quote($_SERVER['REMOTE_ADDR']), Database::RETURN_COLUMN);
 						trigger_error("State mismatch during login from \"". $_SERVER['REMOTE_ADDR'] ."\". Expected \"". $this->api->error['expected'] ."\" but got \"". $this->api->error['got'] ."\". Either someone is trying to break something, or two different sessions were created for this person during the login attempt. Current session is \"". session_id() ."\". That IP has the following sessions currently open:\n". implode("\n", $sessions), E_USER_ERROR);
 						break;
-					case OAuth2Client::E_FAILED_LOGIN:
+					case OAuth2\Client::E_FAILED_LOGIN:
 						trigger_error("Login failed after code was obtained from OAuth2. Response from server: ". print_r($this->api->error['token'],true) ."\n Header from that response: \n". $this->api->error['lastheader'], E_USER_ERROR);
 						break;
 				}
@@ -363,7 +363,7 @@ class TwitchUser extends User
       return $output;
    }
 	
-   // TODO: Could maybe move the below paged queries to OAuth2Client
+   // TODO: Could maybe move the below paged queries to OAuth2\Client
 	public function getPagedResponse($endpoint="/", $containerKey="data")
 	{
       // For a typical Twitch API query where the API returns up to 100 results, and gives you a cursor to retreive additional results if there are more than 100.

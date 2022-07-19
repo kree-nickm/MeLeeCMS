@@ -59,22 +59,13 @@ CREATE TABLE `settings` (
 INSERT INTO `settings` (`setting`, `value`, `type`, `description`) VALUES
 ('index_page', '', 'page', 'Page that will load if someone visits your website but doesn\'t specify another page. For example, if they visit the URL <tt>www.yourdomain.com/</tt>, with nothing after the slash.');
 
-CREATE TABLE `themes` (
-  `index` int(10) UNSIGNED NOT NULL,
-  `name` varchar(63) NOT NULL,
-  `doctype` text NOT NULL,
-  `xsl` longtext NOT NULL,
-  `css` longtext NOT NULL,
-  `token` varchar(50) NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE `users` (
   `index` int(10) UNSIGNED NOT NULL,
   `username` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
   `jointime` bigint(20) UNSIGNED NOT NULL,
   `timezone` varchar(255) NOT NULL,
-  `permission` bigint(20) UNSIGNED NOT NULL,
+  `permissions` json NOT NULL,
   `custom_data` longblob NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
@@ -96,7 +87,8 @@ CREATE TABLE `error_log` (
   `type` varchar(20) NOT NULL,
   `message` text NOT NULL,
   `file` varchar(255) NOT NULL,
-  `line` int(11) NOT NULL
+  `line` int(11) NOT NULL,
+  `stack` json NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 
@@ -114,9 +106,6 @@ ALTER TABLE `page_components`
 
 ALTER TABLE `settings`
   ADD UNIQUE KEY `setting` (`setting`);
-
-ALTER TABLE `themes`
-  ADD PRIMARY KEY (`index`);
 
 ALTER TABLE `users`
   ADD PRIMARY KEY (`index`),
@@ -136,9 +125,6 @@ ALTER TABLE `pages`
   MODIFY `index` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `page_components`
-  MODIFY `index` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `themes`
   MODIFY `index` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `users`
