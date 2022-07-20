@@ -122,7 +122,6 @@ class Theme
 	
 	public function resolveFile($directory, $name, $name_extra="default", $recursion=[])
 	{
-      //$this->cms->debugLog("ADMIN", $this->cms->implodeBacktrace(0,2), $added_xsl);
       if(in_array($this->name, $recursion))
       {
          // Note: Maybe we don't need a warning here? What if ThemeA implements some unique stuff and wants to use ThemeB for the rest, but ThemeB also implements some unique stuff and wants to use ThemeA for the rest. Using one or the other would be different in the cases where they overlap, but the same everywhere else. It's a valid use case in my opinion, but would start logging these errors.
@@ -157,18 +156,20 @@ class Theme
          else
             return $this->url_path . $directory ."/". $fileB;
       }
-		else
+		else if($this->name != "default")
       {
          foreach($this->superthemes as $supertheme)
             if($result = $supertheme->resolveFile($directory, $name, $name_extra, $recursion))
                return $result;
-			return false;
+         if(!empty($this->cms->themes['default']))
+            if($result = $this->cms->themes['default']->resolveFile($directory, $name, $name_extra, $recursion))
+               return $result;
       }
+		return false;
 	}
 	
 	public function parseTemplate($data, $class="MeLeeCMS", $subtheme="default", $added_xsl=[], $transformer=null)
 	{
-      //$this->cms->debugLog("ADMIN", $this->cms->implodeBacktrace(0,2), $added_xsl);
       if(empty($transformer))
          $transformer = new Transformer();
 		$path = $this->server_path ."templates". DIRECTORY_SEPARATOR;
@@ -182,7 +183,7 @@ class Theme
 			$transformer->set_stylesheet("", $file);
          return $transformer->transform($data, $class, $added_xsl);
       }
-		else
+		else if($this->name != "default")
       {
          foreach($this->superthemes as $supertheme)
             if($supertheme->resolveFile("templates", $class, $subtheme, [$this->name]))
@@ -190,7 +191,7 @@ class Theme
          if(!empty($this->cms->themes['default']))
             if($this->cms->themes['default']->resolveFile("templates", $class, $subtheme, [$this->name]))
                return $this->cms->themes['default']->parseTemplate($data, $class, $subtheme, $added_xsl, $transformer);
-			return $data;
       }
+      return $data;
 	}
 }

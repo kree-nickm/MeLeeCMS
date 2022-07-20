@@ -7,7 +7,7 @@ namespace MeLeeCMS;
 class MeLeeCMSUser extends User
 {
 	public $error = "";
-	protected $obscured_cols = ["password", "permissions", "token", "custom_data", "custom_data_keys"];
+	protected $obscured_cols = ["password", "token", "custom_data", "custom_data_keys"];
 
 	public function __construct($cms)
 	{

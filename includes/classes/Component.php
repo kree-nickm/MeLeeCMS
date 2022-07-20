@@ -1,11 +1,13 @@
 <?php
 namespace MeLeeCMS;
 
+/**
+A collection of content that is not specific to a single page.
+A Component is a type of Container that is meant to be added to multiple pages. To that end, it's generally stored in MySQL so that every page can read it from there, rather than every page having to define it separately. That way, if you want to modify the Component, you only have to modify the one instance of it that is stored, and the changes will be reflected on every page.
+*/
 class Component extends Container
 {
 	public $index;
-	public $attrs;
-	public $content;
 	
 	public function __construct($index=0, $attrs=[])
 	{

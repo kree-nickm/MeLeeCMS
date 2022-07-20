@@ -13,7 +13,7 @@ class User
 	protected $logged_in;
 	protected $permission_defs;
 	public $user_info;
-	protected $obscured_cols = ["permissions"];
+	protected $obscured_cols = [];
 
 	public function __construct($cms)
 	{
@@ -48,6 +48,22 @@ class User
 			if(!in_array($k, $this->obscured_cols))
 				$info[$k] = $v;
 		}
+      $info['class'] = get_class($this);
+      $info['permissions'] = [];
+      foreach($this->user_info['permissions'] as $perm)
+      {
+         if(!empty($this->permission_defs[$perm]))
+         {
+            foreach($this->permission_defs[$perm] as $p)
+            {
+               $info['permissions'][$p] = true;
+            }
+         }
+         else
+         {
+            $info['permissions'][$perm] = true;
+         }
+      }
 		return $info;
 	}
 

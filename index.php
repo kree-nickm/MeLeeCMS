@@ -7,6 +7,7 @@ if(version_compare(PHP_VERSION, "5.6.0beta1", "<"))
 }
 else
 {
+   require_once("includes/init.php");
    if($_SERVER['REQUEST_METHOD'] == "GET")
    {
       require_once("includes/get.php");

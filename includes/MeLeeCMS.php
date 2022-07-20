@@ -1,15 +1,9 @@
 <?php
-/**
-The code for the MeLeeCMS class, as well as some initial setup before the application is loaded.
-In addition to the MeLeeCMS class definition, this file also does the following things immediately upon execution, before the class is instantiated or even defined:
-- Changes the INI settings for how errors are logged; `display_errors` off, `log_errors` on, and `error_log` set to a directory and file in `includes/logs/` based on today's date.
-- Records the current system time and memory before MeLeeCMS runs, so that usage data can be calculated later.
-- Defines a function that performs said calculation.
-*/
+/** The code for the MeLeeCMS class. */
 namespace MeLeeCMS;
 
-/*
-TODO: Guilty admission: This project has inconsistent indentations and naming conventions. This is a consequence of being developed over more than a decade, and my preferences and text editors/settings changing over that time period. So, to clarify the project's conventions in the hope of eventually making every file conform to them:
+/**
+@todo Guilty admission: This project has inconsistent indentations and naming conventions. This is a consequence of being developed over more than a decade, and my preferences and text editors/settings changing over that time period. So, to clarify the project's conventions in the hope of eventually making every file conform to them:
 - Indentations should be 3 spaces.
 - Class names should be PascalCase
 - Constants should be CAPITAL_UNDER_SCORED
@@ -17,56 +11,6 @@ TODO: Guilty admission: This project has inconsistent indentations and naming co
 - All other variables and functions should be under_scored
 The naming conventions are my best attempt to conform to PHP's own naming conventions, which are themselves inconsistent.
 */
-ini_set("display_errors", 0);
-ini_set("log_errors", 1);
-// Note: Don't know if we should care about this, but using __DIR__ means we require PHP>=5.3.0, and it appears in multiple files.
-$error_dir = __DIR__ . DIRECTORY_SEPARATOR ."logs". DIRECTORY_SEPARATOR ."errors-". date("Y-m");
-$error_file = $error_dir . DIRECTORY_SEPARATOR . date("Y-m-d") .".log";
-if(!is_dir($error_dir))
-{
-   mkdir($error_dir, 0770, true);
-}
-if(!is_file($error_file))
-{
-   touch($error_file);
-   chmod($error_file, 0660);
-}
-ini_set("error_log", $error_file);
-// Note: Permissions for the log directory and log files is going to be totally screwed. They will be owned by the PHP/Apache user, and the group will also be the PHP/Apache group like every other file here, so the actual logged-in linux user is just SOL. No clue how to fix this other than with a root script, way outside the jurisdiction of this CMS.
-
-/** Define these for PHP<5.3.0, just in case we ever care about backwards-compatibility. */
-defined("E_DEPRECATED") OR define("E_DEPRECATED", 8192);
-defined("E_USER_DEPRECATED") OR define("E_USER_DEPRECATED", 16384);
-/** @var int The current memory usage at the time the page starts loading. */
-define("START_MEMORY", memory_get_usage());
-/** @var float The current microsecond timestamp at the time the page starts loading. */
-define("START_TIME", microtime(true));
-/**
-Prints out the time elapsed and net memory usage since the page first started loading, in the form of an HTML comment.
-@return void
-*/
-function print_load_statistics()
-{
-	$time = (round((microtime(true) - START_TIME)*1000000)/1000) ." ms";
-	
-	$mem = memory_get_usage() - START_MEMORY;
-	if($mem > 1048576*1.5)
-		$mem = round($mem/1048576, 3) ." MB";
-	else if($mem > 1024*1.5)
-		$mem = round($mem/1024, 2) ." kB";
-	else
-		$mem = $mem ." B";
-	
-	$peak = memory_get_peak_usage() - START_MEMORY;
-	if($peak > 1048576*1.5)
-		$peak = round($peak/1048576, 3) ." MB";
-	else if($peak > 1024*1.5)
-		$peak = round($peak/1024, 2) ." kB";
-	else
-		$peak = $peak ." B";
-	
-	echo("<!-- MeLeeCMS Load Statistics; Time: ". $time .", Memory: ". $mem ." (Peak: ". $peak .") -->");
-}
 
 /**
  * The core class of MeLeeCMS, containing all of the code that sets up the back-end and handles the displaying of pages.
@@ -167,8 +111,8 @@ class MeLeeCMS
    /** @var array[] All of the currently loaded forms. */
 	public $forms = [];
    /**
-   @var CMSData All arbitrary non-content data that MeLeeCMS is to include with the page, which will be sent to the user in the `window.MeLeeCMS` JavaScript object, as well as provided to XSLT, unless instructed otherwise.
-   @see MeLeeCMS::addData() The method that can be used to add data. Forwards the call to {@see CMSData::add()}.
+   @var Data All arbitrary non-content data that MeLeeCMS is to include with the page, which will be sent to the user in the `window.MeLeeCMS` JavaScript object, as well as provided to XSLT, unless instructed otherwise.
+   @see MeLeeCMS::addData() The method that can be used to add data. Forwards the call to {@see Data::add()}.
    */
 	public $out_data;
    /** @var string[] PHP files to include between the instantiation of MeLeeCMS and the final page render. Mostly used when you want to have a PHP file construct the page, as opposed to the control panel building the page. */
@@ -220,6 +164,7 @@ class MeLeeCMS
 			array_unshift($this->class_paths, $this->settings['server_path'] ."includes". DIRECTORY_SEPARATOR ."classes". DIRECTORY_SEPARATOR);
 		spl_autoload_register(array($this, "loadClass"), true);
       
+      $this->out_data = new Data();
       // Determine if we are in the control panel.
       $this->cpanel = (dirname($_SERVER['SCRIPT_FILENAME']) == $this->settings['server_path'] . $this->settings['cpanel_dir']);
       
@@ -244,7 +189,6 @@ class MeLeeCMS
          $this->setupPages();
 		if(($this->mode & self::SETUP_PAGE) > 0)
          $this->setupPage();
-      $this->out_data = new CMSData($this);
       
       // If a refresh was requested at some point during initialization, do it now.
 		if(isset($this->refresh_requested['url']))
@@ -329,7 +273,7 @@ class MeLeeCMS
 		}
       
       // Write the error to a log file.
-		error_log($type .": ". $message ."\n". $this->implodeBacktrace(1));
+		error_log($type .": ". $message ."\n". stack_trace_string(1));
       $backtrace = array_slice(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), 1);
       
       // Send the error to the XML output if the user has permission to view errors.
@@ -361,23 +305,6 @@ class MeLeeCMS
 		}
 		return true;
 	}
-	
-	public function get_setting($key)
-   {
-      trigger_error("MeLeeCMS->get_setting() is deprecated; use MeLeeCMS->getSetting() instead.", E_USER_DEPRECATED);
-      return $this->getSetting($key);
-   }
-
-	public function getSetting($key)
-	{
-		return $this->settings[$key];
-	}
-	
-	public function get_page($key)
-	{
-      trigger_error("MeLeeCMS->get_page() is deprecated and will be removed eventually. Access MeLeeCMS->page directly instead.", E_USER_DEPRECATED);
-		return empty($this->page->$key) ? "" : $this->page->$key;
-	}
 
 	public function loadClass($class)
 	{
@@ -405,68 +332,6 @@ class MeLeeCMS
       }
 	}
    
-   public function implodeBacktrace($start=0, $steps=0, $multiline=false)
-   {
-      if($start < 0)
-         $start = 0;
-      // Start at 1, because 0 is literally just this method.
-      $start += 1;
-      $result = ($multiline ? "Backtrace:\n" : "");
-      foreach(debug_backtrace(0) as $i=>$step)
-      {
-         if($i < $start)
-            continue;
-         if($steps > 0 && $i == $start + $steps)
-            break;
-         $result .=     ($multiline ? "\tStep #{$i}\n"                  : "\tStack-{$i}: ");
-         if(!empty($step['class']))
-            $result .=  ($multiline ? "\t\tClass: {$step['class']}\n"   : $step['class']);
-         if(!empty($step['type']))
-            $result .=  ($multiline ? ""                                : $step['type']);
-         if(!empty($step['function']))
-            $result .=  ($multiline ? "\t\tFunc: {$step['function']}\n" : $step['function']);
-         if(!empty($step['args']))
-         {
-            if($multiline)
-            {
-               $result .=  "\t\tArgs:\n";
-               foreach($step['args'] as $arg=>$val)
-                  if(is_array($val))
-                     $result .=  "\t\t\t{$arg} => array[". count($val) ."]\n";
-                  else if(is_object($val))
-                     $result .=  "\t\t\t{$arg} => ". get_class($val) ."\n";
-                  else if(is_string($val))
-                     $result .=  "\t\t\t{$arg} => \"{$val}\"\n";
-                  else
-                     $result .=  "\t\t\t{$arg} => {$val}\n";
-            }
-            else
-            {
-               $result .=  "(";
-               foreach($step['args'] as $arg=>$val)
-                  if(is_array($val))
-                     $result .=  "array[". count($val) ."],";
-                  else if(is_object($val))
-                     $result .=  get_class($val) .",";
-                  else if(is_string($val))
-                     $result .=  "\"{$val}\",";
-                  else
-                     $result .=  "{$val},";
-               $result =  substr($result,0,-1) .")";
-            }
-         }
-         else if(!$multiline && !empty($step['function']))
-            $result .= "()";
-         if(!empty($step['file']))
-            $result .=  ($multiline ? "\t\tFile: {$step['file']}\n"     : " in {$step['file']}");
-         if(!empty($step['line']))
-            $result .=  ($multiline ? "\t\tLine: {$step['line']}\n"     : " at line {$step['line']}");
-         if(!$multiline)
-            $result .= "\n";
-      }
-      return $result;
-   }
-	
 	protected function setupDatabase()
 	{
 		global $GlobalConfig;
@@ -552,7 +417,7 @@ class MeLeeCMS
 		session_start($session_options);
 		if(isset($_SESSION['form_response']))
 		{
-			$this->addDataProtected('form_response', $_SESSION['form_response'], CMSData::NO_AUTO_ARRAY);
+			$this->addDataProtected('form_response', $_SESSION['form_response'], Data::NO_AUTO_ARRAY);
 			unset($_SESSION['form_response']);
 		}
 		if($this->getSetting('user_system') == "")
@@ -716,6 +581,23 @@ class MeLeeCMS
       // Finish setting up the page output.
       $this->page->loadToCMS();
 	}
+	
+	public function get_setting($key)
+   {
+      trigger_error("MeLeeCMS->get_setting() is deprecated; use MeLeeCMS->getSetting() instead.", E_USER_DEPRECATED);
+      return $this->getSetting($key);
+   }
+
+	public function getSetting($key)
+	{
+		return $this->settings[$key];
+	}
+	
+	public function get_page($key)
+	{
+      trigger_error("MeLeeCMS->get_page() is deprecated and will be removed eventually. Access MeLeeCMS->page directly instead.", E_USER_DEPRECATED);
+		return empty($this->page->$key) ? "" : $this->page->$key;
+	}
 
 	public function setTheme($theme)
 	{
@@ -833,9 +715,9 @@ class MeLeeCMS
       return $this->out_data->add($index, $data, $flags, $errorIfExists);
 	}
 
-	public function addData($index, $data, $flags=CMSData::CUSTOM, $errorIfExists=E_USER_NOTICE)
+	public function addData($index, $data, $flags=Data::CUSTOM, $errorIfExists=E_USER_NOTICE)
 	{
-      return $this->out_data->add($index, $data, $flags|CMSData::CUSTOM, $errorIfExists);
+      return $this->out_data->add($index, $data, $flags|Data::CUSTOM, $errorIfExists);
 	}
 	
 	public function parse_template($data, $class, $subtheme)
@@ -890,15 +772,13 @@ class MeLeeCMS
 			'theme' => $this->getTheme()->name,
 			'content' => [],
 			'css' => [],
-			//'js' => [],
-			//'data' => [],
 		];
 		if(!empty($this->user))
-			$this->addDataProtected('user', $this->user->myInfo(), CMSData::NO_AUTO_ARRAY);
+			$this->addDataProtected('user', $this->user->myInfo(), Data::NO_AUTO_ARRAY);
 		if(!empty($_POST))
-			$this->addDataProtected('post', $_POST, CMSData::NO_AUTO_ARRAY);
+			$this->addDataProtected('post', $_POST, Data::NO_AUTO_ARRAY);
 		if(!empty($_GET))
-			$this->addDataProtected('get', $_GET, CMSData::NO_AUTO_ARRAY);
+			$this->addDataProtected('get', $_GET, Data::NO_AUTO_ARRAY);
 		
       $content_xsl = [];
       foreach($this->page_content as $tag=>$content)
@@ -928,7 +808,7 @@ class MeLeeCMS
 				'attrs' => $js['attrs'],
 			];
 		// TODO: This won't include errors during XSLT conversion. Don't know how to fix that.
-		$params['data'] = $this->out_data->toXMLArray();
+		$params['data'] = $this->out_data->toArray();
 		if($subtheme == "__xml" && $this->user->has_permission("view_xml"))
 		{
 			header("Content-type: text/xml");

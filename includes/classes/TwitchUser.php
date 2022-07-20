@@ -6,7 +6,7 @@ class TwitchUser extends User
 	public $api;
 	public $login_error = false;
 
-	protected $obscured_cols = ["permissions"];
+	protected $obscured_cols = [];
 	
 	public function __construct($cms)
 	{

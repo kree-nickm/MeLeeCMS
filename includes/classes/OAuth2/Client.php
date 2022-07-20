@@ -254,7 +254,6 @@ class Client
 			'client_secret' => $this->client_secret,
 		];
 		$raw = $this->curl->request($this->auth_url ."/oauth2/token", [CURLOPT_POSTFIELDS => $post]);
-      $this->rate_limit->loadHeaders($this->curl->getLastHeaders());
 		if(is_object($json = json_decode($raw)))
 		{
 			if(!empty($json->access_token))
