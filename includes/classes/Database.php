@@ -153,7 +153,6 @@ class Database
 					if(!is_array($return))
 						$return = false;
 					else
-						// Note: Don't know if we should care about this, but using array_column() means we require PHP>=5.5.0
 						$return = array_column($return, $col);
 					break;
 				case self::RETURN_ALL:

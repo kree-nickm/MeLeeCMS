@@ -128,6 +128,16 @@ $GlobalConfig['pages']['401'] = [
    'js' => [],
    'xsl' => [],
 ];
+$GlobalConfig['pages']['503'] = [
+   'id' => "503",
+   'select' => function($cms){ return http_response_code()==503; },
+   'subtheme' => "default",
+   'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:11:\"Maintenance\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:42:\"Website is currently down for maintenance.\";s:5:\"attrs\";a:0:{}}}}}",
+   'title' => "Maintenance",
+   'css' => [],
+   'js' => [],
+   'xsl' => [],
+];
 
 /******************************* Form Handlers ********************************
  * List of forms the site can handle. First element is a function that returns

@@ -13,7 +13,6 @@ namespace MeLeeCMS;
  */
 abstract class Content
 {
-   // TODO: MeLeeCMS reference might not be necessary anymore now that page rendering is handled differently.
    /** @var MeLeeCMS A reference to the {@see MeLeeCMS} instance that this object is used by. */
 	protected $cms;
 	

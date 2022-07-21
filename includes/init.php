@@ -12,7 +12,6 @@ namespace MeLeeCMS;
 
 ini_set("display_errors", 0);
 ini_set("log_errors", 1);
-// Note: Don't know if we should care about this, but using __DIR__ means we require PHP>=5.3.0, and it appears in multiple files.
 $error_dir = __DIR__ . DIRECTORY_SEPARATOR ."logs". DIRECTORY_SEPARATOR ."errors-". date("Y-m");
 $error_file = $error_dir . DIRECTORY_SEPARATOR . date("Y-m-d") .".log";
 if(!is_dir($error_dir))
@@ -27,9 +26,6 @@ if(!is_file($error_file))
 ini_set("error_log", $error_file);
 // Note: Permissions for the log directory and log files is going to be totally screwed. They will be owned by the PHP/Apache user, and the group will also be the PHP/Apache group like every other file here, so the actual logged-in linux user is just SOL. No clue how to fix this other than with a root script, way outside the jurisdiction of this CMS.
 
-/** Define these for PHP<5.3.0, just in case we ever care about backwards-compatibility. */
-defined("E_DEPRECATED") OR define("E_DEPRECATED", 8192);
-defined("E_USER_DEPRECATED") OR define("E_USER_DEPRECATED", 16384);
 /** @var int The current memory usage at the time the page starts loading. */
 define("START_MEMORY", memory_get_usage());
 /** @var float The current microsecond timestamp at the time the page starts loading. */

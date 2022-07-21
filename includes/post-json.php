@@ -11,7 +11,7 @@ $input = json_decode(file_get_contents('php://input'));
 if(!empty($input->process))
 {
    $class = empty($input->class) ? "MeLeeCMS" : preg_replace("/[^a-zA-Z0-9]/", "", $input->class);
-   $subtheme = empty($input->subtheme) ? "default" : preg_replace("/[^a-zA-Z0-9]/", "", $input->subtheme);
+   $subtheme = empty($input->subtheme) ? "ajax" : preg_replace("/[^a-zA-Z0-9]/", "", $input->subtheme);
    $process = empty($input->process) ? "" : preg_replace("/[^a-zA-Z0-9]/", "", $input->process);
    $process_file = $builder->getSetting('server_path') ."includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR ."includes". DIRECTORY_SEPARATOR . $process .".php";
    $xsl_files = [];
@@ -51,5 +51,5 @@ else
    http_response_code(406);
 
 ob_end_clean();
-
+header("Content-type: text/html");
 echo($response);

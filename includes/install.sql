@@ -88,7 +88,8 @@ CREATE TABLE `error_log` (
   `message` text NOT NULL,
   `file` varchar(255) NOT NULL,
   `line` int(11) NOT NULL,
-  `stack` json NOT NULL
+  `stack` json NOT NULL,
+  `read_by` text NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 

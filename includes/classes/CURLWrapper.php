@@ -83,7 +83,6 @@ class CURLWrapper
 		}
 		else
 		{
-			// Note: Don't know if we should care about this, but using curl_strerror() means we require PHP>=5.5.0
 			$raw = ['type'=>curl_strerror(curl_errno($this->curl)), 'message'=>curl_error($this->curl)];
 		}
       
@@ -120,7 +119,6 @@ class CURLWrapper
       if($this->log_responses)
          $this->log[count($this->log)-1]['response'] = $raw;
       
-		// Note: Don't know if we should care about this, but using curl_reset() means we require PHP>=5.5.0
 		curl_reset($this->curl);
 		curl_setopt_array($this->curl, $this->default_options);
 		return $raw;

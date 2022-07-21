@@ -8,14 +8,7 @@ class Transformer
 	/**
 	 * @var array[] Contains the parsed data from all loaded stylesheets.
 	 */
-	protected $stylesheets;
-	
-	/**
-	 */
-	public function __construct()
-	{
-		$this->stylesheets = [];
-	}
+	protected $stylesheets = [];
 	
 	/**
 	 * Loads the given XSL code for future transformations.
@@ -82,7 +75,6 @@ class Transformer
 		$proc->importStyleSheet($xsl);
 		//return $proc->transformToXML($xml);
 		$result = $proc->transformToDoc($xml);
-		// Note: Don't know if we should care about this, but using ENT_HTML5 means we require PHP>=5.4.0
 		return html_entity_decode($result->saveHTML(), ENT_QUOTES|ENT_HTML5, "UTF-8");
 	}
 	
@@ -155,7 +147,6 @@ class Transformer
 	{
 		if(is_object($data))
 			$data = json_decode(json_encode($data), true);
-		// Note: Don't know if we should care about this, but using ENT_XML1|ENT_DISALLOWED in this method means we require PHP>=5.4.0
 		if(is_array($data))
 		{
 			$result = "";
@@ -207,7 +198,6 @@ class Transformer
 			{
 				if(is_numeric(substr($tag, 0, 1)))
 					$tag = "_". $tag;
-				// Note: Don't know if we should care about this, but using array dereferencing here and below means we require PHP>=5.4.0
 				return "<". $tag .">". $result ."</". explode(" ", $tag, 2)[0] .">";
 			}
 		}

@@ -66,7 +66,6 @@ if(!empty($_REQUEST['ContentClass']))
 	$proc = new XSLTProcessor();
 	$proc->importStyleSheet($xsl);
 	$result = $proc->transformToDoc($xml);
-	// Note: Don't know if we should care about this, but using ENT_HTML5 means we require PHP>=5.4.0
 	echo(html_entity_decode($result->saveHTML(), ENT_QUOTES|ENT_HTML5, "UTF-8"));
 	exit;
 }

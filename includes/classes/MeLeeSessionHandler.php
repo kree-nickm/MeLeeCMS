@@ -1,7 +1,6 @@
 <?php
 namespace MeLeeCMS;
 
-// Note: Don't know if we should care about this, but using SessionHandlerInterface means we require PHP>=5.4.0
 class MeLeeSessionHandler implements \SessionHandlerInterface
 {
 	protected $cms;
@@ -39,7 +38,7 @@ class MeLeeSessionHandler implements \SessionHandlerInterface
 			'time' => time(),
 			'ip' => $_SERVER['REMOTE_ADDR'],
 			'user_agent' => $_SERVER['HTTP_USER_AGENT'],
-         // TODO: below setting does not seem to be working.
+         // TODO: Below setting does not seem to be working; it's always false.
 			'session_indefinite' => (int)!empty($this->cms->session_expiration),
 		];
 		$this->cms->database->insert("sessions", $mysql_data);

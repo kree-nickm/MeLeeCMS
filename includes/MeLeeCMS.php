@@ -119,6 +119,7 @@ class MeLeeCMS
 	public $include_later = [];
    /** @var mixed[] Stores the parameters of the last call to {@see MeLeeCMS::requestRefresh()}. */
 	public $refresh_requested = ['strip'=>[]];
+	public $maintenance_until = 0;
 
    /**
    Loads MeLeeCMS.
@@ -127,7 +128,6 @@ class MeLeeCMS
 	public function __construct($mode=self::MODE_ALL)
 	{
 		$this->mode = $mode;
-		// Note: Don't know if we should care about this, but using [] to create arrays means we require PHP>=5.4.0, and it appears in just about every file.
 		set_error_handler([$this, "errorHandler"]);
       
 		// Load and validate $GlobalConfig settings.
@@ -174,6 +174,10 @@ class MeLeeCMS
          $this->setupDatabase();
 		if(($this->mode & self::SETUP_SETTINGS) > 0)
          $this->setupSettings();
+      
+      // TODO: Fix the control panel and add a maintenance mode button.
+      $this->maintenance_until = 0;
+      
 		if(($this->mode & self::SETUP_THEMES) > 0)
          $this->setupThemes();
       // Note: This is 'else if' because setupThemes() does everything that setupTheme() does.
@@ -323,11 +327,11 @@ class MeLeeCMS
                return true;
             }
          }
-         throw new \Exception("Unable to load class '". $class ."' in MeLeeCMS namespace. Class file not found.");
+         trigger_error("Unable to load class '". $class ."' in MeLeeCMS namespace. Class file not found.", E_USER_ERROR);
+         return false;
       }
       else
       {
-         trigger_error("Unable to load class '". $class ."'. Class is outside MeLeeCMS namespace.", E_USER_WARNING);
          return false;
       }
 	}
@@ -502,61 +506,70 @@ class MeLeeCMS
          $this->page = $this->special_pages[$_GET['specialPage']];
       }
       
-      // Normal page request.
-      if(empty($this->page))
+      if(time() < $this->maintenance_until)
       {
-         $pageId = !empty($this->path_info) ? $this->path_info : $this->getSetting('index_page');
-         // See if the page is already stored in $this->pages.
-         if(!empty($this->pages[$pageId]))
-            $this->page = $this->pages[$pageId];
-         else
-         {
-            // First check if it's in $GlobalConfig. 
-            /* Note: Not needed at the moment, because $GlobalConfig is always stored in $this->pages
-            foreach($GlobalConfig['pages'] as $page)
-            {
-               if(!empty($page['url']) && $page['url'] == $pageId)
-               {
-                  $this->page = new Page($this, $page);
-                  $this->pages[] = $this->page;
-                  break;
-               }
-            }
-            */
-            // If not, check if its in the database.
-            if(empty($this->page))
-            {
-               $page = $this->database->query("SELECT * FROM `pages` WHERE `url`={$this->database->quote($pageId)}", Database::RETURN_ROW);
-               if(!empty($page))
-               {
-                  $this->page = new Page($this, $page);
-                  $this->pages[] = $this->page;
-               }
-            }
-         }
-      }
-      
-      // Determine any problems with the request.
-      if(!empty($this->page))
-      {
-         if(empty($this->page->permission) || !empty($this->user) && $this->user->has_permission($this->page->permission))
-         {
-            // No problems.
-         }
-         else if(empty($this->user) || !$this->user->is_logged())
-         {
-            http_response_code(401);
-            $this->page = null;
-         }
-         else
-         {
-            http_response_code(403);
-            $this->page = null;
-         }
+         http_response_code(503);
+         header("Retry-After: ". date("r", $this->maintenance_until));
+         header("Retry-After: ". $this->maintenance_until - time(), false);
       }
       else
       {
-         http_response_code(404);
+         // Normal page request.
+         if(empty($this->page))
+         {
+            $pageId = !empty($this->path_info) ? $this->path_info : $this->getSetting('index_page');
+            // See if the page is already stored in $this->pages.
+            if(!empty($this->pages[$pageId]))
+               $this->page = $this->pages[$pageId];
+            else
+            {
+               // First check if it's in $GlobalConfig. 
+               /* Note: Not needed at the moment, because $GlobalConfig is always stored in $this->pages
+               foreach($GlobalConfig['pages'] as $page)
+               {
+                  if(!empty($page['url']) && $page['url'] == $pageId)
+                  {
+                     $this->page = new Page($this, $page);
+                     $this->pages[] = $this->page;
+                     break;
+                  }
+               }
+               */
+               // If not, check if its in the database.
+               if(empty($this->page))
+               {
+                  $page = $this->database->query("SELECT * FROM `pages` WHERE `url`={$this->database->quote($pageId)}", Database::RETURN_ROW);
+                  if(!empty($page))
+                  {
+                     $this->page = new Page($this, $page);
+                     $this->pages[] = $this->page;
+                  }
+               }
+            }
+         }
+         
+         // Determine any problems with the request.
+         if(!empty($this->page))
+         {
+            if(empty($this->page->permission) || !empty($this->user) && $this->user->has_permission($this->page->permission))
+            {
+               // No problems.
+            }
+            else if(empty($this->user) || !$this->user->is_logged())
+            {
+               http_response_code(401);
+               $this->page = null;
+            }
+            else
+            {
+               http_response_code(403);
+               $this->page = null;
+            }
+         }
+         else
+         {
+            http_response_code(404);
+         }
       }
       
       // Resolve problematic requests into a special page.
