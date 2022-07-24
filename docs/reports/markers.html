@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+            <title>    MeLeeCMS Documentation &raquo; Markers
+</title>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="../">
+    <link rel="icon" href="images/favicon.ico"/>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/base.css">
+            <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="css/template.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0/css/all.min.css" integrity="sha256-ybRkN9dBjhcS2qrW1z+hfCxq+1aBdwyQM5wlQoQVt/0=" crossorigin="anonymous" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.23.0/themes/prism-okaidia.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.23.0/plugins/line-numbers/prism-line-numbers.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.23.0/plugins/line-highlight/prism-line-highlight.css">
+                <script src="https://cdn.jsdelivr.net/npm/fuse.js@3.4.6"></script>
+        <script src="https://cdn.jsdelivr.net/npm/css-vars-ponyfill@2"></script>
+        <script src="js/search.js"></script>
+        <script defer src="js/searchIndex.js"></script>
+    </head>
+<body id="top">
+    <header class="phpdocumentor-header phpdocumentor-section">
+    <h1 class="phpdocumentor-title"><a href="" class="phpdocumentor-title__link">MeLeeCMS Documentation</a></h1>
+    <input class="phpdocumentor-header__menu-button" type="checkbox" id="menu-button" name="menu-button" />
+    <label class="phpdocumentor-header__menu-icon" for="menu-button">
+        <i class="fas fa-bars"></i>
+    </label>
+    <section data-search-form class="phpdocumentor-search">
+    <label>
+        <span class="visually-hidden">Search for</span>
+        <svg class="phpdocumentor-search__icon" width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="7.5" cy="7.5" r="6.5" stroke="currentColor" stroke-width="2"/>
+            <line x1="12.4892" y1="12.2727" x2="19.1559" y2="18.9393" stroke="currentColor" stroke-width="3"/>
+        </svg>
+        <input type="search" class="phpdocumentor-field phpdocumentor-search__field" placeholder="Loading .." disabled />
+    </label>
+</section>
+
+    <nav class="phpdocumentor-topnav">
+    <ul class="phpdocumentor-topnav__menu">
+        </ul>
+</nav>
+</header>
+
+    <main class="phpdocumentor">
+        <div class="phpdocumentor-section">
+            <input class="phpdocumentor-sidebar__menu-button" type="checkbox" id="sidebar-button" name="sidebar-button" />
+<label class="phpdocumentor-sidebar__menu-icon" for="sidebar-button">
+    Menu
+</label>
+<aside class="phpdocumentor-column -four phpdocumentor-sidebar">
+                    <section class="phpdocumentor-sidebar__category">
+            <h2 class="phpdocumentor-sidebar__category-header">Documentation</h2>
+                                    <h4 class="phpdocumentor-sidebar__root-namespace">
+    <a href="guide/installation.html" class="">Installation</a>
+</h4>
+
+                                    <h4 class="phpdocumentor-sidebar__root-namespace">
+    <a href="guide/configuration.html" class="">Configuration</a>
+</h4>
+
+                        </section>
+                <section class="phpdocumentor-sidebar__category">
+            <h2 class="phpdocumentor-sidebar__category-header">Namespaces</h2>
+                                    <h4 class="phpdocumentor-sidebar__root-namespace">
+    <a href="namespaces/meleecms.html" class="">MeLeeCMS</a>
+</h4>
+    <ul class="phpdocumentor-list">
+                    <li>
+                <a href="namespaces/meleecms-oauth2.html" class="">OAuth2</a>
+                
+            </li>
+            </ul>
+
+                        </section>
+                <section class="phpdocumentor-sidebar__category">
+            <h2 class="phpdocumentor-sidebar__category-header">Packages</h2>
+                                    <h4 class="phpdocumentor-sidebar__root-namespace">
+    <a href="packages/MeLeeCMS.html" class="">MeLeeCMS</a>
+</h4>
+
+                        </section>
+            
+    <section class="phpdocumentor-sidebar__category">
+        <h2 class="phpdocumentor-sidebar__category-header">Reports</h2>
+                <h3 class="phpdocumentor-sidebar__root-package"><a href="reports/deprecated.html">Deprecated</a></h3>
+        <h3 class="phpdocumentor-sidebar__root-package"><a href="reports/errors.html">Errors</a></h3>
+        <h3 class="phpdocumentor-sidebar__root-package"><a href="reports/markers.html">Markers</a></h3>
+    </section>
+
+    <section class="phpdocumentor-sidebar__category">
+        <h2 class="phpdocumentor-sidebar__category-header">Indices</h2>
+        <h3 class="phpdocumentor-sidebar__root-package"><a href="indices/files.html">Files</a></h3>
+    </section>
+</aside>
+
+            <div class="phpdocumentor-column -eight phpdocumentor-content">
+                    <ul class="phpdocumentor-breadcrumbs">
+        <li><a href="">Home</a></li>
+    </ul>
+
+    <div class="phpdocumentor-row">
+        <h2 class="phpdocumentor-content__title">Markers</h2>
+
+                    <h3>Table of Contents</h3>
+            <table class="phpdocumentor-table_of_contents">
+                                                            <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/admin/init.php">includes/admin/init.php</a></td>
+                            <td class="phpdocumentor-cell">1</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/classes/Database.php">includes/classes/Database.php</a></td>
+                            <td class="phpdocumentor-cell">4</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/classes/MeLeeCMSUser.php">includes/classes/MeLeeCMSUser.php</a></td>
+                            <td class="phpdocumentor-cell">2</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/classes/MeLeeSessionHandler.php">includes/classes/MeLeeSessionHandler.php</a></td>
+                            <td class="phpdocumentor-cell">1</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/classes/OAuth2/Client.php">includes/classes/OAuth2/Client.php</a></td>
+                            <td class="phpdocumentor-cell">5</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/classes/Page.php">includes/classes/Page.php</a></td>
+                            <td class="phpdocumentor-cell">3</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/classes/Text.php">includes/classes/Text.php</a></td>
+                            <td class="phpdocumentor-cell">1</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/classes/Theme.php">includes/classes/Theme.php</a></td>
+                            <td class="phpdocumentor-cell">3</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/classes/Transformer.php">includes/classes/Transformer.php</a></td>
+                            <td class="phpdocumentor-cell">1</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/classes/TwitchUser.php">includes/classes/TwitchUser.php</a></td>
+                            <td class="phpdocumentor-cell">3</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/defaultconfig.php">includes/defaultconfig.php</a></td>
+                            <td class="phpdocumentor-cell">3</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/get.php">includes/get.php</a></td>
+                            <td class="phpdocumentor-cell">1</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/MeLeeCMS.php">includes/MeLeeCMS.php</a></td>
+                            <td class="phpdocumentor-cell">7</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/post-json.php">includes/post-json.php</a></td>
+                            <td class="phpdocumentor-cell">1</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#index.php">index.php</a></td>
+                            <td class="phpdocumentor-cell">1</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#install.php">install.php</a></td>
+                            <td class="phpdocumentor-cell">1</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#old_cpanel/page_edit.php">old_cpanel/page_edit.php</a></td>
+                            <td class="phpdocumentor-cell">1</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#old_cpanel/page_save.php">old_cpanel/page_save.php</a></td>
+                            <td class="phpdocumentor-cell">1</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#old_cpanel/theme_save.php">old_cpanel/theme_save.php</a></td>
+                            <td class="phpdocumentor-cell">1</td>
+                        </tr>
+                                                </table>
+        
+                    <a id="includes/admin/init.php"></a>
+            <h3><abbr title="includes/admin/init.php">init.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">5</td>
+                        <td class="phpdocumentor-cell">Both make it impossible to put ../ in the &#039;file&#039; field, and make the cpanel load from the admin/ dir automatically.</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="includes/classes/Database.php"></a>
+            <h3><abbr title="includes/classes/Database.php">Database.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">59</td>
+                        <td class="phpdocumentor-cell">generate errors for tables with no PRIMARY key that is also AUTO_INCREMENT</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">269</td>
+                        <td class="phpdocumentor-cell">use default values, but not if there&#039;s another unique index, in which case we need to get that row and use its values instead. Also have to factor in whether the column has a valid default value (for example, AUTO_INCREMENT columns will not).</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">610</td>
+                        <td class="phpdocumentor-cell">if there are multiple indexes, and this insert causes a single row to combine two separate existing ones, weird stuff happens. MySQL strongly suggests that people not attempt that.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">643</td>
+                        <td class="phpdocumentor-cell">Remake this in the image of the new SELECT</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="includes/classes/MeLeeCMSUser.php"></a>
+            <h3><abbr title="includes/classes/MeLeeCMSUser.php">MeLeeCMSUser.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">PHPVersion</td>
+                        <td class="phpdocumentor-cell">33</td>
+                        <td class="phpdocumentor-cell">hash_equals() requires PHP &gt;= 5.6.0beta1</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">52</td>
+                        <td class="phpdocumentor-cell">Some sort of code that determines user timezone until they manually set it.</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="includes/classes/MeLeeSessionHandler.php"></a>
+            <h3><abbr title="includes/classes/MeLeeSessionHandler.php">MeLeeSessionHandler.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">41</td>
+                        <td class="phpdocumentor-cell">Below setting does not seem to be working; it&#039;s always false.</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="includes/classes/OAuth2/Client.php"></a>
+            <h3><abbr title="includes/classes/OAuth2/Client.php">Client.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">93</td>
+                        <td class="phpdocumentor-cell">Make sure this isn&#039;t run on every single page load.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">138</td>
+                        <td class="phpdocumentor-cell">We can have a session var update on every page load with a new state and send it to JavaScript for implicit grant relog states</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">306</td>
+                        <td class="phpdocumentor-cell">Maybe do more than this. If the reset is in a while, this could be rough.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">314</td>
+                        <td class="phpdocumentor-cell">Might be more useful to return the error response here, but also save it so you don&#039;t keep making API queries with the same error.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">323</td>
+                        <td class="phpdocumentor-cell">Cookie access token might be redundant now with most APIs.</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="includes/classes/Page.php"></a>
+            <h3><abbr title="includes/classes/Page.php">Page.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">52</td>
+                        <td class="phpdocumentor-cell">Check for valid URL characters, not just &quot;is_string&quot;.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">81</td>
+                        <td class="phpdocumentor-cell">These checks aren&#039;t very comprehensive, just thrown together.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">142</td>
+                        <td class="phpdocumentor-cell">Move all the validation to setPermission() so it only has to be done once.</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="includes/classes/Text.php"></a>
+            <h3><abbr title="includes/classes/Text.php">Text.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">4</td>
+                        <td class="phpdocumentor-cell">Get rid of Text and just have it be Content instead.</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="includes/classes/Theme.php"></a>
+            <h3><abbr title="includes/classes/Theme.php">Theme.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">29</td>
+                        <td class="phpdocumentor-cell">Validate $directory just in case something other than MeLeeCMS sent it in.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">42</td>
+                        <td class="phpdocumentor-cell">For init.php to return anything but a function (which it should), this will have to be moved to MeLeeCMS-&gt;addTheme().</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">84</td>
+                        <td class="phpdocumentor-cell">More than just the MeLeeCMS XSL file could have a subtheme, but some files might just have a hyphen for no reason. * Actually, I don&#039;t think we need to know about subthemes here, and subtheme is a misleading term anyway that I plan to change.</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="includes/classes/Transformer.php"></a>
+            <h3><abbr title="includes/classes/Transformer.php">Transformer.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">171</td>
+                        <td class="phpdocumentor-cell">There is currently no clean way to let the user determine if an empty array comes back as a empty element or blank string. For now, it is always a blank string.</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="includes/classes/TwitchUser.php"></a>
+            <h3><abbr title="includes/classes/TwitchUser.php">TwitchUser.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">35</td>
+                        <td class="phpdocumentor-cell">Twitch API mentions something about validating tokens periodically even while the app is not in use, which I haven&#039;t been doing.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">119</td>
+                        <td class="phpdocumentor-cell">Some sort of code that determines user timezone until they manually set it.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">366</td>
+                        <td class="phpdocumentor-cell">Could maybe move the below paged queries to OAuth2\Client</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="includes/defaultconfig.php"></a>
+            <h3><abbr title="includes/defaultconfig.php">defaultconfig.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">48</td>
+                        <td class="phpdocumentor-cell">This can be programmatically determined by scanning the directories in $GlobalConfig[&#039;server_path&#039;] for which one contains &quot;load_page.php&quot;, or a similar unique control panel PHP file.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">57</td>
+                        <td class="phpdocumentor-cell">Currently only works with pages that use the index.php in $GlobalConfig[&#039;url_path&#039;]. In other words, not the control panel.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">98</td>
+                        <td class="phpdocumentor-cell">These error pages have no way of including a navbar. Need to figure out how to implement a navbar in a way that any site can use, such that it appears on these generic error pages.</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="includes/get.php"></a>
+            <h3><abbr title="includes/get.php">get.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">PHPVersion</td>
+                        <td class="phpdocumentor-cell">7</td>
+                        <td class="phpdocumentor-cell">Throwable requires PHP &gt;= 7.0.0, but this check should provide a fallback for older versions. Same as below.</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="includes/MeLeeCMS.php"></a>
+            <h3><abbr title="includes/MeLeeCMS.php">MeLeeCMS.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">130</td>
+                        <td class="phpdocumentor-cell">Set an error handler in init.php that doesn&#039;t require MeLeeCMS, but overwrite it with this one. This one should also call that one.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">180</td>
+                        <td class="phpdocumentor-cell">Pull this value from where ever the control panel stores it.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">240</td>
+                        <td class="phpdocumentor-cell">Why do we need both? Check it out.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">279</td>
+                        <td class="phpdocumentor-cell">We ignore error_reporting() right now. In the future I think a better approach would be letting the owner set what errors they want reported in config.php, perhaps even three separate times for the three different logs (file, database, XML output).</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">395</td>
+                        <td class="phpdocumentor-cell">Need to figure out when we are allowed to set cookie expiration. A not-logged-in user can&#039;t set the &quot;remember me&quot; flag, so their session cookie will expire with the browser window. However they retain the same session ID after logging in, so the cookie will need to be updated with a new expiration if they want to be remembered.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">502</td>
+                        <td class="phpdocumentor-cell">Probably allow it, but would also need to allow special pages to load from database.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">73</td>
+                        <td class="phpdocumentor-cell">Include some way for the user to specify how long they want this to be, even something as simple as a &quot;remember me&quot; checkbox.</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="includes/post-json.php"></a>
+            <h3><abbr title="includes/post-json.php">post-json.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">35</td>
+                        <td class="phpdocumentor-cell">Do we want to convert it, or force the included file to use objects?</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="index.php"></a>
+            <h3><abbr title="index.php">index.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">PHPVersion</td>
+                        <td class="phpdocumentor-cell">14</td>
+                        <td class="phpdocumentor-cell">Throwable requires PHP &gt;= 7.0.0. This code would catch certain fatal errors during page load in PHP7 so that PHP fails a little more gracefully. In earlier versions of PHP, the response will just be a blank page with a 500 status code.</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="install.php"></a>
+            <h3><abbr title="install.php">install.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">6</td>
+                        <td class="phpdocumentor-cell">Copy most of this into various files in includes/install/</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="old_cpanel/page_edit.php"></a>
+            <h3><abbr title="old_cpanel/page_edit.php">page_edit.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">16</td>
+                        <td class="phpdocumentor-cell">Drafts can&#039;t be loaded yet.</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="old_cpanel/page_save.php"></a>
+            <h3><abbr title="old_cpanel/page_save.php">page_save.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">73</td>
+                        <td class="phpdocumentor-cell">Deal with these possibilities rather than displaying an error and giving up.</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="old_cpanel/theme_save.php"></a>
+            <h3><abbr title="old_cpanel/theme_save.php">theme_save.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">47</td>
+                        <td class="phpdocumentor-cell">Remove from the _save arrays each file that has the same contents as the corresponding file on disk</td>
+                    </tr>
+                                </tbody>
+            </table>
+            </div>
+                <section data-search-results class="phpdocumentor-search-results phpdocumentor-search-results--hidden">
+    <section class="phpdocumentor-search-results__dialog">
+        <header class="phpdocumentor-search-results__header">
+            <h2 class="phpdocumentor-search-results__title">Search results</h2>
+            <button class="phpdocumentor-search-results__close"><i class="fas fa-times"></i></button>
+        </header>
+        <section class="phpdocumentor-search-results__body">
+            <ul class="phpdocumentor-search-results__entries"></ul>
+        </section>
+    </section>
+</section>
+            </div>
+        </div>
+        <a href="reports/markers.html#top" class="phpdocumentor-back-to-top"><i class="fas fa-chevron-circle-up"></i></a>
+
+    </main>
+
+    <script>
+        cssVars({});
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.23.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.23.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.23.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.23.0/plugins/line-highlight/prism-line-highlight.min.js"></script>
+</body>
+</html>
