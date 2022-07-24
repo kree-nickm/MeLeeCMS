@@ -50,6 +50,20 @@ class Container extends Content
 			$result['content@class='.$content->getContentClass().($c?'@id='.$c:'')][] = $content->build_params();
 		return $result;
 	}
+   
+   public function findXSLFiles($theme, $subtheme="default")
+   {
+      if(!empty($this->attrs['subtheme']))
+         $subtheme = $this->attrs['subtheme'];
+      $content_xsl = [];
+      if(!empty($xsl_filepath = $theme->resolveXSLFile($this->getContentClass(), $subtheme)))
+         $content_xsl[] = ['href'=>$xsl_filepath];
+		foreach($this->content as $c=>$content)
+      {
+         $content_xsl = array_merge($content_xsl, $content->findXSLFiles($theme, $subtheme));
+      }
+      return $content_xsl;
+   }
 	
 	public function set_cms($cms)
 	{

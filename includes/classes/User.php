@@ -22,15 +22,8 @@ class User
 		$this->cms = $cms;
 		$this->logged_in = false;
 		$this->user_info = self::default_user();
-	}
-
-	public static function default_user()
-	{
-		$result['ip'] = $_SERVER['REMOTE_ADDR'];
-		$result['username'] = "guest". rand(1000,9999);
-		$result['jointime'] = time();
-		$result['permissions'] = ["VIEW"];
-		return $result;
+      if(!empty($GlobalConfig['admin_ip']) && $_SERVER['REMOTE_ADDR'] == $GlobalConfig['admin_ip'])
+         $result['permissions'] = ["ADMIN"];
 	}
 
 	public function get_property($property)
@@ -67,28 +60,52 @@ class User
 		return $info;
 	}
 
-	public function has_permission($permission)
+	public function has_permission(...$permissions)
 	{
-      if(in_array($permission, $this->user_info['permissions']))
+      $has_all = true;
+      foreach($permissions as $permission)
       {
-         return true;
-      }
-      else
-      {
-         foreach($this->user_info['permissions'] as $perm)
+         if(empty($permission))
+            continue;
+         $found = false;
+         // First check if we have the exact permission.
+         if(in_array($permission, $this->user_info['permissions']))
          {
-            if(!empty($this->permission_defs[$perm]) && in_array($permission, $this->permission_defs[$perm]))
+            $found = true;
+         }
+         else
+         {
+            // Then check if one of our permission groups contains the permission.
+            foreach($this->user_info['permissions'] as $perm_group)
             {
-               return true;
+               if(!empty($this->permission_defs[$perm_group]) && in_array($permission, $this->permission_defs[$perm_group]))
+               {
+                  $found = true;
+               }
             }
          }
+         $has_all &= $found;
       }
-		return false;
+		return $has_all;
 	}
 
 	public function is_logged()
 	{
 		return $this->logged_in;
+	}
+
+	public static function default_user()
+	{
+		$result['ip'] = $_SERVER['REMOTE_ADDR'];
+		$result['username'] = "guest". rand(1000,9999);
+		$result['jointime'] = time();
+		$result['permissions'] = ["ANON"];
+		return $result;
+	}
+
+	public function getDisplayName($index)
+	{
+		return $index;
 	}
 	
 	/** @var string[] Stores the last result of {@see User::get_subclasses()} so that it won't be run more than once per page load. */

@@ -3,7 +3,7 @@ namespace MeLeeCMS;
 
 ob_start();
 require_once("MeLeeCMS.php");
-$builder = new MeLeeCMS(MeLeeCMS::SETUP_DATABASE | MeLeeCMS::SETUP_SETTINGS | MeLeeCMS::SETUP_THEME);
+$builder = new MeLeeCMS(MeLeeCMS::MODE_AJAX);
 
 $response = "";
 $input = json_decode(file_get_contents('php://input'));

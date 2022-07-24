@@ -43,6 +43,7 @@ class Transformer
 	 */
 	public function transform($data, $root="DATA", $includes=[])
 	{
+      //global $builder;
 		$xmlcode = self::array_to_xml($root, $data);
 		$xml = new \DOMDocument();
 		$xml->loadXML($xmlcode);
@@ -51,20 +52,24 @@ class Transformer
 			$xsl->load($this->stylesheets['file']);
 		else
 			$xsl->loadXML($this->stylesheets['raw']);
-      //global $builder;
       //if(!empty($builder))
       //   $builder->debugLog("ADMIN", $includes);
+      $already_included = [];
 		if(is_array($includes)) foreach($includes as $inc)
 		{
          if(is_array($inc) && !empty($inc['href']))
          {
-            $node = $xsl->createElementNS($xsl->documentElement->namespaceURI, $xsl->documentElement->prefix .":include");
-            $attr = $xsl->createAttribute("href");
-            $attr->value = $inc['href'];
-            $node->appendChild($attr);
-            $xsl->documentElement->appendChild($node);
-            //if(!empty($builder))
-            //   $builder->debugLog("ADMIN", $node->nodeName, $node->attributes->item(0)->nodeName, $node->attributes->item(0)->nodeValue);
+            if(!in_array($inc['href'], $already_included))
+            {
+               $node = $xsl->createElementNS($xsl->documentElement->namespaceURI, $xsl->documentElement->prefix .":include");
+               $attr = $xsl->createAttribute("href");
+               $attr->value = $inc['href'];
+               $node->appendChild($attr);
+               $xsl->documentElement->appendChild($node);
+               $already_included[] = $inc['href'];
+               //if(!empty($builder))
+               //   $builder->debugLog("ADMIN", $node->nodeName, $node->attributes->item(0)->nodeName, $node->attributes->item(0)->nodeValue);
+            }
          }
          else
          {

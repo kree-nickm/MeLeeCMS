@@ -11,7 +11,7 @@ else
    require_once("includes/init.php");
    if($_SERVER['REQUEST_METHOD'] == "GET")
    {
-      // PHPVersion: Throwable requires PHP >= 7.0.0, but this check should provide a fallback for older versions.
+      // PHPVersion: Throwable requires PHP >= 7.0.0. This code would catch certain fatal errors during page load in PHP7 so that PHP fails a little more gracefully. In earlier versions of PHP, the response will just be a blank page with a 500 status code.
       if(class_exists("\\Throwable"))
       {
          try
@@ -22,7 +22,7 @@ else
          {
             http_response_code(500);
             trigger_error("MeLeeCMS failed to process the GET request because \"{$ex->getMessage()}\" ({$ex->getCode()}) in get.php on line {$ex->getLine()}", E_USER_ERROR);
-            echo("The server encountered an unrecoverable error while attempting to load the page. If this problem persists for more than a few minutes, it may be worthwhile to get in contact with the website staff to report the error.");
+            echo("The server encountered an unrecoverable error while attempting to load the page. If this problem persists for more than a few minutes, it may be worthwhile to report the error to the website staff");
          }
       }
       else

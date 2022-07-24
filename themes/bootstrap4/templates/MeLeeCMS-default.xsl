@@ -129,7 +129,6 @@
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.2/js/bootstrap-select.min.js"></script>
-<script src="{/MeLeeCMS/url_path}themes/bootstrap4/js/modal-extras.js"></script>
 <xsl:for-each select="js">
 	<xsl:element name="script">
 		<xsl:attribute name="type">text/javascript</xsl:attribute>

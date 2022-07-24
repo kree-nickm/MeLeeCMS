@@ -11,10 +11,7 @@
 			<xsl:if test="content[@id='subtitle']"><h6 class="card-subtitle text-muted"><xsl:value-of select="content[@id='subtitle']"/></h6></xsl:if>
 		</div>
 		<xsl:element name="div">
-			<xsl:attribute name="class">
-				card-body no-footer
-				<xsl:if test="@nopadding">p-0</xsl:if>
-			</xsl:attribute>
+			<xsl:attribute name="class">card-body no-footer<xsl:if test="@nopadding"> p-0</xsl:if></xsl:attribute>
 			<xsl:apply-templates select="content[@id!='subtitle']"/>
 		</xsl:element>
 	</div>

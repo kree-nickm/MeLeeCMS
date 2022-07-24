@@ -122,7 +122,7 @@ class MeLeeCMSUser extends User
 		$this->cms->database->insert("users", ['index'=>$this->user_info['index'],'custom_data'=>json_encode($custom_data)], true, ['index'], true);
 	}
 	
-	public function register($username, $password1, $password2, $permissions=["VIEW"], $custom_data=[])
+	public function register($username, $password1, $password2, $permissions=["LOGGED"], $custom_data=[])
 	{
 		$this->error = [];
 		if(empty($username))
@@ -186,5 +186,10 @@ class MeLeeCMSUser extends User
 			$this->error[] = $this->cms->database->error[2];
 			return $result;
 		}
+	}
+
+	public function getDisplayName($index)
+	{
+      return $this->cms->database->query("SELECT `username` FROM `users` WHERE `index`=". (int)$index, Database::RETURN_FIELD);
 	}
 }

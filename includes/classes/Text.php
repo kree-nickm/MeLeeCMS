@@ -1,6 +1,7 @@
 <?php
 namespace MeLeeCMS;
 
+// TODO: Get rid of Text and just have it be Content instead.
 class Text extends Content
 {
 	public $text;

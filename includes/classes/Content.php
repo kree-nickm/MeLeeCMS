@@ -37,6 +37,16 @@ abstract class Content
 				$result[$p] = [];
 		return $result;
 	}
+   
+   public function findXSLFiles($theme, $subtheme="default")
+   {
+      if(!empty($this->attrs['subtheme']))
+         $subtheme = $this->attrs['subtheme'];
+      $content_xsl = [];
+      if(!empty($xsl_filepath = $theme->resolveXSLFile($this->getContentClass(), $subtheme)))
+         $content_xsl[] = ['href'=>$xsl_filepath];
+      return $content_xsl;
+   }
 	
 	/**
 	 * Sets the internal reference to the active {@see MeLeeCMS} instance.

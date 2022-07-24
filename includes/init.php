@@ -4,14 +4,32 @@ This file handles a few definitions that need to be in place before MeLeeCMS loa
 The following things are handled by this file:
 - Setting `display_errors` to `false`.
 - Setting `log_errors` to `true`.
+- Loads the site settings from `defaultconfig.php` and `config.php`.
+- Redirects to HTTPS if the setting for it is set.
 - Setting the error log file to a directory and file in `includes/logs` based on today's date.
 - Records the current system time and memory before MeLeeCMS runs, so that usage data can be calculated later.
-- Defines a function that performs said calculation.
+- Defines the function that performs said calculation.
+- Defines the function that builds readable stack traces for the error log.
 */
 namespace MeLeeCMS;
 
 ini_set("display_errors", 0);
 ini_set("log_errors", 1);
+
+/** @var int The current memory usage at the time the page starts loading. */
+define("START_MEMORY", memory_get_usage());
+/** @var float The current microsecond timestamp at the time the page starts loading. */
+define("START_TIME", microtime(true));
+
+require_once(__DIR__ . DIRECTORY_SEPARATOR ."defaultconfig.php");
+include_once(__DIR__ . DIRECTORY_SEPARATOR ."config.php");
+
+if(!empty($GlobalConfig['force_https']) && empty($_SERVER['HTTPS']))
+{
+   header("Location: https://". $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI']);
+   exit;
+}
+
 $error_dir = __DIR__ . DIRECTORY_SEPARATOR ."logs". DIRECTORY_SEPARATOR ."errors-". date("Y-m");
 $error_file = $error_dir . DIRECTORY_SEPARATOR . date("Y-m-d") .".log";
 if(!is_dir($error_dir))
@@ -26,10 +44,6 @@ if(!is_file($error_file))
 ini_set("error_log", $error_file);
 // Note: Permissions for the log directory and log files is going to be totally screwed. They will be owned by the PHP/Apache user, and the group will also be the PHP/Apache group like every other file here, so the actual logged-in linux user is just SOL. No clue how to fix this other than with a root script, way outside the jurisdiction of this CMS.
 
-/** @var int The current memory usage at the time the page starts loading. */
-define("START_MEMORY", memory_get_usage());
-/** @var float The current microsecond timestamp at the time the page starts loading. */
-define("START_TIME", microtime(true));
 /**
 Prints out the time elapsed and net memory usage since the page first started loading, in the form of an HTML comment.
 @return void

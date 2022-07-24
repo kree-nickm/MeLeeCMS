@@ -9,6 +9,7 @@ class Theme
    public $url_path;
    public $description = "";
    public $thumbnail = "";
+   public $init_func;
    public $superthemes_raw = [];
    public $superthemes = [];
    public $are_superthemes_resolved = false;
@@ -37,6 +38,10 @@ class Theme
          $this->thumbnail = $this->url_path ."thumbnail.png";
       else
          $this->thumbnail = $this->cms->getSetting('url_path') ."themes/default/thumbnail.png";
+      
+      // TODO: For init.php to return anything but a function (which it should), this will have to be moved to MeLeeCMS->addTheme().
+      if(is_file($this->server_path . "init.php"))
+         $this->init_func = include($this->server_path ."init.php");
       
       if(is_file($superthemes_file = $this->server_path ."superthemes.txt"))
          $this->superthemes_raw = file($superthemes_file, FILE_IGNORE_NEW_LINES|FILE_SKIP_EMPTY_LINES);
@@ -76,7 +81,7 @@ class Theme
          $template_dir = dir($template_path);
          while(false !== ($file = $template_dir->read()))
          {
-            // TODO: More than just the MeLeeCMS XSL file could have a subtheme, but some files might just have a hyphen for no reason.
+            // TODO: More than just the MeLeeCMS XSL file could have a subtheme, but some files might just have a hyphen for no reason. * Actually, I don't think we need to know about subthemes here, and subtheme is a misleading term anyway that I plan to change.
             if(substr($file, 0, 9) == "MeLeeCMS-" && substr($file, -4) == ".xsl")
             {
                $this->subthemes[] = ['__attr:name'=>substr($file, 9, -4), $file];
@@ -89,6 +94,23 @@ class Theme
       }
    }
    
+   public function init()
+   {
+      $this->cms->debugLog("ADMIN", "Initializing theme:", $this->name);
+      if(!empty($this->init_func) && is_callable($this->init_func))
+         $continue = ($this->init_func)($this->cms);
+      else
+         $continue = true;
+      if($continue)
+      {
+         foreach($this->superthemes as $theme)
+         {
+            $this->cms->debugLog("ADMIN", "Initializing supertheme:", $theme->name);
+            $theme->init();
+         }
+      }
+   }
+   
    public function resolveSuperthemes()
    {
       if($this->name != "default")
@@ -97,11 +119,11 @@ class Theme
       {
          if($supertheme == "default")
          {
-            trigger_error("Theme '{$this->name}' has 'default' as a supertheme. Do not do this, as it would break theme chaining, and 'default' is always checked last in the chain regardless. Ignoring it, but remove 'default' from the superthemes.txt file.", E_USER_NOTICE);
+            trigger_error("Theme '{$this->name}' has 'default' as a supertheme. Do not do this, as it would break theme chaining, and 'default' is always checked last in the chain regardless. Ignoring it, but you should still remove 'default' from the superthemes.txt file.", E_USER_NOTICE);
          }
          else if($supertheme == $this->name)
          {
-            trigger_error("Theme '{$this->name}' has itself in its own superthemes.txt file. Don't.", E_USER_WARNING);
+            trigger_error("Theme '{$this->name}' has itself in its own superthemes.txt file. Don't. Ignoring it.", E_USER_NOTICE);
          }
          else if(($theme = $this->cms->addTheme($supertheme)) != null)
          {
@@ -120,77 +142,54 @@ class Theme
       }
    }
 	
-	public function resolveFile($directory, $name, $name_extra="default", $recursion=[])
+	public function resolveFile($directory, $name, $recursion=[])
 	{
       if(in_array($this->name, $recursion))
       {
          // Note: Maybe we don't need a warning here? What if ThemeA implements some unique stuff and wants to use ThemeB for the rest, but ThemeB also implements some unique stuff and wants to use ThemeA for the rest. Using one or the other would be different in the cases where they overlap, but the same everywhere else. It's a valid use case in my opinion, but would start logging these errors.
-         trigger_error("Infinitely recursive superthemes detected. The chain was '". implode("'->'", $recursion) ."'->'{$this->name}'. While not a fatal error, this should probably still be corrected by editing the themes' superthemes.txt file(s).", E_USER_WARNING);
+         trigger_error("Infinitely recursive superthemes detected. The chain was '". implode("'->'", $recursion) ."'->'{$this->name}'. While not a fatal error, this should probably still be corrected by editing the themes' superthemes.txt file(s).", E_USER_NOTICE);
          return false;
       }
       else
          $recursion[] = $this->name;
       
 		$path = $this->server_path . $directory . DIRECTORY_SEPARATOR;
-      if($directory == "templates" && substr($name, -4) != ".xsl")
-      {
-         $fileA = "{$name}-{$name_extra}.xsl";
-         $fileB = "{$name}-default.xsl";
-      }
-      else
-         $fileA = $name;
-      
-		if(is_file($path . $fileA))
+		if(is_file($path . $name))
       {
          // Since XSLT is all done internally within PHP, we need server path instead of URL path.
          if($directory == "templates")
-            return $path . $fileA;
+            return $path . $name;
          else
-            return $this->url_path . $directory ."/". $fileA;
-      }
-		else if(!empty($fileB) && is_file($path . $fileB))
-      {
-         // Since XSLT is all done internally within PHP, we need server path instead of URL path.
-         if($directory == "templates")
-            return $path . $fileB;
-         else
-            return $this->url_path . $directory ."/". $fileB;
+            return $this->url_path . $directory ."/". $name;
       }
 		else if($this->name != "default")
       {
          foreach($this->superthemes as $supertheme)
-            if($result = $supertheme->resolveFile($directory, $name, $name_extra, $recursion))
+            if($result = $supertheme->resolveFile($directory, $name, $recursion))
                return $result;
          if(!empty($this->cms->themes['default']))
-            if($result = $this->cms->themes['default']->resolveFile($directory, $name, $name_extra, $recursion))
+            if($result = $this->cms->themes['default']->resolveFile($directory, $name, $recursion))
                return $result;
       }
 		return false;
 	}
 	
-	public function parseTemplate($data, $class="MeLeeCMS", $subtheme="default", $added_xsl=[], $transformer=null)
+	public function resolveXSLFile($class, $subtheme="default")
 	{
-      if(empty($transformer))
+      $result = $this->resolveFile("templates", "{$class}-{$subtheme}.xsl");
+      if($result === false && $subtheme != "default")
+         $result = $this->resolveFile("templates", "{$class}-default.xsl");
+      return $result;
+	}
+	
+	public function parseTemplate($data, $class="MeLeeCMS", $subtheme="default", $added_xsl=[])
+	{
+      $xsl_file = $this->resolveXSLFile($class, $subtheme);
+      if(!empty($xsl_file))
+      {
          $transformer = new Transformer();
-		$path = $this->server_path ."templates". DIRECTORY_SEPARATOR;
-		if(is_file($file = ($path . $class."-".$subtheme.".xsl")))
-      {
-			$transformer->set_stylesheet("", $file);
+         $transformer->set_stylesheet("", $xsl_file);
          return $transformer->transform($data, $class, $added_xsl);
-      }
-		else if(is_file($file = ($path . $class."-default.xsl")))
-      {
-			$transformer->set_stylesheet("", $file);
-         return $transformer->transform($data, $class, $added_xsl);
-      }
-		else if($this->name != "default")
-      {
-         foreach($this->superthemes as $supertheme)
-            if($supertheme->resolveFile("templates", $class, $subtheme, [$this->name]))
-               return $supertheme->parseTemplate($data, $class, $subtheme, $added_xsl, $transformer);
-         if(!empty($this->cms->themes['default']))
-            if($this->cms->themes['default']->resolveFile("templates", $class, $subtheme, [$this->name]))
-               return $this->cms->themes['default']->parseTemplate($data, $class, $subtheme, $added_xsl, $transformer);
       }
       return $data;
 	}

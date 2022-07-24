@@ -37,7 +37,17 @@ class Menu extends Container
    
    public function addLink($url, $text="")
    {
-      return $this->addContent(new Link($url, $text))->setMenu($this)->setActive($this->cms->path_info == $url || ($url == $this->cms->getSetting('index_page') && $this->cms->path_info == ""));
+      $url_path = $this->cms->getSetting('url_path');
+      if(substr($url, 0, strlen($url_path)) !== $url_path)
+      {
+         if($url{0} == "/")
+            $url = $url_path . substr($url, 1);
+         else
+            $url = $url_path . $url;
+      }
+      return $this->addContent(new Link($url, $text))
+         ->setMenu($this)
+         ->setActive($this->cms->page->url_path == $url);
    }
    
    public function addMenu($title)

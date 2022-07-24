@@ -1,16 +1,13 @@
 <?php
-/** The code for the MeLeeCMS class. */
-namespace MeLeeCMS;
-
-/**
+/** The code for the MeLeeCMS class.
 @todo Guilty admission: This project has inconsistent indentations and naming conventions. This is a consequence of being developed over more than a decade, and my preferences and text editors/settings changing over that time period. So, to clarify the project's conventions in the hope of eventually making every file conform to them:
 - Indentations should be 3 spaces.
 - Class names should be PascalCase
 - Constants should be CAPITAL_UNDER_SCORED
 - Class methods should be camelCase()
 - All other variables and functions should be under_scored
-The naming conventions are my best attempt to conform to PHP's own naming conventions, which are themselves inconsistent.
-*/
+The naming conventions are my best attempt to conform to PHP's own naming conventions, which are themselves inconsistent.*/
+namespace MeLeeCMS;
 
 /**
  * The core class of MeLeeCMS, containing all of the code that sets up the back-end and handles the displaying of pages.
@@ -36,19 +33,21 @@ class MeLeeCMS
    
    /** @var int Bit union for loading only the features needed to authenticate a user. */
    const MODE_AUTH = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_USER;
-   /** @var int Bit union for loading only the features needed to handle a POST request. */
+   /** @var int Bit union for loading only the features needed to handle a form-submitted POST request. */
    const MODE_FORM = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_USER | self::SETUP_FORMS;
+   /** @var int Bit union for loading only the features needed to handle a JSON POST request. */
+   const MODE_AJAX = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_USER | self::SETUP_THEME;
    /** @var int Bit union for loading only the features needed to display a page. */
-   const MODE_PAGE = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_THEME | self::SETUP_USER | self::SETUP_PAGE;
+   const MODE_PAGE = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_USER | self::SETUP_THEME | self::SETUP_PAGE;
    /** @var int Bit union for loading all MeLeeCMS features. This is the default. */
-   const MODE_ALL  = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_THEMES | self::SETUP_USER | self::SETUP_FORMS | self::SETUP_PAGES | self::SETUP_PAGE;
+   const MODE_ALL  = self::SETUP_DATABASE | self::SETUP_SETTINGS | self::SETUP_USER | self::SETUP_THEMES | self::SETUP_FORMS | self::SETUP_PAGES | self::SETUP_PAGE;
    
    /** @var int The bit union used in the MeLeeCMS constructor. */
 	protected $mode;
    /** @var array<string,mixed> Array of key/value pairs for all loaded MeLeeCMS settings. */
 	protected $settings = [];
    /** @var boolean Whether to load the control panel instead of a normal page. */
-	protected $cpanel;
+	protected $cpanel = false;
    /** @var string The full title that will appear on the browser window, can be set by {@see MeLeeCMS::setTitle()}. */
 	protected $page_title = "";
    /**
@@ -75,7 +74,7 @@ class MeLeeCMS
 	
    /** @var array<int,string> The system file paths from which MeLeeCMS will attempt to autoload classes. */
 	public $class_paths = [];
-   /** @var string The parsed and calculated `$_SERVER['PATH_INFO']` that MeLeeCMS will use to determine what page to load. */
+   /** @var array<int,string> The parsed `$_SERVER['PATH_INFO']` that MeLeeCMS will use to determine what page to load. */
 	public $path_info;
    /**
    @var Database The loaded database that all MeLeeCMS components will use to make MySQL queries.
@@ -128,18 +127,9 @@ class MeLeeCMS
 	public function __construct($mode=self::MODE_ALL)
 	{
 		$this->mode = $mode;
+      // TODO: Set an error handler in init.php that doesn't require MeLeeCMS, but overwrite it with this one. This one should also call that one.
 		set_error_handler([$this, "errorHandler"]);
-      
-		// Load and validate $GlobalConfig settings.
 		global $GlobalConfig;
-		require_once(__DIR__ . DIRECTORY_SEPARATOR ."defaultconfig.php");
-		include_once(__DIR__ . DIRECTORY_SEPARATOR ."config.php");
-      
-      if(!empty($GlobalConfig['force_https']) && empty($_SERVER['HTTPS']))
-      {
-         header("Location: https://". $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI']);
-         exit;
-      }
       
       // Store most of the settings from the config file in MeLeeCMS.
 		$this->settings['server_path'] = realpath($GlobalConfig['server_path']) . DIRECTORY_SEPARATOR;
@@ -153,7 +143,6 @@ class MeLeeCMS
 		$this->settings['user_system'] = $GlobalConfig['user_system'];
 		$this->settings['site_title'] = $GlobalConfig['site_title'];
 		$this->settings['default_theme'] = $GlobalConfig['default_theme'];
-		$this->settings['cpanel_theme'] = $GlobalConfig['cpanel_theme'];
 		$this->settings['index_page'] = $GlobalConfig['index_page'];
       
 		// Setup the load paths for classes.
@@ -165,33 +154,44 @@ class MeLeeCMS
 		spl_autoload_register(array($this, "loadClass"), true);
       
       $this->out_data = new Data();
-      // Determine if we are in the control panel.
-      $this->cpanel = (dirname($_SERVER['SCRIPT_FILENAME']) == $this->settings['server_path'] . $this->settings['cpanel_dir']);
       
-		// Setup the rest of MeLeeCMS based on the $mode.
-		$this->path_info = (isset($_SERVER['PATH_INFO']) ? substr($_SERVER['PATH_INFO'],1) : "");
+		// Load what we need to identify the current user.
 		if(($this->mode & self::SETUP_DATABASE) > 0)
          $this->setupDatabase();
 		if(($this->mode & self::SETUP_SETTINGS) > 0)
          $this->setupSettings();
+		if(($this->mode & self::SETUP_USER) > 0)
+         $this->setupUser();
       
-      // TODO: Fix the control panel and add a maintenance mode button.
-      $this->maintenance_until = 0;
+      // Parse out the URL so we can determine the requested page later.
+      $this->path_info = isset($_SERVER['PATH_INFO']) ? array_values(array_filter(explode("/", $_SERVER['PATH_INFO']))) : [];
+      // Determine if we need to load the control panel.
+      if(count($this->path_info) && $this->path_info[0] == $this->settings['cpanel_dir'] && (!empty($this->user) && $this->user->has_permission("view_cpanel") || !empty($GlobalConfig['admin_ip']) && $_SERVER['REMOTE_ADDR'] == $GlobalConfig['admin_ip']))
+      {
+         $this->cpanel = true;
+         $this->settings['default_theme'] = $GlobalConfig['cpanel_theme'];
+         // Set the "index" of the control panel.
+         if(count($this->path_info) == 1)
+            $this->path_info[] = "settings";
+         require_once($this->settings['server_path'] ."includes". DIRECTORY_SEPARATOR ."admin". DIRECTORY_SEPARATOR ."init.php");
+      }
+      else
+         // Ignore maintenance mode inside the control panel.
+         $this->maintenance_until = 0;// TODO: Pull this value from where ever the control panel stores it.
       
-		if(($this->mode & self::SETUP_THEMES) > 0)
+      // Load the rest of what we need to generate a response.
+		if($this->cpanel || ($this->mode & self::SETUP_THEMES) > 0)
          $this->setupThemes();
       // Note: This is 'else if' because setupThemes() does everything that setupTheme() does.
 		else if(($this->mode & self::SETUP_THEME) > 0)
          $this->setupTheme();
-		if(($this->mode & self::SETUP_USER) > 0)
-         $this->setupUser();
-		if(($this->mode & self::SETUP_FORMS) > 0)
+		if($this->cpanel || ($this->mode & self::SETUP_FORMS) > 0)
          $this->setupForms();
-		if(($this->mode & (self::SETUP_PAGES | self::SETUP_PAGE)) > 0)
+		if($this->cpanel || ($this->mode & (self::SETUP_PAGES | self::SETUP_PAGE)) > 0)
          $this->setupSpecialPages();
-		if(($this->mode & self::SETUP_PAGES) > 0)
+		if($this->cpanel || ($this->mode & self::SETUP_PAGES) > 0)
          $this->setupPages();
-		if(($this->mode & self::SETUP_PAGE) > 0)
+		if($this->cpanel || ($this->mode & self::SETUP_PAGE) > 0)
          $this->setupPage();
       
       // If a refresh was requested at some point during initialization, do it now.
@@ -248,6 +248,28 @@ class MeLeeCMS
    
 	public function debugLog($permission, ...$input)
    {
+      $mute_meleecms = function(&$in) use(&$mute_meleecms)
+      {
+         if($in instanceof MeLeeCMS)
+         {
+            $in = "<MeLeeCMS instance>";
+         }
+         else if(is_array($in))
+         {
+            foreach($in as $k=>$v)
+            {
+               $mute_meleecms($in[$k]);
+            }
+         }
+         else if(is_object($in))
+         {
+            foreach(get_object_vars($in) as $k=>$t)
+            {
+               $mute_meleecms($in->$k);
+            }
+         }
+      };
+      $mute_meleecms($input);
       if(empty($permission) || !empty($this->user) && $this->user->has_permission($permission))
          $this->debug_log[] = $input;
    }
@@ -277,8 +299,8 @@ class MeLeeCMS
 		}
       
       // Write the error to a log file.
-		error_log($type .": ". $message ."\n". stack_trace_string(1));
-      $backtrace = array_slice(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), 1);
+		error_log($type .": ". $message ."\n". stack_trace_string(0));
+      $backtrace = array_slice(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), 0);
       
       // Send the error to the XML output if the user has permission to view errors.
 		if(is_object($this->user) && $this->user->has_permission("view_errors"))
@@ -366,6 +388,40 @@ class MeLeeCMS
 			return false;
 		}
 	}
+	
+	protected function setupUser()
+	{
+      global $GlobalConfig;
+      // TODO: Need to figure out when we are allowed to set cookie expiration. A not-logged-in user can't set the "remember me" flag, so their session cookie will expire with the browser window. However they retain the same session ID after logging in, so the cookie will need to be updated with a new expiration if they want to be remembered.
+      //$this->session_expiration = (!empty($_POST['remember_me']) && is_numeric($_POST['remember_me'])) ? (int)$_POST['remember_me'] : 0;
+		session_set_save_handler(new MeLeeSessionHandler($this), true);
+		session_name($this->getSetting('cookie_prefix') ."sessid");
+      $session_options = [
+         'cookie_lifetime' => $this->session_expiration,
+         'cookie_secure' => empty($GlobalConfig['force_https']) ? 0 : 1,
+         'cookie_httponly' => 1,
+         //'cookie_samesite' => "strict", // only works in PHP>=7.3.0
+      ];
+		session_start($session_options);
+		if(isset($_SESSION['form_response']))
+		{
+			$this->addDataProtected('form_response', $_SESSION['form_response'], Data::NO_AUTO_ARRAY);
+			unset($_SESSION['form_response']);
+		}
+		if($this->getSetting('user_system') == "")
+			$user_class = "\\MeLeeCMS\\User";
+		else
+			$user_class = "\\MeLeeCMS\\". $this->getSetting('user_system');
+      
+      $this->user = new $user_class($this);
+      if(!empty($this->user))
+         return true;
+      else
+      {
+			trigger_error("Unable to create user object using the '". $this->getSetting('user_system') ."' user system.", E_USER_ERROR);
+         return false;
+      }
+	}
    
    public function addTheme($directory)
    {
@@ -405,40 +461,6 @@ class MeLeeCMS
 		return count($this->themes)>0;
 	}
 	
-	protected function setupUser()
-	{
-      global $GlobalConfig;
-      // TODO: Need to figure out when we are allowed to set cookie expiration. A not-logged-in user can't set the "remember me" flag, so their session cookie will expire with the browser window. However they retain the same session ID after logging in, so the cookie will need to be updated with a new expiration if they want to be remembered.
-      //$this->session_expiration = (!empty($_POST['remember_me']) && is_numeric($_POST['remember_me'])) ? (int)$_POST['remember_me'] : 0;
-		session_set_save_handler(new MeLeeSessionHandler($this), true);
-		session_name($this->getSetting('cookie_prefix') ."sessid");
-      $session_options = [
-         'cookie_lifetime' => $this->session_expiration,
-         'cookie_secure' => empty($GlobalConfig['force_https']) ? 0 : 1,
-         'cookie_httponly' => 1,
-         //'cookie_samesite' => "strict", // only works in PHP>=7.3.0
-      ];
-		session_start($session_options);
-		if(isset($_SESSION['form_response']))
-		{
-			$this->addDataProtected('form_response', $_SESSION['form_response'], Data::NO_AUTO_ARRAY);
-			unset($_SESSION['form_response']);
-		}
-		if($this->getSetting('user_system') == "")
-			$user_class = "\\MeLeeCMS\\User";
-		else
-			$user_class = "\\MeLeeCMS\\". $this->getSetting('user_system');
-      
-      $this->user = new $user_class($this);
-      if(!empty($this->user))
-         return true;
-      else
-      {
-			trigger_error("Unable to create user object using the '". $this->getSetting('user_system') ."' user system.", E_USER_ERROR);
-         return false;
-      }
-	}
-	
 	protected function setupForms()
 	{
       global $GlobalConfig;
@@ -473,13 +495,13 @@ class MeLeeCMS
          if(empty($this->special_pages[$page->id]))
          {
             $this->special_pages[$page->id] = $page;
-            return true;
+            return $this->special_pages[$page->id];
          }
          else
          {
             // TODO: Probably allow it, but would also need to allow special pages to load from database.
             trigger_error("Special page already exists with the ID '{$page->id}'. Overwriting special pages with MeLeeCMS->addPage() is not allowed.", E_USER_WARNING);
-            return false;
+            return $this->special_pages[$page->id];
          }
       }
       else
@@ -487,26 +509,46 @@ class MeLeeCMS
          if(empty($this->pages[$page->id]))
          {
             $this->pages[$page->id] = $page;
-            return true;
+            return $this->pages[$page->id];
          }
          else
          {
             trigger_error("Page already exists with the URL '{$page->id}'. Overwriting pages with MeLeeCMS->addPage() is not allowed.", E_USER_WARNING);
-            return false;
+            return $this->pages[$page->id];
+         }
+      }
+   }
+   
+   protected function findPage($path_info=[], $args=[])
+   {
+      if(count($path_info) == 0)
+         return [null, $args];
+      $pageId = implode("/", $path_info);
+      if(!empty($this->pages[$pageId]))
+         return [$this->pages[$pageId], $args];
+      else
+      {
+         $page = $this->database->query("SELECT * FROM `pages` WHERE `url`={$this->database->quote($pageId)}", Database::RETURN_ROW);
+         if(!empty($page))
+            return [$this->addPage($page), $args];
+         else
+         {
+            array_unshift($args, array_pop($path_info));
+            return $this->findPage($path_info, $args);
          }
       }
    }
 	
 	protected function setupPage()
 	{
-      global $GlobalConfig;
       // Special case for viewing/debugging the special pages.
       if(!empty($_GET['specialPage']) && !empty($this->special_pages[$_GET['specialPage']]))
       {
          $this->page = $this->special_pages[$_GET['specialPage']];
       }
       
-      if(time() < $this->maintenance_until)
+      // Attempt to load the page until we encounter an error state.
+      if(time() < $this->maintenance_until && (empty($this->user) || !$this->user->has_permission("ignore_maintenance")))
       {
          http_response_code(503);
          header("Retry-After: ". date("r", $this->maintenance_until));
@@ -516,44 +558,16 @@ class MeLeeCMS
       {
          // Normal page request.
          if(empty($this->page))
-         {
-            $pageId = !empty($this->path_info) ? $this->path_info : $this->getSetting('index_page');
-            // See if the page is already stored in $this->pages.
-            if(!empty($this->pages[$pageId]))
-               $this->page = $this->pages[$pageId];
-            else
-            {
-               // First check if it's in $GlobalConfig. 
-               /* Note: Not needed at the moment, because $GlobalConfig is always stored in $this->pages
-               foreach($GlobalConfig['pages'] as $page)
-               {
-                  if(!empty($page['url']) && $page['url'] == $pageId)
-                  {
-                     $this->page = new Page($this, $page);
-                     $this->pages[] = $this->page;
-                     break;
-                  }
-               }
-               */
-               // If not, check if its in the database.
-               if(empty($this->page))
-               {
-                  $page = $this->database->query("SELECT * FROM `pages` WHERE `url`={$this->database->quote($pageId)}", Database::RETURN_ROW);
-                  if(!empty($page))
-                  {
-                     $this->page = new Page($this, $page);
-                     $this->pages[] = $this->page;
-                  }
-               }
-            }
-         }
+            list($this->page, $args) = $this->findPage(!empty($this->path_info) ? $this->path_info : explode("/", $this->getSetting('index_page')));
          
          // Determine any problems with the request.
          if(!empty($this->page))
          {
-            if(empty($this->page->permission) || !empty($this->user) && $this->user->has_permission($this->page->permission))
+            $req_perms = $this->page->getPermission();
+            if(empty($req_perms) || !empty($this->user) && $this->user->has_permission(...$req_perms))
             {
-               // No problems.
+               // No problems, this should be a successful load.
+               $this->page->args = $args;
             }
             else if(empty($this->user) || !$this->user->is_logged())
             {
@@ -577,7 +591,7 @@ class MeLeeCMS
       {
          foreach($this->special_pages as $spage)
          {
-            // Note: Page->select a callable property and not a method, so we have to call it like this.
+            // Note: Page->select a callable property and not a method, so we have to call it with parinthesis.
             if(($spage->select)($this))
             {
                $this->page = $spage;
@@ -586,7 +600,7 @@ class MeLeeCMS
          }
          if(empty($this->page))
          {
-            trigger_error("Page request '{$this->path_info}' couldn't resolve to a page or a special page. HTTP response would have been ". http_response_code() .". Make sure a special page is defined for that response code.", E_USER_WARNING);
+            trigger_error("Page request '". implode("/",$this->path_info) ."' couldn't resolve to a page or a special page. HTTP response would have been ". http_response_code() .". Make sure a special page is defined for that response code.", E_USER_WARNING);
             $this->page = new Page($this, false);
          }
       }
@@ -600,7 +614,7 @@ class MeLeeCMS
       trigger_error("MeLeeCMS->get_setting() is deprecated; use MeLeeCMS->getSetting() instead.", E_USER_DEPRECATED);
       return $this->getSetting($key);
    }
-
+   
 	public function getSetting($key)
 	{
 		return $this->settings[$key];
@@ -611,7 +625,7 @@ class MeLeeCMS
       trigger_error("MeLeeCMS->get_page() is deprecated and will be removed eventually. Access MeLeeCMS->page directly instead.", E_USER_DEPRECATED);
 		return empty($this->page->$key) ? "" : $this->page->$key;
 	}
-
+   
 	public function setTheme($theme)
 	{
 		if(!empty($this->themes[$theme]))
@@ -797,9 +811,9 @@ class MeLeeCMS
       foreach($this->page_content as $tag=>$content)
       {
          $params['content@class='.$content->getContentClass().($tag?'@id='.$tag:'')][] = $content->build_params();
-         if(!empty($xsl_filepath = $this->getTheme()->resolveFile("templates", $content->getContentClass(), $subtheme)))
-            $content_xsl[] = ['href'=>$xsl_filepath];
+         $content_xsl = array_merge($content_xsl, $content->findXSLFiles($this->getTheme(), $subtheme));
       }
+      
 		foreach($this->page_css as $css)
 			$params['css'][] = [
 				'href' => ($css['fromtheme'] ? $this->getTheme()->resolveFile("css", $css['href']) : $css['href']),
@@ -820,7 +834,7 @@ class MeLeeCMS
 				'code' => $js['code'],
 				'attrs' => $js['attrs'],
 			];
-		// TODO: This won't include errors during XSLT conversion. Don't know how to fix that.
+		// Note: data/errors won't include errors during XSLT conversion. Pretty sure it's impossible to fix that.
 		$params['data'] = $this->out_data->toArray();
 		if($subtheme == "__xml" && $this->user->has_permission("view_xml"))
 		{

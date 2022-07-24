@@ -57,7 +57,7 @@ class TwitchUser extends User
 				if(!empty($user_data->id))
 				{
 					// We have a response, which means we need to create an entry for it in the users database.
-					$this->cms->database->insert("users", ['twitch_id'=>$user_data->id, 'jointime'=>time(), 'permissions'=>["VIEW"]], false);
+					$this->cms->database->insert("users", ['twitch_id'=>$user_data->id, 'jointime'=>time(), 'permissions'=>["LOGGED"]], false);
                // Also update the user cache since we have the freshest data.
                if(!empty($user_data->email))
                   unset($user_data->email);
@@ -122,7 +122,7 @@ class TwitchUser extends User
 			else
 			{
 				$this->user_info = [];
-				$this->user_info['permissions'] = ["VIEW"];
+				$this->user_info['permissions'] = ["ANON"];
 				$this->user_info['custom_data'] = [];
 				$this->user_info['follows'] = [];
 				$this->logged_in = false;
@@ -457,5 +457,14 @@ class TwitchUser extends User
 	protected function saveCustomData()
 	{
 		$this->cms->database->insert("users", ['index'=>$this->user_info['index'], 'custom_data'=>json_encode($this->user_info['custom_data'])], true, ['index']);
+	}
+
+	public function getDisplayName($index)
+	{
+      $id = $this->cms->database->query("SELECT `twitch_id` FROM `users` WHERE `index`=". (int)$index, Database::RETURN_FIELD);
+      if(!empty($id))
+         return $this->cms->database->query("SELECT `data`->>'$.display_name' FROM `custom_twitchusercache` WHERE `id`=". (int)$id, Database::RETURN_FIELD);
+      else
+         return $index;
 	}
 }

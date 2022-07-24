@@ -8,10 +8,12 @@
 	<p><xsl:value-of select="."/></p>
 </xsl:if>
 <xsl:if test="*">
-	<p><xsl:for-each select="*">
-		<xsl:value-of select="."/>
-		<xsl:if test="position()!=last()"><br/></xsl:if>
-	</xsl:for-each></p>
+	<p>
+      <xsl:for-each select="*">
+         <xsl:value-of select="."/>
+         <xsl:if test="position()!=last()"><br/></xsl:if>
+      </xsl:for-each>
+   </p>
 </xsl:if>
 </xsl:template>
 
@@ -51,6 +53,17 @@
 </xsl:element>
 </xsl:template>
 
+<xsl:template match="content[@class='Text' and @type='input-check']">
+<xsl:param name="id"/>
+<xsl:element name="input">
+	<xsl:attribute name="class"></xsl:attribute>
+	<xsl:attribute name="id"><xsl:value-of select="$id"/></xsl:attribute>
+	<xsl:attribute name="type">checkbox</xsl:attribute>
+	<xsl:attribute name="value">1</xsl:attribute>
+	<xsl:if test="checked"><xsl:attribute name="checked">checked</xsl:attribute></xsl:if>
+</xsl:element>
+</xsl:template>
+
 <xsl:template match="content[@class='Text' and @type='submit']">
 <xsl:element name="button">
 	<xsl:attribute name="class">form-control btn btn-success</xsl:attribute>
@@ -67,11 +80,23 @@
 </xsl:element>
 </xsl:template>
 
-<!-- A text block with alert styling -->
 <xsl:template match="content[@class='Text' and @alert]">
 <div class="alert alert-{@alert}" role="alert">
 	<xsl:value-of select="."/>
 </div>
+</xsl:template>
+
+<xsl:template match="content[@class='Text' and @type='pagination']">
+<nav aria-label="Changes page navigation">
+   <ul class="pagination my-2 justify-content-center">
+      <xsl:for-each select="page">
+         <xsl:element name="li">
+            <xsl:attribute name="class">page-item<xsl:if test="@disabled"> disabled</xsl:if><xsl:if test="@current"> active</xsl:if></xsl:attribute>
+            <a class="page-link" href="?p={@number}"><xsl:value-of select="."/></a>
+         </xsl:element>
+      </xsl:for-each>
+   </ul>
+</nav>
 </xsl:template>
 
 </xsl:stylesheet>

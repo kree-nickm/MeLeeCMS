@@ -1,11 +1,16 @@
 <IfModule mod_rewrite.c>
 Options +FollowSymlinks
 RewriteEngine On
+RewriteRule ^(includes/.*)$ index.php/$1 [L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php/$1 [L]
 </IfModule>
-<FilesMatch "config\.php$">
-	Order allow,deny
-	Deny from all
+
+<FilesMatch "^(?!index|install)\.php">
+   Require all denied
+</FilesMatch>
+
+<FilesMatch "\.log$">
+   Require all denied
 </FilesMatch>
