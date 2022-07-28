@@ -2,23 +2,36 @@
 
 ini_set("display_errors", 1);
 
-// TODO: Both make it impossible to put ../ in the 'file' field, and make the cpanel load from the admin/ dir automatically.
+// Note: When the control panel is loaded, 'file' looks inside /includes/admin/pages, not /includes/pages as normal.
 $GlobalConfig['pages']['adminSettings'] = [
    'url' => $GlobalConfig['cpanel_dir'] ."/settings",
-   'file' => "../admin/pages/settings.php",
+   'file' => "settings.php",
+   'permissions' => ["view_cpanel"],
 ];
 $GlobalConfig['pages']['adminPages'] = [
    'url' => $GlobalConfig['cpanel_dir'] ."/pages",
-   'file' => "../admin/pages/pages.php",
+   'file' => "pages.php",
+   'permissions' => ["view_cpanel"],
+];
+$GlobalConfig['pages']['adminThemes'] = [
+   'url' => $GlobalConfig['cpanel_dir'] ."/themes",
+   'file' => "themes.php",
+   'permissions' => ["view_cpanel"],
+];
+$GlobalConfig['pages']['adminData'] = [
+   'url' => $GlobalConfig['cpanel_dir'] ."/data",
+   'file' => "data.php",
+   'permissions' => ["view_cpanel"],
 ];
 $GlobalConfig['pages']['adminChanges'] = [
    'url' => $GlobalConfig['cpanel_dir'] ."/changes",
-   'file' => "../admin/pages/changes.php",
+   'file' => "changes.php",
+   'permissions' => ["view_cpanel"],
 ];
 
 $GlobalConfig['forms']['adminSaveSettings'] = [
    'file' => "../admin/forms/save-settings.php",
    'select' => function($cms){
-      return !empty($_POST['saveSettings']);
+      return !empty($_POST['adminSaveSettings']);
    },
 ];

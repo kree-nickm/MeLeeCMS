@@ -36,7 +36,7 @@
 <body id="MeLeeCMS" class="MeLeeCMS">
 
 <xsl:if test="content[@id='branding'] or content[@id='nav']">
-<nav class="shadow navbar navbar-expand-sm navbar-dark">
+<nav class="shadow navbar navbar-expand-sm navbar-dark bg-dark">
    <xsl:if test="content[@id='branding']">
       <div class="dropdown">
          <a class="navbar-brand dropdown-toggle" href="#" role="button" id="user_menu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

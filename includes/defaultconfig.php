@@ -44,17 +44,13 @@ $GlobalConfig['dbname'] = "";
 // The path to your wesite's root directory within the server. This is usually something like "/home/user/public_html/".
 $GlobalConfig['server_path'] = dirname(__DIR__) . DIRECTORY_SEPARATOR;
 
-// This is the directory that contains the control panel files. If you change this, also make sure to change the actual directory name. If you are only changing this to try to make the control panel URL harder to find, don't bother. You should make sure the directory is protected whether its URL is public knowledge or not. Note: That should already be taken care of if you use any user_system other than User.
-$GlobalConfig['cpanel_dir'] = "mcmsadmin"; // TODO: This can be programmatically determined by scanning the directories in $GlobalConfig['server_path'] for which one contains "load_page.php", or a similar unique control panel PHP file.
+// This is the URL that will cause MeLeeCMS to attempt to load the control panel. The site should not have any page that shares this name, or an Exception will be thrown when that page attempts to load.
+$GlobalConfig['cpanel_dir'] = "mcmsadmin";
 
 // The URL path to your website from the domain name. If your website loads right from "yourdomain.com", this should be "/". If it loads from "yourdomain.com/yoursite", this should be "/yoursite/". Etc.
 $GlobalConfig['url_path'] = dirname(str_replace("/". $GlobalConfig['cpanel_dir'] ."/", "/", $_SERVER['SCRIPT_NAME']));
-// You don't need this 'if' check in your config.php file. It's only here to correct the default value. Also, MeLeeCMS already does this check.
-if($GlobalConfig['url_path']{-1} != "/")
-   $GlobalConfig['url_path'] .= "/";
 
 // This will redirect any page request from HTTP to HTTPS automatically, making sure no one accidentally uses the non-secure URL. Make sure your website has an SSL certificate and HTTPS works before setting this to true.
-// TODO: Currently only works with pages that use the index.php in $GlobalConfig['url_path']. In other words, not the control panel.
 $GlobalConfig['force_https'] = false;
 
 /******************************* User Settings ********************************
@@ -65,7 +61,7 @@ $GlobalConfig['force_https'] = false;
 // This will be prepended to the names of any cookies set by MeLeeCMS. Generally this is only the session id cookie. Changing this in a production site will force all users to log back in, as well as lose any other data that is tracked using cookies.
 $GlobalConfig['cookie_prefix'] = "melee_";
 
-// This is the class name of the class to use to handle user accounts. If invalid or blank, it will default to the User class found in includes/classes/User.php. It is strongly recommended that you use another class, as the default User class does not support logins and will not protect the control panel directory at all. If you want to use the User class because of its simplicity and lack of logins, then you should set up Apache password protection on the control panel directory to protect it, if you have nothing else.
+// This is the class name of the class to use to handle user accounts. If invalid or blank, it will default to the User class found in includes/classes/User.php.
 $GlobalConfig['user_system'] = "User";
 
 // This is what will appear in the title bar of your website. Each page has its own title, followed by a hyphen, followed by whatever you specify here. This value can be overwritten by the MeLeeCMS control panel.
@@ -85,35 +81,27 @@ $GlobalConfig['index_page'] = "test-page";
 ******************************************************************************/
 
 $GlobalConfig['pages'] = [];
-// You don't need this 'if' check in your config.php file, it's only here to prevent error messages from triggering once you replace all the defaults with your own pages.
+// You don't need this 'if' check in your config.php file, it's only here to prevent error messages from triggering if/when you delete test-page.php since you don't need it.
 if(is_file("includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR ."test-page.php"))
 {
    // Copy/paste the below definition in your own config.php file as needed with different values for each page.
    $GlobalConfig['pages'][] = [
-      'url' => "test-page", // The URL the page is accessed from, in this case: yoursite.com/test-page
-      'subtheme' => "default", // A subtheme to load for the XSLT. Subthemes are defined in the names of XSL files, eg. for MeLeeCMS-default.xsl, the 'default' specifies that the file is for the 'default' subtheme.
-      'file' => "test-page.php", // Specify the file name that contains the page logic in place of test-page.php
+      'url' => "test-page",
+      'file' => "test-page.php",
+      'title' => "Testing Grounds",
+      'css' => [],
+      'js' => [],
+      'xsl' => [],
+      'permissions' => [],
    ];
 }
 // TODO: These error pages have no way of including a navbar. Need to figure out how to implement a navbar in a way that any site can use, such that it appears on these generic error pages.
 // These are special pages, like the 404 page, etc. You can overwrite them in your config.php if you follow the same format.
-$GlobalConfig['pages']['404'] = [ // Arbitrary array key, '404' in this case. Only useful if you want to overwrite this definition in your own config.php.
-   'id' => "404", // A unique ID for the special page.
-   'select' => function($cms){ return http_response_code()==404; }, // A function that returns true if this page should load, or false if not. A normal page that matches the requested URL will load first if possible. If that load fails, then, special pages are checked in the order they are defined, and the first matching page is displayed. A reference to the MeLeeCMS instance is provided in case you need it.
-   'subtheme' => "default", // See above.
-   'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:14:\"Page Not Found\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:45:\"The page you are looking for cannot be found.\";s:5:\"attrs\";a:0:{}}}}}", // Serialized PHP data. Not recommended that you do this if you are defining your own special pages; just use a file instead.
-   'title' => "Page Not Found",
-   'css' => [], // List of CSS files to include on this page, relative to the theme's CSS directory.
-   'js' => [], // List of JS files to include on this page, relative to the theme's JS directory.
-   'xsl' => [], // List of XSL files to include on this page, relative to the theme's templates directory.
-   'permission' => 0, // Permission integer, a bitwise union of required permissions to view the page. Special pages don't check permissions.
-];
-$GlobalConfig['pages']['403'] = [
-   'id' => "403",
-   'select' => function($cms){ return http_response_code()==403; },
-   'subtheme' => "default",
-   'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:13:\"Access Denied\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:45:\"You do not have permission to view this page.\";s:5:\"attrs\";a:0:{}}}}}",
-   'title' => "Access Denied",
+$GlobalConfig['pages']['503'] = [
+   'id' => "503",
+   'select' => function($cms){ return http_response_code()==503; },
+   'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:11:\"Maintenance\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:42:\"Website is currently down for maintenance.\";s:5:\"attrs\";a:0:{}}}}}",
+   'title' => "Maintenance",
    'css' => [],
    'js' => [],
    'xsl' => [],
@@ -121,19 +109,26 @@ $GlobalConfig['pages']['403'] = [
 $GlobalConfig['pages']['401'] = [
    'id' => "401",
    'select' => function($cms){ return http_response_code()==401; },
-   'subtheme' => "default",
    'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:14:\"Login Required\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:40:\"You must be logged in to view this page.\";s:5:\"attrs\";a:0:{}}}}}",
    'title' => "Login Required",
    'css' => [],
    'js' => [],
    'xsl' => [],
 ];
-$GlobalConfig['pages']['503'] = [
-   'id' => "503",
-   'select' => function($cms){ return http_response_code()==503; },
-   'subtheme' => "default",
-   'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:11:\"Maintenance\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:42:\"Website is currently down for maintenance.\";s:5:\"attrs\";a:0:{}}}}}",
-   'title' => "Maintenance",
+$GlobalConfig['pages']['403'] = [
+   'id' => "403",
+   'select' => function($cms){ return http_response_code()==403; },
+   'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:13:\"Access Denied\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:45:\"You do not have permission to view this page.\";s:5:\"attrs\";a:0:{}}}}}",
+   'title' => "Access Denied",
+   'css' => [],
+   'js' => [],
+   'xsl' => [],
+];
+$GlobalConfig['pages']['404'] = [
+   'id' => "404",
+   'select' => function($cms){ return http_response_code()==404; },
+   'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:14:\"Page Not Found\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:45:\"The page you are looking for cannot be found.\";s:5:\"attrs\";a:0:{}}}}}",
+   'title' => "Page Not Found",
    'css' => [],
    'js' => [],
    'xsl' => [],
@@ -147,7 +142,7 @@ $GlobalConfig['pages']['503'] = [
 ******************************************************************************/
 
 $GlobalConfig['forms'] = [];
-// You don't need this 'if' check in your config.php file, it's only here to prevent error messages from triggering once you replace all the defaults with your own forms.
+// You don't need this 'if' check in your config.php file, it's only here to prevent error messages from triggering if/when you delete test-form.php since you don't need it.
 if(is_file("includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR ."test-form.php"))
 {
    // Copy/paste the below definition in your own config.php file as needed with different values for each form.

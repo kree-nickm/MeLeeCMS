@@ -13,7 +13,6 @@ class Theme
    public $superthemes_raw = [];
    public $superthemes = [];
    public $are_superthemes_resolved = false;
-   public $subthemes = [];
    public $css = [];
    public $js = [];
    public $xsl = [];
@@ -81,12 +80,7 @@ class Theme
          $template_dir = dir($template_path);
          while(false !== ($file = $template_dir->read()))
          {
-            // TODO: More than just the MeLeeCMS XSL file could have a subtheme, but some files might just have a hyphen for no reason. * Actually, I don't think we need to know about subthemes here, and subtheme is a misleading term anyway that I plan to change.
-            if(substr($file, 0, 9) == "MeLeeCMS-" && substr($file, -4) == ".xsl")
-            {
-               $this->subthemes[] = ['__attr:name'=>substr($file, 9, -4), $file];
-            }
-            else if(substr($file, -4) == ".xsl")
+            if(substr($file, -4) == ".xsl")
             {
                $this->xsl[] = $file;
             }
@@ -174,17 +168,17 @@ class Theme
 		return false;
 	}
 	
-	public function resolveXSLFile($class, $subtheme="default")
+	public function resolveXSLFile($class, $format="default")
 	{
-      $result = $this->resolveFile("templates", "{$class}-{$subtheme}.xsl");
-      if($result === false && $subtheme != "default")
+      $result = $this->resolveFile("templates", "{$class}-{$format}.xsl");
+      if($result === false && $format != "default")
          $result = $this->resolveFile("templates", "{$class}-default.xsl");
       return $result;
 	}
 	
-	public function parseTemplate($data, $class="MeLeeCMS", $subtheme="default", $added_xsl=[])
+	public function parseTemplate($data, $class="MeLeeCMS", $format="default", $added_xsl=[])
 	{
-      $xsl_file = $this->resolveXSLFile($class, $subtheme);
+      $xsl_file = $this->resolveXSLFile($class, $format);
       if(!empty($xsl_file))
       {
          $transformer = new Transformer();

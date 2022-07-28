@@ -15,16 +15,17 @@ class Page
    public $select;
    public $file;
    public $theme;
-   public $subtheme;
-   public $permission;
+   public $permissions;
    public $content;
    public $content_serialized;
    public $css;
    public $js;
    public $xsl;
    public $args = [];
+   public $hardcoded;
+   public $db_stored;
    
-   function __construct($cms, $page_data)
+   function __construct($cms, $page_data, $defined_in=0)
    {
       // Only valid with MeLeeCMS.
       if(!empty($cms))
@@ -32,22 +33,25 @@ class Page
       else
          throw new \Exception("Page must be provided a MeLeeCMS reference.");
       
-      // Special case for generating a generic error page, when $page_data is explicitly false
+      // Special case for generating a generic error page, when $page_data is explicitly false.
       if($page_data === false)
       {
          $this->is_special = true;
          $this->id = null;
          $this->select = function(){ return true; };
-         $this->subtheme = "default";
          $this->content_serialized = "a:1:{s:7:\"content\";O:9:\"Container\":3:{s:5:\"title\";s:17:\"An Error Occurred\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:4:\"Text\":2:{s:4:\"text\";s:45:\"An unknown error occurred. Response code ". http_response_code() .".\";s:5:\"attrs\";a:0:{}}}}}";
          $this->title = http_response_code() ." Error";
-         $this->permission = "";
+         $this->permissions = "";
          $this->css = [];
          $this->js = [];
          $this->xsl = [];
+         $this->hardcoded = true;
+         $this->db_stored = false;
       }
       else
       {
+         $this->hardcoded = $defined_in & 1;
+         $this->db_stored = $defined_in & 2;
          // Figure out if it's a normal page, a special page, or invalid.
          if(!empty($page_data['url']) && is_string($page_data['url'])) // TODO: Check for valid URL characters, not just "is_string".
          {
@@ -95,8 +99,7 @@ class Page
          
          // Set up the page with any initial data that has been provided.
          $this->title = !empty($page_data['title']) ? $page_data['title'] : (!empty($page_data['url']) ? ucfirst($page_data['url']) : $page_data['id']);
-         $this->subtheme = !empty($page_data['subtheme']) ? $page_data['subtheme'] : "";
-         $this->permission = !empty($page_data['permission']) ? $page_data['permission'] : "view_pages";
+         $this->permissions = !empty($page_data['permissions']) ? $page_data['permissions'] : "view_pages";
          foreach(['css','js','xsl'] as $type)
          {
             // Set $this->$type to something appropriate.
@@ -108,7 +111,7 @@ class Page
                   if(is_array($decoded))
                      $this->$type = $decoded;
                   else
-                     $this->$type = array_filter(preg_split("![,;|&+]!", $page_data[$type]));
+                     $this->$type = array_filter(preg_split("![,;|]!", $page_data[$type]));
                }
                else if(is_array($page_data[$type]))
                   $this->$type = $page_data[$type];
@@ -120,39 +123,46 @@ class Page
             // Make sure $this->$type is formatted correctly.
             foreach($this->$type as $k=>$v)
                if(is_string($v))
-                  $this->$type[$k] = [($type=="js"?'src':'href')=>$v, 'fromtheme'=>true];
+                  $this->$type[$k] = [($type=="js"?'src':'href')=>$v, 'fromtheme'=>!preg_match("!^[a-zA-Z]+://!", $v)];
          }
          $this->content_serialized = !empty($page_data['content']) ? $page_data['content'] : "";
          
          // Now figure out if it's a hard-coded PHP file or a file built with the control panel.
          if(!empty($page_data['file']))
          {
-            if(is_file($cms->getSetting("server_path") ."includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR . $page_data['file']))
-               $this->file = $page_data['file'];
+            if($this->is_cpanel)
+               $dir_path = $cms->getSetting("server_path") ."includes". DIRECTORY_SEPARATOR ."admin". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR;
+            else
+               $dir_path = $cms->getSetting("server_path") ."includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR;
+            $file_path = realpath($dir_path . $page_data['file']);
+            if(empty($file_path) || substr($file_path, 0, strlen($dir_path)) !== $dir_path)
+               $file_path = false;
+            if(is_file($file_path))
+               $this->file = $file_path;
             else
                trigger_error("Invalid file '{$page_data['file']}' was provided for the page '{$this->id}'.", E_USER_WARNING);
          }
          else if(!isset($page_data['content']))
-            throw new \Exception("Pages must have either a 'file' (valid file in includes/pages/ directory) or 'content' (serialized PHP objects or blank) parameter.");
+            trigger_error("Pages must have either a 'file' (valid file in includes/pages/ directory) or 'content' (serialized PHP objects or blank) parameter.", E_USER_WARNING);
       }
    }
    
-   public function getPermission()
+   public function getPermissions()
    {
       // TODO: Move all the validation to setPermission() so it only has to be done once.
-      if(is_string($this->permission))
+      if(is_string($this->permissions))
       {
-         $decoded = json_decode($this->permission, true);
+         $decoded = json_decode($this->permissions, true);
          if(is_array($decoded))
             return array_filter($decoded);
          else
-            return array_filter(preg_split("![,./;|&+]!", $this->permission));
+            return array_filter(preg_split("![,.;|&+ ]!", $this->permissions));
       }
-      else if(is_array($this->permission))
-         return array_filter($this->permission);
+      else if(is_array($this->permissions))
+         return array_filter($this->permissions);
       else
       {
-         trigger_error("Page '{$this->id}' permissions not defined correctly. Must be an array, or a string with each permission separated by one of these \",./;|&+\". Instead, we have this: ". $this->permission, E_USER_ERROR);
+         trigger_error("Page '{$this->id}' permissions not defined correctly. Must be an array, or a string with each permission separated by one of these \",./;|&+\". Instead, we have this: ". $this->permissions, E_USER_ERROR);
          return ["ADMIN"];
       }
    }
@@ -183,18 +193,17 @@ class Page
          foreach($this->content as $x=>$object)
             $this->cms->addContent($object, $x);
       foreach($this->js as $js)
-         $this->cms->attachJS($js['file'], "", $js['fromtheme']);
+         $this->cms->attachJS($js['src'], "", $js['fromtheme']);
       foreach($this->css as $css)
-         $this->cms->attachCSS($css['file'], "", $css['fromtheme']);
+         $this->cms->attachCSS($css['href'], "", $css['fromtheme']);
       foreach($this->xsl as $xsl)
          $this->cms->attachXSL($xsl);
       
 		if(!empty($this->file))
 		{
-			$file = $this->cms->getSetting("server_path") ."includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR . $this->file;
-			if(is_file($file))
+			if(is_file($this->file))
             // Note: Has to be included later, because the file is going to expect a MeLeeCMS instance to be initilized, but it is not at this point, because this function is called during the MeLeeCMS constructor.
-				$this->cms->include_later[] = $file;
+				$this->cms->include_later[] = $this->file;
 			else
 				trigger_error("Page refers to file {$this->file}, but it does not exist.", E_USER_ERROR);
 		}

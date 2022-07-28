@@ -67,7 +67,7 @@ class TwitchUser extends User
                   'data' => json_encode($user_data),
                   'last_api_query' => time(),
                ];
-					$this->cms->database->insert("custom_twitchusercache", $mysql_data, true);
+					$this->cms->database->insert("twitch_usercache", $mysql_data, true);
                // And finally, use the data we just stored.
 					$this->user_info = $this->cms->database->query("SELECT * FROM `users` WHERE `twitch_id`=". (int)$user_data->id, Database::RETURN_ROW);
 				}
@@ -108,7 +108,7 @@ class TwitchUser extends User
 					$this->user_info['twitch_data'] = $user_data;
             else
             {
-               $this->user_info['twitch_data'] = json_decode($this->cms->database->query("SELECT `data` FROM `custom_twitchusercache` WHERE `id`=". $this->cms->database->quote($this->user_info['twitch_id']), Database::RETURN_FIELD));
+               $this->user_info['twitch_data'] = json_decode($this->cms->database->query("SELECT `data` FROM `twitch_usercache` WHERE `id`=". $this->cms->database->quote($this->user_info['twitch_id']), Database::RETURN_FIELD));
             }
             
 				$this->user_info['permissions'] = json_decode($this->user_info['permissions'], true);
@@ -156,6 +156,13 @@ class TwitchUser extends User
 	public function updateFollows()
 	{
 		$this->user_info['follows'] = $this->getPagedResponse("/helix/users/follows?first=100&from_id={$this->user_info['twitch_id']}");
+      // Clean up the result a bit. from_* is always going to be the curent user, we don't need it to be defined in every single element of the following array.
+      foreach($this->user_info['follows'] as $follow)
+      {
+         unset($follow->from_id);
+         unset($follow->from_name);
+         unset($follow->from_login);
+      }
 		$this->cms->database->insert("users", ['index'=>$this->user_info['index'], 'follows'=>json_encode($this->user_info['follows'])], true, ['index']);
 	}
    
@@ -236,7 +243,7 @@ class TwitchUser extends User
          $where[] = "`id` IN (". implode(",", $userIdsQuoted) .")";
       if(count($userLoginsQuoted))
          $where[] = "`login` IN (". implode(",", $userLoginsQuoted) .")";
-      $mysqlResult = $this->cms->database->query("SELECT * FROM custom_twitchusercache WHERE `last_api_query`>". (time()-(int)$updateAge) . (count($where) ? " AND (".implode(" OR ", $where).")" : ""), Database::RETURN_ALL);
+      $mysqlResult = $this->cms->database->query("SELECT * FROM twitch_usercache WHERE `last_api_query`>". (time()-(int)$updateAge) . (count($where) ? " AND (".implode(" OR ", $where).")" : ""), Database::RETURN_ALL);
       
       $output = [];
       // Build a list of user to query the API for, from the users that were either not in MySQL or had not been queried in $updateAge.
@@ -316,7 +323,7 @@ class TwitchUser extends User
          });
          foreach($notFetched as $nf)
          {
-            $newRow = $this->cms->database->query("SELECT * FROM `custom_twitchusercache` WHERE ". (!empty($nf['id']) ? "`id`=".$this->cms->database->quote($nf['id']) : "`login`=".$this->cms->database->quote($nf['login'])), Database::RETURN_ROW);
+            $newRow = $this->cms->database->query("SELECT * FROM `twitch_usercache` WHERE ". (!empty($nf['id']) ? "`id`=".$this->cms->database->quote($nf['id']) : "`login`=".$this->cms->database->quote($nf['login'])), Database::RETURN_ROW);
             if(empty($newRow))
             {
                $newRow = ['last_api_query' => time()];
@@ -358,7 +365,7 @@ class TwitchUser extends User
       }
       
       if(count($mysql_data))
-         $this->cms->database->insert("custom_twitchusercache", $mysql_data, true);
+         $this->cms->database->insert("twitch_usercache", $mysql_data, true);
       
       return $output;
    }
@@ -463,7 +470,7 @@ class TwitchUser extends User
 	{
       $id = $this->cms->database->query("SELECT `twitch_id` FROM `users` WHERE `index`=". (int)$index, Database::RETURN_FIELD);
       if(!empty($id))
-         return $this->cms->database->query("SELECT `data`->>'$.display_name' FROM `custom_twitchusercache` WHERE `id`=". (int)$id, Database::RETURN_FIELD);
+         return $this->cms->database->query("SELECT `data`->>'$.display_name' FROM `twitch_usercache` WHERE `id`=". (int)$id, Database::RETURN_FIELD);
       else
          return $index;
 	}

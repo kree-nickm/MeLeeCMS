@@ -3,11 +3,11 @@
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:output method="html"/>
 
-<xsl:template match="content[@class='Container' and @subtheme='table']" priority="1">
+<xsl:template match="content[@class='Container' and @format='table']" priority="1">
 <xsl:if test="title!=''"><h3><xsl:value-of select="title"/></h3></xsl:if>
-<xsl:if test="content[@id='subtitle']"><h6><xsl:value-of select="content[@id='subtitle']"/></h6></xsl:if>
-<table class="table">
-   <thead>
+<table class="table table-striped">
+   <xsl:if test="content[@id='subtitle']"><caption><xsl:value-of select="content[@id='subtitle']"/></caption></xsl:if>
+   <thead class="thead-light">
       <xsl:for-each select="content[@class='Container' and @type='header']">
          <tr>
             <xsl:for-each select="content">

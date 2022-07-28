@@ -81,7 +81,7 @@ else
 				{
 					// This is where we can check for updates, or check to see if this is a MeLeeCMS database or something else, and display an appropriate message.
 					echo("MeLeeCMS appears to have been installed to this database already. ");
-					$admins = $builder->database->query("SELECT `index` FROM users WHERE `permission`&". (int)MeLeeCMSUser::PERM_ADMIN ."=". (int)MeLeeCMSUser::PERM_ADMIN, Database::RETURN_FIELD);
+					$admins = $builder->database->query("SELECT `index` FROM users WHERE `permissions`&". (int)MeLeeCMSUser::PERM_ADMIN ."=". (int)MeLeeCMSUser::PERM_ADMIN, Database::RETURN_FIELD);
 					if(!empty($admins))
 					{
 						echo("Additionally, at least one admin account appears to have been already set up. You should delete <tt>install.php</tt>. However, if you need to create another admin account, you can do so below. ");

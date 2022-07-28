@@ -38,12 +38,14 @@ abstract class Content
 		return $result;
 	}
    
-   public function findXSLFiles($theme, $subtheme="default")
+   public function findXSLFiles($theme)
    {
-      if(!empty($this->attrs['subtheme']))
-         $subtheme = $this->attrs['subtheme'];
+      if(!empty($this->attrs['format']))
+         $format = $this->attrs['format'];
+      else
+         $format = "default";
       $content_xsl = [];
-      if(!empty($xsl_filepath = $theme->resolveXSLFile($this->getContentClass(), $subtheme)))
+      if(!empty($xsl_filepath = $theme->resolveXSLFile($this->getContentClass(), $format)))
          $content_xsl[] = ['href'=>$xsl_filepath];
       return $content_xsl;
    }

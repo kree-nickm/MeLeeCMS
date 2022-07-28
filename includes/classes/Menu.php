@@ -1,7 +1,5 @@
 <?php
-/** The code for the Menu and Link classes.
-Normally, classes used by MeLeeCMS each have their own file with the same name as the class. However, because Link is only ever meant to be used by the Menu class, they are declared in the same file (for now). While this means that Link cannot be auto-loaded, it should never be required before the Menu class is loaded.
-*/
+/** The code for the Menu class. */
 namespace MeLeeCMS;
 
 class Menu extends Container
@@ -37,22 +35,12 @@ class Menu extends Container
    
    public function addLink($url, $text="")
    {
-      $url_path = $this->cms->getSetting('url_path');
-      if(substr($url, 0, strlen($url_path)) !== $url_path)
-      {
-         if($url{0} == "/")
-            $url = $url_path . substr($url, 1);
-         else
-            $url = $url_path . $url;
-      }
-      return $this->addContent(new Link($url, $text))
-         ->setMenu($this)
-         ->setActive($this->cms->page->url_path == $url);
+      return $this->addContent(new Link($url, $text));
    }
    
    public function addMenu($title)
    {
-      return $this->addContent(new Menu($title))->setMenu($this);
+      return $this->addContent(new Menu($title));
    }
    
    public function setMenu($menu)
@@ -82,66 +70,19 @@ class Menu extends Container
          $result['__attr:root'] = true;
 		return $result;
 	}
-}
-
-class Link extends Content
-{
-	public $url;
-	public $text;
-	public $attrs;
    
-   public $active;
-   public $menu;
-	
-	public function __construct($url, $text="", $attrs=[])
+	public function addContent($content, $x="")
 	{
-		$this->url = $url;
-		$this->text = !empty($text) ? $text : $url;
-		$this->attrs = $attrs;
-      $this->active = false;
-	}
-   
-   public function setMenu($menu)
-   {
-      $this->menu = $menu;
-      return $this;
-   }
-   
-   public function setActive($active)
-   {
-      $this->active = $active;
-      $this->menu->updateActive($active);
-      return $this;
-   }
-	
-	public function get_properties()
-	{
-		return [
-			'url' => [
-				'type' => "string",
-				'desc' => "URL of the link."
-			],
-			'text' => [
-				'type' => "string",
-				'desc' => "Text of the link."
-			],
-			'attrs' => [
-				'type' => "dictionary",
-				'desc' => "Attributes that the theme can use to decide how to display the link."
-			]
-		];
-	}
-
-	public function build_params()
-	{
-		$result = [];
-		if(is_array($this->attrs))
-			foreach($this->attrs as $k=>$v)
-				$result["__attr:".$k] = $v;
-      $result['url'] = $this->url;
-      $result['text'] = $this->text;
-      if($this->active)
-         $result['__attr:active'] = true;
-      return $result;
+      // TODO: Make a MenuItem interface.
+		if(is_a($content, "MeLeeCMS\\Link") || is_a($content, "MeLeeCMS\\Menu"))
+		{
+         $content->setMenu($this);
+         return parent::addContent($content, $x);
+		}
+		else
+		{
+			trigger_error("'". get_class($content) ."' is not a subclass of Menu or Link, cannot add it as content (". $x .").", E_USER_WARNING);
+			return null;
+		}
 	}
 }

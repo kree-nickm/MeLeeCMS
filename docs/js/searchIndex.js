@@ -596,6 +596,76 @@ Search.appendIndex(
             "summary": "",
             "url": "classes/MeLeeCMS-InputText.html"
         },                {
+            "fqsen": "\\MeLeeCMS\\Link",
+            "name": "Link",
+            "summary": "Superclass\u0020of\u0020all\u0020classes\u0020that\u0020can\u0020be\u0020added\u0020to\u0020a\u0020page\u0020as\u0020content.",
+            "url": "classes/MeLeeCMS-Link.html"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Link\u003A\u003A__construct\u0028\u0029",
+            "name": "__construct",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Link.html#method___construct"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Link\u003A\u003Aset_cms\u0028\u0029",
+            "name": "set_cms",
+            "summary": "Sets\u0020the\u0020internal\u0020reference\u0020to\u0020the\u0020active\u0020\u007B\u0040see\u0020MeLeeCMS\u007D\u0020instance.",
+            "url": "classes/MeLeeCMS-Link.html#method_set_cms"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Link\u003A\u003AsetMenu\u0028\u0029",
+            "name": "setMenu",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Link.html#method_setMenu"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Link\u003A\u003AsetActive\u0028\u0029",
+            "name": "setActive",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Link.html#method_setActive"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Link\u003A\u003Aget_properties\u0028\u0029",
+            "name": "get_properties",
+            "summary": "Returns\u0020the\u0020class\u0027\u0020important\u0020properties\u0020that\u0020contain\u0020the\u0020data\u0020that\u0020users\u0020need\u0020to\u0020define.",
+            "url": "classes/MeLeeCMS-Link.html#method_get_properties"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Link\u003A\u003Abuild_params\u0028\u0029",
+            "name": "build_params",
+            "summary": "Converts\u0020the\u0020properties\u0020of\u0020the\u0020object\u0020into\u0020a\u0020multidimensional\u0020array\u0020for\u0020use\u0020by\u0020\u007B\u0040see\u0020Theme\u003A\u003AparseTemplate\u0028\u0029\u007D.",
+            "url": "classes/MeLeeCMS-Link.html#method_build_params"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Link\u003A\u003A\u0024url",
+            "name": "url",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Link.html#property_url"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Link\u003A\u003A\u0024text",
+            "name": "text",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Link.html#property_text"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Link\u003A\u003A\u0024attrs",
+            "name": "attrs",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Link.html#property_attrs"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Link\u003A\u003A\u0024active",
+            "name": "active",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Link.html#property_active"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Link\u003A\u003A\u0024menu",
+            "name": "menu",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Link.html#property_menu"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Link\u003A\u003A\u0024external",
+            "name": "external",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Link.html#property_external"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Link\u003A\u003A\u0024resolved",
+            "name": "resolved",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Link.html#property_resolved"
+        },                {
             "fqsen": "\\MeLeeCMS\\MeLeeCMSUser",
             "name": "MeLeeCMSUser",
             "summary": "A\u0020User\u0020class\u0020that\u0020provides\u0020basic\u0020login\u0020features\u0020and\u0020a\u0020permission\u0020for\u0020the\u0020control\u0020panel.",
@@ -736,6 +806,11 @@ Search.appendIndex(
             "summary": "",
             "url": "classes/MeLeeCMS-Menu.html#method_getSimpleArray"
         },                {
+            "fqsen": "\\MeLeeCMS\\Menu\u003A\u003AaddContent\u0028\u0029",
+            "name": "addContent",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Menu.html#method_addContent"
+        },                {
             "fqsen": "\\MeLeeCMS\\Menu\u003A\u003A\u0024active",
             "name": "active",
             "summary": "",
@@ -745,61 +820,6 @@ Search.appendIndex(
             "name": "menu",
             "summary": "",
             "url": "classes/MeLeeCMS-Menu.html#property_menu"
-        },                {
-            "fqsen": "\\MeLeeCMS\\Link",
-            "name": "Link",
-            "summary": "Superclass\u0020of\u0020all\u0020classes\u0020that\u0020can\u0020be\u0020added\u0020to\u0020a\u0020page\u0020as\u0020content.",
-            "url": "classes/MeLeeCMS-Link.html"
-        },                {
-            "fqsen": "\\MeLeeCMS\\Link\u003A\u003A__construct\u0028\u0029",
-            "name": "__construct",
-            "summary": "",
-            "url": "classes/MeLeeCMS-Link.html#method___construct"
-        },                {
-            "fqsen": "\\MeLeeCMS\\Link\u003A\u003AsetMenu\u0028\u0029",
-            "name": "setMenu",
-            "summary": "",
-            "url": "classes/MeLeeCMS-Link.html#method_setMenu"
-        },                {
-            "fqsen": "\\MeLeeCMS\\Link\u003A\u003AsetActive\u0028\u0029",
-            "name": "setActive",
-            "summary": "",
-            "url": "classes/MeLeeCMS-Link.html#method_setActive"
-        },                {
-            "fqsen": "\\MeLeeCMS\\Link\u003A\u003Aget_properties\u0028\u0029",
-            "name": "get_properties",
-            "summary": "Returns\u0020the\u0020class\u0027\u0020important\u0020properties\u0020that\u0020contain\u0020the\u0020data\u0020that\u0020users\u0020need\u0020to\u0020define.",
-            "url": "classes/MeLeeCMS-Link.html#method_get_properties"
-        },                {
-            "fqsen": "\\MeLeeCMS\\Link\u003A\u003Abuild_params\u0028\u0029",
-            "name": "build_params",
-            "summary": "Converts\u0020the\u0020properties\u0020of\u0020the\u0020object\u0020into\u0020a\u0020multidimensional\u0020array\u0020for\u0020use\u0020by\u0020\u007B\u0040see\u0020Theme\u003A\u003AparseTemplate\u0028\u0029\u007D.",
-            "url": "classes/MeLeeCMS-Link.html#method_build_params"
-        },                {
-            "fqsen": "\\MeLeeCMS\\Link\u003A\u003A\u0024url",
-            "name": "url",
-            "summary": "",
-            "url": "classes/MeLeeCMS-Link.html#property_url"
-        },                {
-            "fqsen": "\\MeLeeCMS\\Link\u003A\u003A\u0024text",
-            "name": "text",
-            "summary": "",
-            "url": "classes/MeLeeCMS-Link.html#property_text"
-        },                {
-            "fqsen": "\\MeLeeCMS\\Link\u003A\u003A\u0024attrs",
-            "name": "attrs",
-            "summary": "",
-            "url": "classes/MeLeeCMS-Link.html#property_attrs"
-        },                {
-            "fqsen": "\\MeLeeCMS\\Link\u003A\u003A\u0024active",
-            "name": "active",
-            "summary": "",
-            "url": "classes/MeLeeCMS-Link.html#property_active"
-        },                {
-            "fqsen": "\\MeLeeCMS\\Link\u003A\u003A\u0024menu",
-            "name": "menu",
-            "summary": "",
-            "url": "classes/MeLeeCMS-Link.html#property_menu"
         },                {
             "fqsen": "\\MeLeeCMS\\OAuth2\\Client",
             "name": "Client",
@@ -1140,6 +1160,16 @@ Search.appendIndex(
             "name": "args",
             "summary": "",
             "url": "classes/MeLeeCMS-Page.html#property_args"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Page\u003A\u003A\u0024hardcoded",
+            "name": "hardcoded",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Page.html#property_hardcoded"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Page\u003A\u003A\u0024db_stored",
+            "name": "db_stored",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Page.html#property_db_stored"
         },                {
             "fqsen": "\\MeLeeCMS\\Text",
             "name": "Text",
@@ -1553,7 +1583,7 @@ Search.appendIndex(
         },                {
             "fqsen": "\\MeLeeCMS\\MeLeeCMS\u003A\u003AaddPage\u0028\u0029",
             "name": "addPage",
-            "summary": "",
+            "summary": "Creates\u0020a\u0020Page\u0020object\u0020from\u0020given\u0020associative\u0020array.",
             "url": "classes/MeLeeCMS-MeLeeCMS.html#method_addPage"
         },                {
             "fqsen": "\\MeLeeCMS\\MeLeeCMS\u003A\u003AfindPage\u0028\u0029",

@@ -1,6 +1,9 @@
 <?php
 namespace MeLeeCMS;
 
+$builder->attachXSL("cpanel.xsl", "", true);
+$builder->attachJS("cpanel.js", "", true);
+
 $nav = $builder->addContent(new Menu(), "nav");
 if($builder->user->has_permission("view_cpanel"))
 {

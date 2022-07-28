@@ -63,6 +63,20 @@
                                     <h4 class="phpdocumentor-sidebar__root-namespace">
     <a href="guide/configuration.html" class="-active">Configuration</a>
 </h4>
+    <ul class="phpdocumentor-list">
+                    <li>
+                <a href="guide/pages.html" class="">Pages</a>
+                
+            </li>
+                    <li>
+                <a href="guide/forms.html" class="">Forms</a>
+                
+            </li>
+                    <li>
+                <a href="guide/permissions.html" class="">Permissions</a>
+                
+            </li>
+            </ul>
 
                         </section>
                 <section class="phpdocumentor-sidebar__category">
@@ -100,26 +114,106 @@
 </aside>
 
             <div class="phpdocumentor-column -eight phpdocumentor-content">
-                    <div class="section" id="configuration">
+                    
+<div class="section" id="configuration">
 <h1>Configuration</h1>
-<p>Configuration of MeLeeCMS is done through the <code>$GlobalConfig</code> array in the <code>includes/config.php</code> file. Below is a list of all supported keys of that array and a description of each.</p>
+<p>Configuration of MeLeeCMS is done through the <code>$GlobalConfig</code> array in the <code>includes/config.php</code> file. Below is a list of all supported keys of that array and a description of each. Defaults for these values are provided in <code>includes/defaultconfig.php</code> where possible, but some of them, such as the MySQL options, you must specify yourself before the website will function.</p>
 <div class="section" id="mysql-options">
 <h2>MySQL Options</h2>
+<p>Settings to connect to the MySQL database where your website's data will be stored. As of now, only MySQL is supported, but other data storage software might be supported in the future.</p>
 <div class="section" id="dbhost">
 <h3>dbhost</h3>
-<p>The hostname of the MySQL server you want to connect to. This will almost always be localhost. Default: &quot;&quot;</p>
+<p>The hostname of the MySQL server you want to connect to. On most website setups, this will be <code>"localhost"</code>.</p>
+<p>Default: None; you must specify this.</p>
 </div>
 <div class="section" id="dbuser">
 <h3>dbuser</h3>
-<p>The username of the MySQL user that you will use to access your MySQL database. Default: &quot;&quot;</p>
+<p>The username of the MySQL user that you will use to access your MySQL database.</p>
+<p>Default: None; you must specify this.</p>
 </div>
 <div class="section" id="dbpass">
 <h3>dbpass</h3>
-<p>Password for the above user. Default: &quot;&quot;</p>
+<p>Password for the above user.</p>
+<p>Default: None; you must specify this.</p>
 </div>
 <div class="section" id="dbname">
 <h3>dbname</h3>
-<p>The name of the MySQL database that stores (or <em>will</em> store) all MeLeeCMS data. Default: &quot;&quot;</p>
+<p>The name of the MySQL database that will store all MeLeeCMS data.</p>
+<p>Default: None; you must specify this.</p>
+</div>
+</div>
+<div class="section" id="uri-settings">
+<h2>URI Settings</h2>
+<p>These help MeLeeCMS find and link to various files.</p>
+<div class="section" id="server-path">
+<h3>server_path</h3>
+<p>The path to your wesite's root directory within the server. This is usually something like <code>"/home/user/public_html/"</code> or <code>"/var/www/"</code>.</p>
+<p>Default: The directory that contains the directory that contains <code>config.php</code>.</p>
+</div>
+<div class="section" id="cpanel-dir">
+<h3>cpanel_dir</h3>
+<p>This is the URL that will cause MeLeeCMS to attempt to load the control panel. The site should not have any page that shares this name, or an Exception will be thrown when that page attempts to load.</p>
+<p>Default: <code>"mcmsadmin"</code></p>
+</div>
+<div class="section" id="url-path">
+<h3>url_path</h3>
+<p>The URL path to your website from the domain name. If your website loads right from <a href="#">yourdomain.com</a>, this should be <code>"/"</code>. If it loads from <a href="#">yourdomain.com/yoursite</a>, this should be <code>"/yoursite/"</code>. Etc.</p>
+<p>Default: The URL of the directory containing the currently-executing <code>index.php</code>.</p>
+</div>
+<div class="section" id="force-https">
+<h3>force_https</h3>
+<p>This will redirect any page request from HTTP to HTTPS automatically, making sure no one accidentally uses the non-secure URL. Make sure your website has an SSL certificate and HTTPS works before setting this to <code>true</code>.</p>
+<p>Default: <code>false</code></p>
+</div>
+</div>
+<div class="section" id="user-settings">
+<h2>User Settings</h2>
+<p>Various other settings that determine how the site will appear to users and their browsers.</p>
+<div class="section" id="cookie-prefix">
+<h3>cookie_prefix</h3>
+<p>This will be prepended to the names of any cookies set by MeLeeCMS. Generally, the session id cookie in the only cookie MeLeeCMS uses. Changing this in a production site will force all users to log back in, as well as lose any other data that is tracked using cookies.</p>
+<p>Default: <code>"melee_"</code></p>
+</div>
+<div class="section" id="user-system">
+<h3>user_system</h3>
+<p>This is the class name of the class to use to handle user accounts. If invalid or blank, it will default to the <code>User</code> class found in <code>includes/classes/User.php</code>. Note that the <code>User</code> class does not support logins or the control panel, so it is only suitable for extremely simple websites. You should change this to <code>"MeLeeCMSUser"</code> if you want to support simple logins and user accounts.</p>
+<p>Default: <code>"User"</code></p>
+</div>
+<div class="section" id="site-title">
+<h3>site_title</h3>
+<p>This is what will appear in the title bar of your website. Each page has its own title, followed by a hyphen, followed by whatever you specify here. This value can be overwritten by the MeLeeCMS control panel.</p>
+<p>Default: The domain name of the website.</p>
+</div>
+<div class="section" id="default-theme">
+<h3>default_theme</h3>
+<p>This is the default theme that will be loaded on your site if no other theme is specified for a page or if the specified theme isn't valid. This value can be overwritten by the MeLeeCMS control panel if you add more themes.</p>
+<p>Default: <code>"bootstrap4"</code></p>
+</div>
+<div class="section" id="cpanel-theme">
+<h3>cpanel_theme</h3>
+<p>This is the theme that will be used by the control panel. Do not change this without making sure that the new theme fully supports all control panel features, or else the control panel will not work, and you will be unable to manage your site (until you change this value back).</p>
+<p>Default: <code>"bootstrap4"</code></p>
+</div>
+<div class="section" id="index-page">
+<h3>index_page</h3>
+<p>Page that will load if someone visits your website but doesn't specify a page. For example, if they visit the URL <a href="#">www.yourdomain.com/</a>, with nothing after the slash. This value can be overwritten by the MeLeeCMS control panel once you have created other pages on your site.</p>
+<p>Default: <code>"test-page"</code></p>
+</div>
+</div>
+<div class="section" id="other-definitions">
+<h2>Other Definitions</h2>
+<p>You can define content such as pages and forms, as well as alter the permissions used by your website.</p>
+<div class="section" id="pages">
+<h3>pages</h3>
+<p>This is an associative array of other associative arrays, which define the properties of custom pages. Visit the <a href="guide/pages.html">Pages</a> section to learn more.</p>
+</div>
+<div class="section" id="forms">
+<h3>forms</h3>
+<p>This is an associative array of other associative arrays, which define the properties of custom pages. Visit the <a href="guide/forms.html">Forms</a> section to learn more.</p>
+</div>
+<div class="section" id="permissions">
+<h3>permissions</h3>
+<p>This is an associative array of other arrays, which define the permissions that will be used by MeLeeCMS. Visit the <a href="guide/permissions.html">Permissions</a> section to learn more.</p>
 </div>
 </div>
 

@@ -22,6 +22,7 @@ $pages = ['page'=>[]];
 $pages['page'][] = ["&larr;", '__attr:number'=>$page-1];
 if($page <= 0)
 	$pages['page'][0]['__attr:disabled'] = "1";
+// TODO: I want this part of the paginator to be built in XSLT, as far limiting the number of buttons on it to prevent overflow. Good luck.
 if($page_count < 10)
 {
 	for($i = 0; $i < $page_count; $i++)
@@ -86,11 +87,12 @@ if($page >= $page_count-1)
 
 // Build content.
 $container = $builder->addContent(new Container("Changes"));
-$table = $container->addContent(new Container("Change Log", ['subtheme'=>"table"]));
+$table = $container->addContent(new Container("Change Log", ['format'=>"table"]));
 $table->addContent(new Text("List of recent changes made to rows of the database."), "subtitle");
 $row = $table->addContent(new Container("", ['type'=>"header"]));
 $row->addContent(new Text("Time", ['raw'=>true]));
 $row->addContent(new Text("Table", ['raw'=>true]));
+$row->addContent(new Text("Columns Updated", ['raw'=>true]));
 $row->addContent(new Text("New", ['raw'=>true]));
 $row->addContent(new Text("Blame", ['raw'=>true]));
 $row->addContent(new Text("", ['raw'=>true]));
@@ -120,16 +122,15 @@ foreach($changelog as $change)
 		foreach($changePrev as $index=>$data)
 			$previous[] = array_merge($data, ['__attr:index'=>$index]);
          
-	$row = $table->addContent(new Container("", ['type'=>"body"]));
+	$row = $table->addContent(new Container("", ['index'=>$change['index'],'type'=>"body"]));
 	$row->addContent(new Text(date("j M Y @ g:ia T", $change['timestamp']), ['raw'=>true]));
 	$row->addContent(new Text($change['table'], ['raw'=>true]));
 	$row->addContent(new Text($new, ['raw'=>true]));
+	$row->addContent(new Text(count($previous)==0 ? 1 : 0), "cpanel-new");
 	$row->addContent(new Text($blame, ['raw'=>true]));
-	$change_popup = $row->addContent(new Container("Change", ['subtheme'=>"modal",'button'=>true]));
-   $change_popup->addContent(new Text(['new'=>$current, 'previous'=>$previous]));
+	$change_popup = $row->addContent(new Container("Change", ['format'=>"modal",'button'=>true]), "cpanel-changes");
+   $change_popup->addContent(new Text(['new'=>$current, 'previous'=>$previous]), "data");
 }
 $container->addContent(new Text($pages, ['type'=>"pagination"]));
 
-$builder->attachJS("https://kree-nickm.github.io/element-list-controller/elc.js", "", false);
-$builder->attachXSL("cpanel-change-log.xsl", "", true);
-$builder->attachCSS("cpanel.css", "", true);
+$builder->attachXSL("cpanel.xsl", "", true);

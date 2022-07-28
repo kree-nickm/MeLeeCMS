@@ -16,12 +16,11 @@ CREATE TABLE `pages` (
   `index` int(10) UNSIGNED NOT NULL,
   `title` varchar(127) NOT NULL,
   `url` varchar(127) NOT NULL,
-  `subtheme` varchar(63) NOT NULL,
   `file` varchar(50) NOT NULL,
   `css` longtext NOT NULL,
   `js` longtext NOT NULL,
   `xsl` longtext NOT NULL,
-  `permission` bigint(20) UNSIGNED NOT NULL DEFAULT '0',
+  `permissions` bigint(20) UNSIGNED NOT NULL DEFAULT '0',
   `content` longblob NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
@@ -31,11 +30,10 @@ CREATE TABLE `pages_drafts` (
   `timestamp` bigint(20) UNSIGNED NOT NULL,
   `title` varchar(127) NOT NULL,
   `url` varchar(127) NOT NULL,
-  `subtheme` varchar(63) NOT NULL,
   `css` longtext NOT NULL,
   `js` longtext NOT NULL,
   `xsl` longtext NOT NULL,
-  `permission` bigint(20) UNSIGNED NOT NULL DEFAULT '0',
+  `permissions` bigint(20) UNSIGNED NOT NULL DEFAULT '0',
   `content` longblob NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 

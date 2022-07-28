@@ -4,7 +4,8 @@
 <xsl:output method="html"/>
 
 <xsl:template match="content[@class='Container']">
-<div class="container my-4">
+<xsl:element name="div">
+   <xsl:attribute name="class">container<xsl:if test="@full-width">-fluid</xsl:if> my-4</xsl:attribute>
 	<div class="card border-dark">
 		<div class="card-header text-white bg-dark">
 			<h4 class="card-title"><xsl:value-of select="title"/></h4>
@@ -15,7 +16,7 @@
 			<xsl:apply-templates select="content[@id!='subtitle']"/>
 		</xsl:element>
 	</div>
-</div>
+</xsl:element>
 </xsl:template>
 
 </xsl:stylesheet>

@@ -9,9 +9,9 @@ Before you can install MeLeeCMS, there are a few other things that must be insta
 
   - Fallbacks are provided for features that require PHP7.
 
-- Apache 2
+- Apache 2.4
 
-  - If you use other HTTP software such as nginx, you'll have to figure out how to replicate the function of the .htaccess files yourself.
+  - If you use other HTTP software such as nginx, you'll have to figure out how to replicate the function of the .htaccess file yourself.
 
 - MySQL >= 5.7.8
 

@@ -51,16 +51,18 @@ class Container extends Content
 		return $result;
 	}
    
-   public function findXSLFiles($theme, $subtheme="default")
+   public function findXSLFiles($theme)
    {
-      if(!empty($this->attrs['subtheme']))
-         $subtheme = $this->attrs['subtheme'];
+      if(!empty($this->attrs['format']))
+         $format = $this->attrs['format'];
+      else
+         $format = "default";
       $content_xsl = [];
-      if(!empty($xsl_filepath = $theme->resolveXSLFile($this->getContentClass(), $subtheme)))
+      if(!empty($xsl_filepath = $theme->resolveXSLFile($this->getContentClass(), $format)))
          $content_xsl[] = ['href'=>$xsl_filepath];
 		foreach($this->content as $c=>$content)
       {
-         $content_xsl = array_merge($content_xsl, $content->findXSLFiles($theme, $subtheme));
+         $content_xsl = array_merge($content_xsl, $content->findXSLFiles($theme));
       }
       return $content_xsl;
    }
@@ -85,7 +87,7 @@ class Container extends Content
 			$x = "__". $x;
 		else if($x == "")
 			$x = "__". count($this->content);
-		if(is_subclass_of($content, "MeLeeCMS\\Content"))
+		if(is_a($content, "MeLeeCMS\\Content"))
 		{
 			return $this->content[$x] = $content->set_cms($this->cms);
 		}

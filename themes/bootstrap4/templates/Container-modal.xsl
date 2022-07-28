@@ -7,7 +7,7 @@
 <xsl:call-template name="modal"/>
 </xsl:template>
 
-<xsl:template match="content[@class='Container' and @subtheme='modal']">
+<xsl:template match="content[@class='Container' and @format='modal']">
 <xsl:call-template name="modal"/>
 </xsl:template>
 

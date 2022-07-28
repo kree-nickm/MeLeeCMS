@@ -5,6 +5,7 @@ require_once("MeLeeCMS.php");
 $builder = new MeLeeCMS(MeLeeCMS::MODE_PAGE);
 
 // PHPVersion: Throwable requires PHP >= 7.0.0, but this check should provide a fallback for older versions. Same as below.
+// TODO: Probably move the Throwable checks and exception handling to Theme->init()
 if(class_exists("\\Throwable"))
 {
    try
