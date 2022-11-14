@@ -86,6 +86,10 @@
 </h4>
     <ul class="phpdocumentor-list">
                     <li>
+                <a href="namespaces/meleecms-connection.html" class="">Connection</a>
+                
+            </li>
+                    <li>
                 <a href="namespaces/meleecms-oauth2.html" class="">OAuth2</a>
                 
             </li>
@@ -200,9 +204,29 @@
 <p>Default: <code>"test-page"</code></p>
 </div>
 </div>
+<div class="section" id="error-reporting">
+<h2>Error Reporting</h2>
+<p>MeLeeCMS records errors in three different ways: standard error log text files, the error_log table in the database, and in the page XML output to users who have permission to view errors. You can determine what types of errors are reported to each location separately using the settings below. The format of these settings is exactly the same as the <a href="https://www.php.net/manual/en/function.error-reporting.php">error_reporting(int)</a> PHP native function.</p>
+<div class="section" id="error-file-reporting">
+<h3>error_file_reporting</h3>
+<p>Errors that will be reported to error log files. MeLeeCMS starts a new error log file every day, which will be in a new directory every month. At the start of a month, a directory will be created in <code>includes/logs/</code> named with the format <code>errors-YYYY-MM</code>. In that directory, log files are named with the format <code>YYYY-MM-DD.log</code>.</p>
+<p>Note that your server configuration settings might cause these log files to have undesirable permissions. As the files are created by the PHP process, they will be owned by the user that owns the PHP process. If this is not the same user that owns the website files, then it's possible that the site owner will not be able to access these log files. A user with root permissions would be required to fix this. I have no idea how to fix this issue from within MeLeeCMS; it's likely not possible. The server would have to be configured in such a way that this doesn't happen.</p>
+<p>Default: <code>E_ALL & ~E_STRICT</code></p>
+</div>
+<div class="section" id="error-database-reporting">
+<h3>error_database_reporting</h3>
+<p>Errors that will be inserted into the error_log table of the database. These errors can be reviewed on the control panel by users with the view_errors permission.</p>
+<p>Default: <code>E_ALL & ~(E_STRICT | E_NOTICE | E_DEPRECATED | E_USER_NOTICE | E_USER_DEPRECATED)</code></p>
+</div>
+<div class="section" id="error-xml-reporting">
+<h3>error_xml_reporting</h3>
+<p>Errors that will be included in the XML output for users with the view_errors permission, which means that XSLT can process them and output them to the page in some way. In the bootstrap4 theme, a red exclaimation point will appear in the top right if errors occurred during the page load, and it can be clicked to reveal those errors.</p>
+<p>Default: <code>E_ALL</code></p>
+</div>
+</div>
 <div class="section" id="other-definitions">
 <h2>Other Definitions</h2>
-<p>You can define content such as pages and forms, as well as alter the permissions used by your website.</p>
+<p>You can define content such as pages and forms as well as alter the permissions used by your website from within config.php, if you would prefer to do that instead of using the control panel.</p>
 <div class="section" id="pages">
 <h3>pages</h3>
 <p>This is an associative array of other associative arrays, which define the properties of custom pages. Visit the <a href="guide/pages.html">Pages</a> section to learn more.</p>

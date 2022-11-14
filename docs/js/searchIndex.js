@@ -31,6 +31,71 @@ Search.appendIndex(
             "summary": "",
             "url": "classes/MeLeeCMS-Component.html#property_index"
         },                {
+            "fqsen": "\\MeLeeCMS\\Connection\\Twitch",
+            "name": "Twitch",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Connection-Twitch.html"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Connection\\Twitch\u003A\u003A__construct\u0028\u0029",
+            "name": "__construct",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Connection-Twitch.html#method___construct"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Connection\\Twitch\u003A\u003Arequest\u0028\u0029",
+            "name": "request",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Connection-Twitch.html#method_request"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Connection\\Twitch\u003A\u003AupdateFollows\u0028\u0029",
+            "name": "updateFollows",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Connection-Twitch.html#method_updateFollows"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Connection\\Twitch\u003A\u003AgetUsers\u0028\u0029",
+            "name": "getUsers",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Connection-Twitch.html#method_getUsers"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Connection\\Twitch\u003A\u003AgetPagedResponse\u0028\u0029",
+            "name": "getPagedResponse",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Connection-Twitch.html#method_getPagedResponse"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Connection\\Twitch\u003A\u003AgetMultiPagedResponse\u0028\u0029",
+            "name": "getMultiPagedResponse",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Connection-Twitch.html#method_getMultiPagedResponse"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Connection\\Twitch\u003A\u003AgetDisplayName\u0028\u0029",
+            "name": "getDisplayName",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Connection-Twitch.html#method_getDisplayName"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Connection\\Twitch\u003A\u003A\u0024user",
+            "name": "user",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Connection-Twitch.html#property_user"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Connection\\Twitch\u003A\u003A\u0024stored_data",
+            "name": "stored_data",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Connection-Twitch.html#property_stored_data"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Connection\\Twitch\u003A\u003A\u0024user_data",
+            "name": "user_data",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Connection-Twitch.html#property_user_data"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Connection\\Twitch\u003A\u003A\u0024api",
+            "name": "api",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Connection-Twitch.html#property_api"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Connection\\Twitch\u003A\u003A\u0024login_error",
+            "name": "login_error",
+            "summary": "",
+            "url": "classes/MeLeeCMS-Connection-Twitch.html#property_login_error"
+        },                {
             "fqsen": "\\MeLeeCMS\\Container",
             "name": "Container",
             "summary": "Superclass\u0020of\u0020all\u0020classes\u0020that\u0020can\u0020be\u0020added\u0020to\u0020a\u0020page\u0020as\u0020content.",
@@ -1061,10 +1126,10 @@ Search.appendIndex(
             "summary": "",
             "url": "classes/MeLeeCMS-Page.html#method___construct"
         },                {
-            "fqsen": "\\MeLeeCMS\\Page\u003A\u003AgetPermission\u0028\u0029",
-            "name": "getPermission",
+            "fqsen": "\\MeLeeCMS\\Page\u003A\u003AgetPermissions\u0028\u0029",
+            "name": "getPermissions",
             "summary": "",
-            "url": "classes/MeLeeCMS-Page.html#method_getPermission"
+            "url": "classes/MeLeeCMS-Page.html#method_getPermissions"
         },                {
             "fqsen": "\\MeLeeCMS\\Page\u003A\u003AunserializeContent\u0028\u0029",
             "name": "unserializeContent",
@@ -1121,15 +1186,10 @@ Search.appendIndex(
             "summary": "",
             "url": "classes/MeLeeCMS-Page.html#property_theme"
         },                {
-            "fqsen": "\\MeLeeCMS\\Page\u003A\u003A\u0024subtheme",
-            "name": "subtheme",
+            "fqsen": "\\MeLeeCMS\\Page\u003A\u003A\u0024permissions",
+            "name": "permissions",
             "summary": "",
-            "url": "classes/MeLeeCMS-Page.html#property_subtheme"
-        },                {
-            "fqsen": "\\MeLeeCMS\\Page\u003A\u003A\u0024permission",
-            "name": "permission",
-            "summary": "",
-            "url": "classes/MeLeeCMS-Page.html#property_permission"
+            "url": "classes/MeLeeCMS-Page.html#property_permissions"
         },                {
             "fqsen": "\\MeLeeCMS\\Page\u003A\u003A\u0024content",
             "name": "content",
@@ -1286,11 +1346,6 @@ Search.appendIndex(
             "summary": "",
             "url": "classes/MeLeeCMS-Theme.html#property_are_superthemes_resolved"
         },                {
-            "fqsen": "\\MeLeeCMS\\Theme\u003A\u003A\u0024subthemes",
-            "name": "subthemes",
-            "summary": "",
-            "url": "classes/MeLeeCMS-Theme.html#property_subthemes"
-        },                {
             "fqsen": "\\MeLeeCMS\\Theme\u003A\u003A\u0024css",
             "name": "css",
             "summary": "",
@@ -1421,6 +1476,11 @@ Search.appendIndex(
             "summary": "",
             "url": "classes/MeLeeCMS-User.html#method_get_property"
         },                {
+            "fqsen": "\\MeLeeCMS\\User\u003A\u003AgetProperty\u0028\u0029",
+            "name": "getProperty",
+            "summary": "",
+            "url": "classes/MeLeeCMS-User.html#method_getProperty"
+        },                {
             "fqsen": "\\MeLeeCMS\\User\u003A\u003AmyInfo\u0028\u0029",
             "name": "myInfo",
             "summary": "",
@@ -1431,15 +1491,30 @@ Search.appendIndex(
             "summary": "",
             "url": "classes/MeLeeCMS-User.html#method_has_permission"
         },                {
+            "fqsen": "\\MeLeeCMS\\User\u003A\u003AhasPermission\u0028\u0029",
+            "name": "hasPermission",
+            "summary": "",
+            "url": "classes/MeLeeCMS-User.html#method_hasPermission"
+        },                {
             "fqsen": "\\MeLeeCMS\\User\u003A\u003Ais_logged\u0028\u0029",
             "name": "is_logged",
             "summary": "",
             "url": "classes/MeLeeCMS-User.html#method_is_logged"
         },                {
+            "fqsen": "\\MeLeeCMS\\User\u003A\u003AisLogged\u0028\u0029",
+            "name": "isLogged",
+            "summary": "",
+            "url": "classes/MeLeeCMS-User.html#method_isLogged"
+        },                {
             "fqsen": "\\MeLeeCMS\\User\u003A\u003Adefault_user\u0028\u0029",
             "name": "default_user",
             "summary": "",
             "url": "classes/MeLeeCMS-User.html#method_default_user"
+        },                {
+            "fqsen": "\\MeLeeCMS\\User\u003A\u003AgetDefaultUser\u0028\u0029",
+            "name": "getDefaultUser",
+            "summary": "",
+            "url": "classes/MeLeeCMS-User.html#method_getDefaultUser"
         },                {
             "fqsen": "\\MeLeeCMS\\User\u003A\u003AgetDisplayName\u0028\u0029",
             "name": "getDisplayName",
@@ -1900,6 +1975,11 @@ Search.appendIndex(
             "name": "MeLeeCMS",
             "summary": "",
             "url": "namespaces/meleecms.html"
+        },                {
+            "fqsen": "\\MeLeeCMS\\Connection",
+            "name": "Connection",
+            "summary": "",
+            "url": "namespaces/meleecms-connection.html"
         },                {
             "fqsen": "\\MeLeeCMS\\OAuth2",
             "name": "OAuth2",

@@ -76,6 +76,14 @@ $GlobalConfig['cpanel_theme'] = "bootstrap4";
 // Page that will load if someone visits your website but doesn't specify a page. For example, if they visit the URL www.yourdomain.com/, with nothing after the slash. This value can be overwritten by the MeLeeCMS control panel.
 $GlobalConfig['index_page'] = "test-page";
 
+/******************************* Error Logging ********************************
+ * MeLeeCMS records errors in three different ways: standard error log text files, the error_log table in the database, and in the page XML output to users who have permission to see them. You can determine what types of errors are reported to each location separately using the settings below. The format of these settings is exactly the same as the error_reporting(int) PHP native function.
+******************************************************************************/
+
+$GlobalConfig['error_file_reporting'] = E_ALL & ~E_STRICT;
+$GlobalConfig['error_database_reporting'] = E_ALL & ~(E_STRICT | E_NOTICE | E_DEPRECATED | E_USER_NOTICE | E_USER_DEPRECATED);
+$GlobalConfig['error_xml_reporting'] = E_ALL;
+
 /******************************* Page Handlers ********************************
  * Defines some of the pages the site can load. These can be defined in the control panel for simpler pages, but if you want to manually write PHP code to display your page, the control panel can't really help you. Define such pages in your config.php using the below format.
 ******************************************************************************/

@@ -86,6 +86,10 @@
 </h4>
     <ul class="phpdocumentor-list">
                     <li>
+                <a href="namespaces/meleecms-connection.html" class="">Connection</a>
+                
+            </li>
+                    <li>
                 <a href="namespaces/meleecms-oauth2.html" class="">OAuth2</a>
                 
             </li>
@@ -132,8 +136,16 @@
                             <td class="phpdocumentor-cell">1</td>
                         </tr>
                                                                                 <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/admin/pages/errors.php">includes/admin/pages/errors.php</a></td>
+                            <td class="phpdocumentor-cell">1</td>
+                        </tr>
+                                                                                <tr>
                             <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/admin/pages/settings.php">includes/admin/pages/settings.php</a></td>
                             <td class="phpdocumentor-cell">1</td>
+                        </tr>
+                                                                                <tr>
+                            <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/classes/Connection/Twitch.php">includes/classes/Connection/Twitch.php</a></td>
+                            <td class="phpdocumentor-cell">4</td>
                         </tr>
                                                                                 <tr>
                             <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/classes/Database.php">includes/classes/Database.php</a></td>
@@ -165,7 +177,7 @@
                         </tr>
                                                                                 <tr>
                             <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/classes/Theme.php">includes/classes/Theme.php</a></td>
-                            <td class="phpdocumentor-cell">3</td>
+                            <td class="phpdocumentor-cell">2</td>
                         </tr>
                                                                                 <tr>
                             <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/classes/Transformer.php">includes/classes/Transformer.php</a></td>
@@ -185,7 +197,7 @@
                         </tr>
                                                                                 <tr>
                             <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/MeLeeCMS.php">includes/MeLeeCMS.php</a></td>
-                            <td class="phpdocumentor-cell">10</td>
+                            <td class="phpdocumentor-cell">9</td>
                         </tr>
                                                                                 <tr>
                             <td class="phpdocumentor-cell"><a href="reports/markers.html#includes/post-json.php">includes/post-json.php</a></td>
@@ -249,6 +261,24 @@
                     </tr>
                                 </tbody>
             </table>
+                    <a id="includes/admin/pages/errors.php"></a>
+            <h3><abbr title="includes/admin/pages/errors.php">errors.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">25</td>
+                        <td class="phpdocumentor-cell">I want this part of the paginator to be built in XSLT, as far limiting the number of buttons on it to prevent overflow. Good luck.</td>
+                    </tr>
+                                </tbody>
+            </table>
                     <a id="includes/admin/pages/settings.php"></a>
             <h3><abbr title="includes/admin/pages/settings.php">settings.php</abbr></h3>
             <table>
@@ -264,6 +294,39 @@
                         <td class="phpdocumentor-cell">TODO</td>
                         <td class="phpdocumentor-cell">40</td>
                         <td class="phpdocumentor-cell">Twitch.tv settings, only display if needed.</td>
+                    </tr>
+                                </tbody>
+            </table>
+                    <a id="includes/classes/Connection/Twitch.php"></a>
+            <h3><abbr title="includes/classes/Connection/Twitch.php">Twitch.php</abbr></h3>
+            <table>
+                <thead>
+                <tr>
+                    <th class="phpdocumentor-heading">Type</th>
+                    <th class="phpdocumentor-heading">Line</th>
+                    <th class="phpdocumentor-heading">Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">36</td>
+                        <td class="phpdocumentor-cell">Twitch API mentions something about validating tokens periodically even while the app is not in use, which I haven&#039;t been doing.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">41</td>
+                        <td class="phpdocumentor-cell">With this implementation it&#039;s possible for someone to have multiple connected Twitch accounts. Load them all.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">103</td>
+                        <td class="phpdocumentor-cell">Might need to unset $_SESSION[&#039;twitch_id&#039;] if a logout is triggered from the user.</td>
+                    </tr>
+                                    <tr>
+                        <td class="phpdocumentor-cell">TODO</td>
+                        <td class="phpdocumentor-cell">347</td>
+                        <td class="phpdocumentor-cell">Could maybe move the below paged queries to OAuth2\Client</td>
                     </tr>
                                 </tbody>
             </table>
@@ -372,27 +435,27 @@
                 <tbody>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">93</td>
+                        <td class="phpdocumentor-cell">94</td>
                         <td class="phpdocumentor-cell">Make sure this isn&#039;t run on every single page load.</td>
                     </tr>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">138</td>
+                        <td class="phpdocumentor-cell">139</td>
                         <td class="phpdocumentor-cell">We can have a session var update on every page load with a new state and send it to JavaScript for implicit grant relog states</td>
                     </tr>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">306</td>
+                        <td class="phpdocumentor-cell">307</td>
                         <td class="phpdocumentor-cell">Maybe do more than this. If the reset is in a while, this could be rough.</td>
                     </tr>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">314</td>
+                        <td class="phpdocumentor-cell">315</td>
                         <td class="phpdocumentor-cell">Might be more useful to return the error response here, but also save it so you don&#039;t keep making API queries with the same error.</td>
                     </tr>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">323</td>
+                        <td class="phpdocumentor-cell">324</td>
                         <td class="phpdocumentor-cell">Cookie access token might be redundant now with most APIs.</td>
                     </tr>
                                 </tbody>
@@ -410,17 +473,17 @@
                 <tbody>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">58</td>
+                        <td class="phpdocumentor-cell">56</td>
                         <td class="phpdocumentor-cell">Check for valid URL characters, not just &quot;is_string&quot;.</td>
                     </tr>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">87</td>
+                        <td class="phpdocumentor-cell">85</td>
                         <td class="phpdocumentor-cell">These checks aren&#039;t very comprehensive, just thrown together.</td>
                     </tr>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">155</td>
+                        <td class="phpdocumentor-cell">152</td>
                         <td class="phpdocumentor-cell">Move all the validation to setPermission() so it only has to be done once.</td>
                     </tr>
                                 </tbody>
@@ -456,18 +519,13 @@
                 <tbody>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">29</td>
+                        <td class="phpdocumentor-cell">28</td>
                         <td class="phpdocumentor-cell">Validate $directory just in case something other than MeLeeCMS sent it in.</td>
                     </tr>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">42</td>
+                        <td class="phpdocumentor-cell">41</td>
                         <td class="phpdocumentor-cell">For init.php to return anything but a function (which it should), this will have to be moved to MeLeeCMS-&gt;addTheme().</td>
-                    </tr>
-                                    <tr>
-                        <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">84</td>
-                        <td class="phpdocumentor-cell">More than just the MeLeeCMS XSL file could have a subtheme, but some files might just have a hyphen for no reason. * Actually, I don&#039;t think we need to know about subthemes here, and subtheme is a misleading term anyway that I plan to change.</td>
                     </tr>
                                 </tbody>
             </table>
@@ -530,7 +588,7 @@
                 <tbody>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">98</td>
+                        <td class="phpdocumentor-cell">106</td>
                         <td class="phpdocumentor-cell">These error pages have no way of including a navbar. Need to figure out how to implement a navbar in a way that any site can use, such that it appears on these generic error pages.</td>
                     </tr>
                                 </tbody>
@@ -586,32 +644,27 @@
                     </tr>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">279</td>
-                        <td class="phpdocumentor-cell">We ignore error_reporting() right now. In the future I think a better approach would be letting the owner set what errors they want reported in config.php, perhaps even three separate times for the three different logs (file, database, XML output).</td>
-                    </tr>
-                                    <tr>
-                        <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">395</td>
+                        <td class="phpdocumentor-cell">398</td>
                         <td class="phpdocumentor-cell">Need to figure out when we are allowed to set cookie expiration. A not-logged-in user can&#039;t set the &quot;remember me&quot; flag, so their session cookie will expire with the browser window. However they retain the same session ID after logging in, so the cookie will need to be updated with a new expiration if they want to be remembered.</td>
                     </tr>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">478</td>
+                        <td class="phpdocumentor-cell">481</td>
                         <td class="phpdocumentor-cell">Also load specials from database, once they are stored there.</td>
                     </tr>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">509</td>
+                        <td class="phpdocumentor-cell">512</td>
                         <td class="phpdocumentor-cell">Probably allow it, but would also need to allow special pages to load from database.</td>
                     </tr>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">523</td>
+                        <td class="phpdocumentor-cell">526</td>
                         <td class="phpdocumentor-cell">Probably allow it here too.</td>
                     </tr>
                                     <tr>
                         <td class="phpdocumentor-cell">TODO</td>
-                        <td class="phpdocumentor-cell">576</td>
+                        <td class="phpdocumentor-cell">579</td>
                         <td class="phpdocumentor-cell">I think ...array expansion requires PHP7. Have to check and then provide fallback implementation if so.</td>
                     </tr>
                                     <tr>

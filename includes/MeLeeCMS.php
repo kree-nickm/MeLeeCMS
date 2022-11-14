@@ -166,7 +166,7 @@ class MeLeeCMS
       // Parse out the URL so we can determine the requested page later.
       $this->path_info = isset($_SERVER['PATH_INFO']) ? array_values(array_filter(explode("/", $_SERVER['PATH_INFO']))) : [];
       // Determine if we need to load the control panel.
-      if(count($this->path_info) && $this->path_info[0] == $this->settings['cpanel_dir'] && (!empty($this->user) && $this->user->has_permission("view_cpanel") || !empty($GlobalConfig['admin_ip']) && $_SERVER['REMOTE_ADDR'] == $GlobalConfig['admin_ip']))
+      if(count($this->path_info) && $this->path_info[0] == $this->settings['cpanel_dir'] && (!empty($this->user) && $this->user->hasPermission("view_cpanel") || !empty($GlobalConfig['admin_ip']) && $_SERVER['REMOTE_ADDR'] == $GlobalConfig['admin_ip']))
       {
          $this->cpanel = true;
          $this->settings['default_theme'] = $GlobalConfig['cpanel_theme'];
@@ -270,13 +270,13 @@ class MeLeeCMS
          }
       };
       $mute_meleecms($input);
-      if(empty($permission) || !empty($this->user) && $this->user->has_permission($permission))
+      if(empty($permission) || !empty($this->user) && $this->user->hasPermission($permission))
          $this->debug_log[] = $input;
    }
    
 	public function errorHandler($level, $message, $file, $line)
 	{
-      // TODO: We ignore error_reporting() right now. In the future I think a better approach would be letting the owner set what errors they want reported in config.php, perhaps even three separate times for the three different logs (file, database, XML output).
+      global $GlobalConfig;
       // Convert the error level to a string.
 		switch($level)
 		{
@@ -299,12 +299,15 @@ class MeLeeCMS
 		}
       
       // Write the error to a log file.
-		error_log($type .": ". $message ."\n". stack_trace_string(0));
-      $backtrace = array_slice(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), 0);
+      if(($level & $GlobalConfig['error_file_reporting']) > 0)
+         error_log($type .": ". $message ."\n". stack_trace_string(0));
+      
+      $backtrace = array_slice(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), 1);
       
       // Send the error to the XML output if the user has permission to view errors.
-		if(is_object($this->user) && $this->user->has_permission("view_errors"))
+		if(($level & $GlobalConfig['error_xml_reporting']) > 0 && is_object($this->user) && $this->user->hasPermission("view_errors"))
 		{
+			$this->addDataProtected('server_path', $this->getSetting('server_path'), Data::NO_AUTO_ARRAY, 0);
 			$this->addDataProtected('errors', [
 				'type' => $type,
 				'message' => $message,
@@ -315,11 +318,11 @@ class MeLeeCMS
 		}
       
       // Log it to the error database, if it exists.
-		if(is_object($this->database) && !empty($this->database->metadata['error_log']) && ($level & (E_NOTICE|E_USER_NOTICE|E_STRICT)) == 0)
+		if(($level & $GlobalConfig['error_database_reporting']) > 0 && is_object($this->database) && !empty($this->database->metadata['error_log']) && ($level & (E_NOTICE|E_USER_NOTICE|E_STRICT)) == 0)
 		{
 			$mysql_data = [
 				'time' => time(),
-				'user' => !empty($this->user) ? (int)$this->user->get_property('index') : 0,
+				'user' => !empty($this->user) ? (int)$this->user->getProperty('index') : 0,
 				'level' => $level,
 				'type' => $type,
 				'message' => $message,
@@ -557,7 +560,7 @@ class MeLeeCMS
       }
       
       // Attempt to load the page until we encounter an error state.
-      if(time() < $this->maintenance_until && (empty($this->user) || !$this->user->has_permission("ignore_maintenance")))
+      if(time() < $this->maintenance_until && (empty($this->user) || !$this->user->hasPermission("ignore_maintenance")))
       {
          http_response_code(503);
          header("Retry-After: ". date("r", $this->maintenance_until));
@@ -574,12 +577,12 @@ class MeLeeCMS
          {
             $req_perms = $this->page->getPermissions();
             // TODO: I think ...array expansion requires PHP7. Have to check and then provide fallback implementation if so.
-            if(empty($req_perms) || !empty($this->user) && $this->user->has_permission(...$req_perms))
+            if(empty($req_perms) || !empty($this->user) && $this->user->hasPermission(...$req_perms))
             {
                // No problems, this should be a successful load.
                $this->page->args = $args;
             }
-            else if(empty($this->user) || !$this->user->is_logged())
+            else if(empty($this->user) || !$this->user->isLogged())
             {
                http_response_code(401);
                $this->page = null;
@@ -844,7 +847,7 @@ class MeLeeCMS
 			];
 		// Note: data/errors won't include errors during XSLT conversion. Pretty sure it's impossible to fix that.
 		$params['data'] = $this->out_data->toArray();
-		if($format == "__xml" && $this->user->has_permission("view_xml"))
+		if($format == "__xml" && $this->user->hasPermission("view_xml"))
 		{
 			header("Content-type: text/xml");
 			echo("<?xml version=\"1.0\"?>");

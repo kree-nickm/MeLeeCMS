@@ -110,11 +110,15 @@
             <xsl:for-each select="data/errors">
                <div class="my-2">
                   <span class="badge badge-danger mr-1"><xsl:value-of select="type"/></span><xsl:value-of select="message"/>
-                  <xsl:for-each select="stack">
-                     <div class="small pl-3">
-                        - <xsl:value-of select="class"/><xsl:value-of select="type"/><xsl:value-of select="function"/>(...) in <xsl:value-of select="file"/> on line <xsl:value-of select="line"/>
-                     </div>
-                  </xsl:for-each>
+                  <table class="small">
+                     <xsl:for-each select="stack">
+                        <tr>
+                           <td class="pl-3 pr-1">-</td>
+                           <td class="px-1"><xsl:value-of select="class"/><xsl:value-of select="type"/><xsl:value-of select="function"/>(...)</td>
+                           <td class="px-1"><xsl:value-of select="substring(file,string-length(../../server_path))"/> line <xsl:value-of select="line"/></td>
+                        </tr>
+                     </xsl:for-each>
+                  </table>
                </div>
             </xsl:for-each>
          </div>

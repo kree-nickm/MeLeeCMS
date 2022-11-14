@@ -86,6 +86,10 @@
 </h4>
     <ul class="phpdocumentor-list">
                     <li>
+                <a href="namespaces/meleecms-connection.html" class="">Connection</a>
+                
+            </li>
+                    <li>
                 <a href="namespaces/meleecms-oauth2.html" class="">OAuth2</a>
                 
             </li>
@@ -125,7 +129,7 @@
    &#039;css&#039; =&gt; [],
    &#039;js&#039; =&gt; [],
    &#039;xsl&#039; =&gt; [],
-   &#039;permission&#039; =&gt; [],
+   &#039;permissions&#039; =&gt; [],
 ];
 </code></pre>
 <p>Alternatively, you can also define special pages, such as error pages, like this:</p>
@@ -142,7 +146,7 @@
 <p>Notice the difference between the two is that normal pages have a 'url', whereas special pages have both an 'id' and a 'select'.</p>
 <div class="section" id="page-fields">
 <h2>Page Fields</h2>
-<p>The page arrays use the following keys, which we will refer to as fields: url, id, select, file, title, css, js, xsl, permission, and content.</p>
+<p>The page arrays use the following keys, which we will refer to as fields: url, id, select, file, title, css, js, xsl, permissions, and content.</p>
 <div class="section" id="array-key">
 <h3>Array Key</h3>
 <p>While not technically a field, it's valuable to mention that the array key of the page array ('key' in the first example and '404' in the second) serves only one purpose, and that is to allow you to easily overwrite it later. While there's not much of a reason why you'd overwrite a normal page, it might be desirable to overwrite the default error pages with your own. To do that, simply use the same array key when defining your custom error page. Error page keys should be the same as the error code, and they are definied for the following error codes by default: 401, 403, 404, 503.</p>
@@ -185,8 +189,8 @@
 <h3>xsl</h3>
 <p>The definition is exactly the same as above with the 'css' and 'js' fields. However, using 'fromtheme' with a <code>false</code> value is not supported and will probably break your page. XSLT is done server-side, so there is nothing to include onto the HTML of the page.</p>
 </div>
-<div class="section" id="permission">
-<h3>permission</h3>
+<div class="section" id="permissions">
+<h3>permissions</h3>
 <p>A list of permissions that are required for a user to be able to view the page. This field is not checked for special pages, as their loading conditions are separate. These permissions can be specified in a number of ways. For a single permission, you can simply provide it as a string. For multiple permissions, you can use a string with each permission separated by the regex character class <code>[,.;|&+ ]</code> which will be split into an array. You can also provide the permissions as that array of strings yourself. Lastly, you can provide raw JSON that decodes to such an array, if you are so inclined.</p>
 </div>
 <div class="section" id="content">

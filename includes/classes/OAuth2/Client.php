@@ -1,6 +1,7 @@
 <?php
 /** The code for the OAuth2\Client class. */
 namespace MeLeeCMS\OAuth2;
+use MeLeeCMS\CURLWrapper;
 
 /**
 An additional wrapper class for the CURLWrapper class, to make cURL requests even easier in the case of interacting with an OAuth 2.0 API.
@@ -23,10 +24,10 @@ class Client
 	public $curl;
 	public $auth_url;
 	public $api_url;
-	protected $client_id;
+	public $client_id;
 	protected $client_secret;
-	protected $grant_type;
-	protected $parameters = [];
+	public $grant_type;
+	public $parameters = [];
 	public $login_attempted = false;
 	public $login_succeeded = false;
 	public $token;
@@ -85,7 +86,7 @@ class Client
       $this->get_implicit = $get_implicit;
 		
 		// Begin the login process.
-		$this->curl = new \MeLeeCMS\CURLWrapper([], true, false);
+		$this->curl = new CURLWrapper([], true, false);
 		
 		// W-I-P code for password logins.
 		if($this->grant_type === "password")

@@ -21,12 +21,18 @@ class User
       $this->permission_defs = $GlobalConfig['permissions'];
 		$this->cms = $cms;
 		$this->logged_in = false;
-		$this->user_info = self::default_user();
+		$this->user_info = self::getDefaultUser();
       if(!empty($GlobalConfig['admin_ip']) && $_SERVER['REMOTE_ADDR'] == $GlobalConfig['admin_ip'])
          $result['permissions'] = ["ADMIN"];
 	}
 
 	public function get_property($property)
+   {
+      trigger_error("User->get_property() is deprecated; use User->getProperty() instead.", E_USER_DEPRECATED);
+      return $this->getProperty($property);
+   }
+   
+	public function getProperty($property)
 	{
 		return empty($this->user_info[$property]) ? null : $this->user_info[$property];
 	}
@@ -34,7 +40,7 @@ class User
 	public function myInfo()
 	{
 		$info = [];
-		if($this->is_logged())
+		if($this->isLogged())
 			$info['logged'] = true;
 		foreach($this->user_info as $k=>$v)
 		{
@@ -61,6 +67,12 @@ class User
 	}
 
 	public function has_permission(...$permissions)
+   {
+      trigger_error("User->has_permission() is deprecated; use User->hasPermission() instead.", E_USER_DEPRECATED);
+      return $this->hasPermission(...$permissions);
+   }
+   
+	public function hasPermission(...$permissions)
 	{
       $has_all = true;
       foreach($permissions as $permission)
@@ -90,11 +102,23 @@ class User
 	}
 
 	public function is_logged()
+   {
+      trigger_error("User->is_logged() is deprecated; use User->isLogged() instead.", E_USER_DEPRECATED);
+      return $this->isLogged();
+   }
+   
+	public function isLogged()
 	{
 		return $this->logged_in;
 	}
 
 	public static function default_user()
+   {
+      trigger_error("User::default_user() is deprecated; use User::getDefaultUser() instead.", E_USER_DEPRECATED);
+      return self::getDefaultUser();
+   }
+   
+	public static function getDefaultUser()
 	{
 		$result['ip'] = $_SERVER['REMOTE_ADDR'];
 		$result['username'] = "guest". rand(1000,9999);

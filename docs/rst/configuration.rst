@@ -107,9 +107,33 @@ Page that will load if someone visits your website but doesn't specify a page. F
 
 Default: ``"test-page"``
 
+Error Reporting
+-------------
+MeLeeCMS records errors in three different ways: standard error log text files, the error\_log table in the database, and in the page XML output to users who have permission to view errors. You can determine what types of errors are reported to each location separately using the settings below. The format of these settings is exactly the same as the `error_reporting(int) <https://www.php.net/manual/en/function.error-reporting.php>`_ PHP native function.
+
+error\_file\_reporting
+......
+Errors that will be reported to error log files. MeLeeCMS starts a new error log file every day, which will be in a new directory every month. At the start of a month, a directory will be created in ``includes/logs/`` named with the format ``errors-YYYY-MM``. In that directory, log files are named with the format ``YYYY-MM-DD.log``.
+
+Note that your server configuration settings might cause these log files to have undesirable permissions. As the files are created by the PHP process, they will be owned by the user that owns the PHP process. If this is not the same user that owns the website files, then it's possible that the site owner will not be able to access these log files. A user with root permissions would be required to fix this. I have no idea how to fix this issue from within MeLeeCMS; it's likely not possible. The server would have to be configured in such a way that this doesn't happen.
+
+Default: ``E_ALL & ~E_STRICT``
+
+error\_database\_reporting
+......
+Errors that will be inserted into the error\_log table of the database. These errors can be reviewed on the control panel by users with the view\_errors permission.
+
+Default: ``E_ALL & ~(E_STRICT | E_NOTICE | E_DEPRECATED | E_USER_NOTICE | E_USER_DEPRECATED)``
+
+error\_xml\_reporting
+......
+Errors that will be included in the XML output for users with the view\_errors permission, which means that XSLT can process them and output them to the page in some way. In the bootstrap4 theme, a red exclaimation point will appear in the top right if errors occurred during the page load, and it can be clicked to reveal those errors.
+
+Default: ``E_ALL``
+
 Other Definitions
 ------------
-You can define content such as pages and forms, as well as alter the permissions used by your website.
+You can define content such as pages and forms as well as alter the permissions used by your website from within config.php, if you would prefer to do that instead of using the control panel.
 
 pages
 .....

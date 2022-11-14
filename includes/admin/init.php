@@ -18,14 +18,19 @@ $GlobalConfig['pages']['adminThemes'] = [
    'file' => "themes.php",
    'permissions' => ["view_cpanel"],
 ];
-$GlobalConfig['pages']['adminData'] = [
-   'url' => $GlobalConfig['cpanel_dir'] ."/data",
-   'file' => "data.php",
-   'permissions' => ["view_cpanel"],
+$GlobalConfig['pages']['adminErrors'] = [
+   'url' => $GlobalConfig['cpanel_dir'] ."/errors",
+   'file' => "errors.php",
+   'permissions' => ["view_cpanel","view_errors"],
 ];
 $GlobalConfig['pages']['adminChanges'] = [
    'url' => $GlobalConfig['cpanel_dir'] ."/changes",
    'file' => "changes.php",
+   'permissions' => ["view_cpanel"],
+];
+$GlobalConfig['pages']['adminData'] = [
+   'url' => $GlobalConfig['cpanel_dir'] ."/data",
+   'file' => "data.php",
    'permissions' => ["view_cpanel"],
 ];
 
