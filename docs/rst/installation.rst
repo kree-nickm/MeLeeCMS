@@ -5,13 +5,13 @@ Requirements
 ------------
 Before you can install MeLeeCMS, there are a few other things that must be installed first:
 
-- PHP >= 5.6.0 (PHP7 recommended)
-
-  - Fallbacks are provided for features that require PHP7.
-
 - Apache 2.4
 
   - If you use other HTTP software such as nginx, you'll have to figure out how to replicate the function of the .htaccess file yourself.
+
+- PHP >= 5.6.0 (PHP7 recommended)
+
+  - Fallbacks are provided for features that require PHP7.
 
 - MySQL >= 5.7.8
 

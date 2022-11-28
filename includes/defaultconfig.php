@@ -61,9 +61,6 @@ $GlobalConfig['force_https'] = false;
 // This will be prepended to the names of any cookies set by MeLeeCMS. Generally this is only the session id cookie. Changing this in a production site will force all users to log back in, as well as lose any other data that is tracked using cookies.
 $GlobalConfig['cookie_prefix'] = "melee_";
 
-// This is the class name of the class to use to handle user accounts. If invalid or blank, it will default to the User class found in includes/classes/User.php.
-$GlobalConfig['user_system'] = "User";
-
 // This is what will appear in the title bar of your website. Each page has its own title, followed by a hyphen, followed by whatever you specify here. This value can be overwritten by the MeLeeCMS control panel.
 $GlobalConfig['site_title'] = $_SERVER['HTTP_HOST'];
 
@@ -92,54 +89,54 @@ $GlobalConfig['pages'] = [];
 // You don't need this 'if' check in your config.php file, it's only here to prevent error messages from triggering if/when you delete test-page.php since you don't need it.
 if(is_file("includes". DIRECTORY_SEPARATOR ."pages". DIRECTORY_SEPARATOR ."test-page.php"))
 {
-   // Copy/paste the below definition in your own config.php file as needed with different values for each page.
-   $GlobalConfig['pages'][] = [
-      'url' => "test-page",
-      'file' => "test-page.php",
-      'title' => "Testing Grounds",
-      'css' => [],
-      'js' => [],
-      'xsl' => [],
-      'permissions' => [],
-   ];
+  // Copy/paste the below definition in your own config.php file as needed with different values for each page.
+  $GlobalConfig['pages'][] = [
+    'url' => "test-page",
+    'file' => "test-page.php",
+    'title' => "Testing Grounds",
+    'css' => [],
+    'js' => [],
+    'xsl' => [],
+    'permissions' => [],
+  ];
 }
 // TODO: These error pages have no way of including a navbar. Need to figure out how to implement a navbar in a way that any site can use, such that it appears on these generic error pages.
 // These are special pages, like the 404 page, etc. You can overwrite them in your config.php if you follow the same format.
 $GlobalConfig['pages']['503'] = [
-   'id' => "503",
-   'select' => function($cms){ return http_response_code()==503; },
-   'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:11:\"Maintenance\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:42:\"Website is currently down for maintenance.\";s:5:\"attrs\";a:0:{}}}}}",
-   'title' => "Maintenance",
-   'css' => [],
-   'js' => [],
-   'xsl' => [],
+  'id' => "503",
+  'select' => function($cms){ return http_response_code()==503; },
+  'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:11:\"Maintenance\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:42:\"Website is currently down for maintenance.\";s:5:\"attrs\";a:0:{}}}}}",
+  'title' => "Maintenance",
+  'css' => [],
+  'js' => [],
+  'xsl' => [],
 ];
 $GlobalConfig['pages']['401'] = [
-   'id' => "401",
-   'select' => function($cms){ return http_response_code()==401; },
-   'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:14:\"Login Required\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:40:\"You must be logged in to view this page.\";s:5:\"attrs\";a:0:{}}}}}",
-   'title' => "Login Required",
-   'css' => [],
-   'js' => [],
-   'xsl' => [],
+  'id' => "401",
+  'select' => function($cms){ return http_response_code()==401; },
+  'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:14:\"Login Required\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:40:\"You must be logged in to view this page.\";s:5:\"attrs\";a:0:{}}}}}",
+  'title' => "Login Required",
+  'css' => [],
+  'js' => [],
+  'xsl' => [],
 ];
 $GlobalConfig['pages']['403'] = [
-   'id' => "403",
-   'select' => function($cms){ return http_response_code()==403; },
-   'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:13:\"Access Denied\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:45:\"You do not have permission to view this page.\";s:5:\"attrs\";a:0:{}}}}}",
-   'title' => "Access Denied",
-   'css' => [],
-   'js' => [],
-   'xsl' => [],
+  'id' => "403",
+  'select' => function($cms){ return http_response_code()==403; },
+  'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:13:\"Access Denied\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:45:\"You do not have permission to view this page.\";s:5:\"attrs\";a:0:{}}}}}",
+  'title' => "Access Denied",
+  'css' => [],
+  'js' => [],
+  'xsl' => [],
 ];
 $GlobalConfig['pages']['404'] = [
-   'id' => "404",
-   'select' => function($cms){ return http_response_code()==404; },
-   'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:14:\"Page Not Found\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:45:\"The page you are looking for cannot be found.\";s:5:\"attrs\";a:0:{}}}}}",
-   'title' => "Page Not Found",
-   'css' => [],
-   'js' => [],
-   'xsl' => [],
+  'id' => "404",
+  'select' => function($cms){ return http_response_code()==404; },
+  'content' => "a:1:{s:7:\"content\";O:19:\"\\MeLeeCMS\\Container\":3:{s:5:\"title\";s:14:\"Page Not Found\";s:5:\"attrs\";a:0:{}s:7:\"content\";a:1:{s:4:\"text\";O:14:\"\\MeLeeCMS\\Text\":2:{s:4:\"text\";s:45:\"The page you are looking for cannot be found.\";s:5:\"attrs\";a:0:{}}}}}",
+  'title' => "Page Not Found",
+  'css' => [],
+  'js' => [],
+  'xsl' => [],
 ];
 
 /******************************* Form Handlers ********************************
@@ -153,13 +150,13 @@ $GlobalConfig['forms'] = [];
 // You don't need this 'if' check in your config.php file, it's only here to prevent error messages from triggering if/when you delete test-form.php since you don't need it.
 if(is_file("includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR ."test-form.php"))
 {
-   // Copy/paste the below definition in your own config.php file as needed with different values for each form.
-   $GlobalConfig['forms']['testForm'] = [ // Give the form a unique name here instead of testForm
-      'file' => 'test-form.php', // Specify the file name that contains the form logic in place of test-form.php
-      'select' => function($cms){ // Define a function to determine if the user wants this form. A reference to MeLeeCMS is provided, but you shouldn't need it, as the $_REQUEST/$_POST/$_GET vars should be all you need to determine the user's intent. All matching forms will be run in a single page request, allowing you to submit multiple forms simultaneously if you so desire.
-         return isset($_REQUEST['testForm']);
-      },
-   ];
+  // Copy/paste the below definition in your own config.php file as needed with different values for each form.
+  $GlobalConfig['forms']['testForm'] = [ // Give the form a unique name here instead of testForm
+    'file' => 'test-form.php', // Specify the file name that contains the form logic in place of test-form.php
+    'select' => function($cms){ // Define a function to determine if the user wants this form. A reference to MeLeeCMS is provided, but you shouldn't need it, as the $_REQUEST/$_POST/$_GET vars should be all you need to determine the user's intent. All matching forms will be run in a single page request, allowing you to submit multiple forms simultaneously if you so desire.
+      return isset($_REQUEST['testForm']);
+    },
+  ];
 }
 
 /******************************************************************************
@@ -167,18 +164,19 @@ if(is_file("includes". DIRECTORY_SEPARATOR ."forms". DIRECTORY_SEPARATOR ."test-
 ******************************************************************************/
 
 $GlobalConfig['permissions'] = [
-   'ANON' => [
-      "view_pages",
-   ],
-   'LOGGED' => [
-      "view_pages",
-      "view_user_pages",
-   ],
-   'ADMIN' => [
-      "view_pages",
-      "view_user_pages",
-      "view_xml",
-      "view_errors",
-      "view_cpanel",
-   ],
+  'ANON' => [
+    "view_pages",
+  ],
+  'LOGGED' => [
+    "view_pages",
+    "view_user_pages",
+  ],
+  'ADMIN' => [
+    "ignore_maintenance",
+    "view_pages",
+    "view_user_pages",
+    "view_xml",
+    "view_errors",
+    "view_cpanel",
+  ],
 ];

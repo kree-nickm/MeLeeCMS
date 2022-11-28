@@ -34,7 +34,7 @@ class MeLeeSessionHandler implements \SessionHandlerInterface
 		$mysql_data = [
 			'session_id' => $session_id,
 			'session_data' => $session_data,
-			'user' => (int)$this->cms->user->get_property("index"),
+			'user' => (int)$this->cms->user->getProperty("index"),
 			'time' => time(),
 			'ip' => $_SERVER['REMOTE_ADDR'],
 			'user_agent' => $_SERVER['HTTP_USER_AGENT'],

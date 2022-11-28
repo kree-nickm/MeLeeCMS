@@ -77,12 +77,6 @@ This will be prepended to the names of any cookies set by MeLeeCMS. Generally, t
 
 Default: ``"melee_"``
 
-user\_system
-......
-This is the class name of the class to use to handle user accounts. If invalid or blank, it will default to the ``User`` class found in ``includes/classes/User.php``. Note that the ``User`` class does not support logins or the control panel, so it is only suitable for extremely simple websites. You should change this to ``"MeLeeCMSUser"`` if you want to support simple logins and user accounts.
-
-Default: ``"User"``
-
 site\_title
 ......
 This is what will appear in the title bar of your website. Each page has its own title, followed by a hyphen, followed by whatever you specify here. This value can be overwritten by the MeLeeCMS control panel.
