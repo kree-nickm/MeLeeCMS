@@ -96,7 +96,7 @@ class CURLWrapper
         else if(!empty($line))
         {
           list($key, $val) = explode(": ", $line);
-          $request_headers[$key] = $val;
+          $request_headers[strtolower($key)] = $val;
         }
       }
       $request_info['request_header'] = $request_headers;
@@ -126,7 +126,7 @@ class CURLWrapper
       else
       {
         list($key, $val) = explode(": ", $line);
-        $response_headers[$key] = $val;
+        $response_headers[strtolower($key)] = $val;
       }
     }
     // If this is a Continue, we can't use it until the complete response is sent. I have no idea how to handle this, but this seemed to fix the problems caused by the first time I ever had to deal with code 100.

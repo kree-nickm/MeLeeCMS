@@ -53,10 +53,10 @@ class ClientRateLimit
       else if(!empty($remaining_header) && !empty($reset_header) && !empty($reset_type) && !empty($limit_header))
       {
          $this->has_limits = true;
-         $this->remaining_header = $remaining_header;
-         $this->reset_header = $reset_header;
-         $this->reset_type = $reset_type;
-         $this->limit_header = $limit_header;
+         $this->remaining_header = strtolower($remaining_header);
+         $this->reset_header = strtolower($reset_header);
+         $this->reset_type = strtolower($reset_type);
+         $this->limit_header = strtolower($limit_header);
       }
       else
       {
