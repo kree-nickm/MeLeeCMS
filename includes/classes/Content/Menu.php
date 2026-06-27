@@ -1,6 +1,6 @@
 <?php
 /** The code for the Menu class. */
-namespace MeLeeCMS;
+namespace MeLeeCMS\Content;
 
 class Menu extends Container
 {
@@ -74,7 +74,7 @@ class Menu extends Container
 	public function addContent($content, $x="")
 	{
       // TODO: Make a MenuItem interface.
-		if(is_a($content, "MeLeeCMS\\Link") || is_a($content, "MeLeeCMS\\Menu"))
+		if(is_a($content, "\\MeLeeCMS\\Content\\Link") || is_a($content, "\\MeLeeCMS\\Content\\Menu"))
 		{
          $content->setMenu($this);
          return parent::addContent($content, $x);

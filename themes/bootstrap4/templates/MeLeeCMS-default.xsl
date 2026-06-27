@@ -65,7 +65,7 @@
 </nav>
 </xsl:if>
 
-<xsl:apply-templates select="content[@notification]"/>
+<xsl:apply-templates select="content[@notification]" mode="notification"/>
 <xsl:apply-templates select="content[not(@hidden) and @id!='branding' and @id!='nav' and not(@notification)]"/>
 
 <xsl:if test="data/user/class='MeLeeCMS\MeLeeCMSUser' and not(data/user/logged)">
@@ -148,7 +148,7 @@
 </xsl:template>
 <!-- END full page HTML. -->
 
-<xsl:template match="content[@notification]">
+<xsl:template match="content[@notification]" mode="notification">
 <!-- TODO: These need to popup on page load. -->
 <div class="modal fade auto-open" tabindex="-1" role="dialog" aria-labelledby="notification{@id}">
 	<div class="modal-dialog" role="document">
@@ -163,13 +163,22 @@
 				</button>
 			</div>
 			<div class="modal-body">
-				<xsl:for-each select="*">
-					<xsl:element name="div">
-						<xsl:attribute name="class">alert <xsl:if test="@type">alert-<xsl:value-of select="@type"/></xsl:if><xsl:if test="not(@type)">alert-primary</xsl:if></xsl:attribute>
-						<xsl:attribute name="role">alert</xsl:attribute>
-						<xsl:value-of select="."/>
-					</xsl:element>
-				</xsl:for-each>
+        <xsl:if test="*">
+          <xsl:for-each select="*">
+            <xsl:element name="div">
+              <xsl:attribute name="class">alert <xsl:if test="@type">alert-<xsl:value-of select="@type"/></xsl:if><xsl:if test="not(@type)">alert-primary</xsl:if></xsl:attribute>
+              <xsl:attribute name="role">alert</xsl:attribute>
+              <xsl:value-of select="."/>
+            </xsl:element>
+          </xsl:for-each>
+        </xsl:if>
+        <xsl:if test="not(*)">
+          <xsl:element name="div">
+            <xsl:attribute name="class">alert <xsl:if test="@type">alert-<xsl:value-of select="@type"/></xsl:if><xsl:if test="not(@type)">alert-primary</xsl:if></xsl:attribute>
+            <xsl:attribute name="role">alert</xsl:attribute>
+            <xsl:value-of select="."/>
+          </xsl:element>
+        </xsl:if>
 			</div>
 			<div class="modal-footer">
 			</div>

@@ -4,7 +4,7 @@ namespace MeLeeCMS;
 $builder->attachXSL("cpanel.xsl", "", true);
 $builder->attachJS("cpanel.js", "", true);
 
-$nav = $builder->addContent(new Menu(), "nav");
+$nav = $builder->addContent(new Content\Menu(), "nav");
 if($builder->user->hasPermission("view_cpanel"))
 {
 	$nav->addLink("mcmsadmin/settings", "Settings");
@@ -18,5 +18,5 @@ if($builder->user->hasPermission("view_cpanel"))
 }
 
 if(!empty($_SESSION['onload_notification']))
-	$builder->addContent(new Text($_SESSION['onload_notification'], ['notification'=>"onload"]));
+	$builder->addContent(new Content\Text($_SESSION['onload_notification'], ['notification'=>"onload"]));
 unset($_SESSION['onload_notification']);

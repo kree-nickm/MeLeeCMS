@@ -5,17 +5,16 @@ use MeLeeCMS\OAuth2\ClientRateLimit;
 use MeLeeCMS\Database;
 // TODO: Twitch API mentions something about validating tokens periodically even while the app is not in use, which I haven't been doing.
 
-class Twitch extends Base
+class Twitch extends Connection
 {
   const NAME = "Twitch";
-  const AUTH_URL = "https://id.twitch.tv";
+  const AUTH_URL = "https://id.twitch.tv/oauth2/authorize";
+  const TOKEN_URL = "https://id.twitch.tv/oauth2/token";
   const API_URL = "https://api.twitch.tv";
-  
-  public function __construct($user)
-  {
-    $this->rate_limit = new ClientRateLimit("Ratelimit-Remaining", "Ratelimit-Reset", "timestamp", "Ratelimit-Limit");
-    parent::__construct($user);
-  }
+  const RATELIMIT_REMAINING = "Ratelimit-Remaining";
+  const RATELIMIT_LIMIT = "Ratelimit-Limit";
+  const RATELIMIT_RESET = "Ratelimit-Reset";
+  const RATELIMIT_TYPE = ClientRateLimit::RESET_TIMESTAMP;
   
   protected function onConnect()
   {
@@ -59,17 +58,21 @@ class Twitch extends Base
     }
     return false;
   }
+
+  public function getDisplayName()
+  {
+    if(!empty($this->api_self->display_name))
+      return $this->api_self->display_name;
+    else
+      return parent::getDisplayName();
+  }
   
   public function updateFollows($save=true)
   {
-    $this->api_data = $this->getPagedResponse("/helix/users/follows?first=100&from_id={$this->api_id}");
-    // Clean up the result a bit. from_* is always going to be the curent user, we don't need it to be defined in every single element of the following array.
-    foreach($this->api_data as $follow)
-    {
-      unset($follow->from_id);
-      unset($follow->from_name);
-      unset($follow->from_login);
-    }
+    $follows = $this->getPagedResponse("/helix/channels/followed?first=100&user_id={$this->api_id}");
+    if(empty($this->api_data))
+      $this->api_data = new stdObject();
+    $this->api_data->follows = $follows;
     if($save)
       $this->save();
   }
@@ -87,21 +90,16 @@ class Twitch extends Base
         $userArrs[$user->user_id] = ['id'=>$user->user_id, 'login'=>null];
         $userIdsQuoted[$user->user_id] = $this->user->cms->database->quote($user->user_id);
       }
-      if(is_object($user) && !empty($user->to_id)) // Array passed in from API "Get Users Follows" when querying users that are being followed
-      {
-        $userArrs[$user->to_id] = ['id'=>$user->to_id, 'login'=>null];
-        $userIdsQuoted[$user->to_id] = $this->user->cms->database->quote($user->to_id);
-      }
-      if(is_object($user) && !empty($user->from_id)) // Array passed in from API "Get Users Follows" when querying users who are following
-      {
-        $userArrs[$user->from_id] = ['id'=>$user->from_id, 'login'=>null];
-        $userIdsQuoted[$user->from_id] = $this->user->cms->database->quote($user->from_id);
-      }
-      if(is_object($user) && !empty($user->broadcaster_id)) // Array passed in from API "Get Channel Information" etc
+      if(is_object($user) && !empty($user->broadcaster_id)) // Array passed in from API "Get Followed Channels" when querying users that are being followed, or "Get Channel Information" etc
       {
         $userArrs[$user->broadcaster_id] = ['id'=>$user->broadcaster_id, 'login'=>null];
         $userIdsQuoted[$user->broadcaster_id] = $this->user->cms->database->quote($user->broadcaster_id);
       }
+      /*if(is_object($user) && !empty($user->from_id)) // Array passed in from API "Get Users Follows" when querying users who are following // TODO: Replace with Get Channel Followers
+      {
+        $userArrs[$user->from_id] = ['id'=>$user->from_id, 'login'=>null];
+        $userIdsQuoted[$user->from_id] = $this->user->cms->database->quote($user->from_id);
+      }*/
       else if(is_object($user) && !empty($user->broadcaster_login)) // Array passed in from API "Search Channels" etc
       {
         $userArrs[$user->broadcaster_login] = ['login'=>$user->broadcaster_login, 'id'=>null];
@@ -276,14 +274,5 @@ class Twitch extends Base
       $this->user->cms->database->insert("twitch_usercache", $mysql_data, true);
     
     return $output;
-  }
-
-  public function getDisplayName($index)
-  {
-    $id = $this->user->cms->database->query("SELECT `twitch_id` FROM `users` WHERE `index`=". (int)$index, Database::RETURN_FIELD);
-    if(!empty($id))
-      return $this->user->cms->database->query("SELECT `data`->>'$.display_name' FROM `twitch_usercache` WHERE `id`=". (int)$id, Database::RETURN_FIELD);
-    else
-      return $index;
   }
 }

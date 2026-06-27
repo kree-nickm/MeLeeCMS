@@ -1,6 +1,6 @@
 <?php
 /** The code for the Link class. */
-namespace MeLeeCMS;
+namespace MeLeeCMS\Content;
 
 class Link extends Content
 {
@@ -30,7 +30,7 @@ class Link extends Content
          $url_path = $cms->getSetting('url_path');
          if(substr($this->url, 0, strlen($url_path)) !== $url_path)
          {
-            if($this->url{0} == "/")
+            if($this->url[0] == "/")
                $this->url = $url_path . substr($this->url, 1);
             else
                $this->url = $url_path . $this->url;

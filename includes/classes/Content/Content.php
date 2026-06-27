@@ -2,7 +2,7 @@
 /**
 The code for the abstract {@see Content} class.
 */
-namespace MeLeeCMS;
+namespace MeLeeCMS\Content;
 
 /**
  * Superclass of all classes that can be added to a page as content.
@@ -99,8 +99,7 @@ abstract class Content
 			$dirs = array_unique($cms->class_paths);
 		else
 		{
-			$dirs = [__DIR__];
-			trigger_error("Content has been loaded without MeLeeCMS.", E_USER_NOTICE);
+			trigger_error("Content has been loaded without MeLeeCMS.", E_USER_ERROR);
 		}
 		$ignore_classes = [];
 		self::$subclasses = [];
@@ -109,10 +108,10 @@ abstract class Content
 			$changed = false;
 			foreach($dirs as $dir)
 			{
-				$dirobj = dir($dir);
+				$dirobj = dir($dir . DIRECTORY_SEPARATOR ."Content");
 				while($file = $dirobj->read())
 				{
-					if($file{0} != ".")
+					if($file[0] != ".")
 					{
 						$filepath = $dirobj->path ."/". $file;
 						$class = substr($file, 0, -4);

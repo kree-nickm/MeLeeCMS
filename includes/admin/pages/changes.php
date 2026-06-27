@@ -86,16 +86,16 @@ if($page >= $page_count-1)
 	$pages['page'][count($pages['page'])-1]['__attr:disabled'] = "1";
 
 // Build content.
-$container = $builder->addContent(new Container("Changes"));
-$table = $container->addContent(new Container("Change Log", ['format'=>"table"]));
-$table->addContent(new Text("List of recent changes made to rows of the database."), "subtitle");
-$row = $table->addContent(new Container("", ['type'=>"header"]));
-$row->addContent(new Text("Time", ['raw'=>true]));
-$row->addContent(new Text("Table", ['raw'=>true]));
-$row->addContent(new Text("Columns Updated", ['raw'=>true]));
-$row->addContent(new Text("New", ['raw'=>true]));
-$row->addContent(new Text("Blame", ['raw'=>true]));
-$row->addContent(new Text("", ['raw'=>true]));
+$container = $builder->addContent(new Content\Container("Changes"));
+$table = $container->addContent(new Content\Container("Change Log", ['format'=>"table"]));
+$table->addContent(new Content\Text("List of recent changes made to rows of the database."), "subtitle");
+$row = $table->addContent(new Content\Container("", ['type'=>"header"]));
+$row->addContent(new Content\Text("Time", ['raw'=>true]));
+$row->addContent(new Content\Text("Table", ['raw'=>true]));
+$row->addContent(new Content\Text("Columns Updated", ['raw'=>true]));
+$row->addContent(new Content\Text("New", ['raw'=>true]));
+$row->addContent(new Content\Text("Blame", ['raw'=>true]));
+$row->addContent(new Content\Text("", ['raw'=>true]));
 foreach($changelog as $change)
 {
 	$blame = $change['blame'];
@@ -122,15 +122,15 @@ foreach($changelog as $change)
 		foreach($changePrev as $index=>$data)
 			$previous[] = array_merge($data, ['__attr:index'=>$index]);
          
-	$row = $table->addContent(new Container("", ['index'=>$change['index'],'type'=>"body"]));
-	$row->addContent(new Text(date("j M Y @ g:ia T", $change['timestamp']), ['raw'=>true]));
-	$row->addContent(new Text($change['table'], ['raw'=>true]));
-	$row->addContent(new Text($new, ['raw'=>true]));
-	$row->addContent(new Text(count($previous)==0 ? 1 : 0), "cpanel-new");
-	$row->addContent(new Text($blame, ['raw'=>true]));
-	$change_popup = $row->addContent(new Container("Change", ['format'=>"modal",'button'=>true]), "cpanel-changes");
-   $change_popup->addContent(new Text(['new'=>$current, 'previous'=>$previous]), "data");
+	$row = $table->addContent(new Content\Container("", ['index'=>$change['index'],'type'=>"body"]));
+	$row->addContent(new Content\Text(date("j M Y @ g:ia T", $change['timestamp']), ['raw'=>true]));
+	$row->addContent(new Content\Text($change['table'], ['raw'=>true]));
+	$row->addContent(new Content\Text($new, ['raw'=>true]));
+	$row->addContent(new Content\Text(count($previous)==0 ? 1 : 0), "cpanel-new");
+	$row->addContent(new Content\Text($blame, ['raw'=>true]));
+	$change_popup = $row->addContent(new Content\Container("Change", ['format'=>"modal",'button'=>true]), "cpanel-changes");
+   $change_popup->addContent(new Content\Text(['new'=>$current, 'previous'=>$previous]), "data");
 }
-$container->addContent(new Text($pages, ['type'=>"pagination"]));
+$container->addContent(new Content\Text($pages, ['type'=>"pagination"]));
 
 $builder->attachXSL("cpanel.xsl", "", true);

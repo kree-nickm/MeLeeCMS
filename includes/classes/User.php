@@ -2,9 +2,8 @@
 namespace MeLeeCMS;
 
 /**
- * Superclass of all classes that can be used to hold user properties.
+ * An instance of this class represents the user currently using/viewing the website.
  * 
- * Any subclass of `User` must be declared in a file with the same name as the class and end in `.php`, ie. `MeLeeCMSUser.php` for the `MeLeeCMSUser` class. Additionally, the class declaration within that file must match the following regex: `/\bclass\s+ClassName\s+extends\s+User\b/i`. Any subclass can be in place of `User`, as long as it extends from `User` and each ancestor follows the same declaration rules.
  * Other features of MeLeeCMS, such as the database changelog, require that users can be uniquely identified by the 'index' element of the `$user_info` array. If a user cannot be uniquely identified with said index, then leave the 'index' element empty and the feature in question will use something else.
  */
 class User
@@ -27,6 +26,8 @@ class User
     // Load all enabled connections.
     if($GlobalConfig['twitch_enabled'])
       $this->connections['Twitch'] = new Connection\Twitch($this);
+    if($GlobalConfig['youtube_enabled'])
+      $this->connections['YouTube'] = new Connection\YouTube($this);
     
     if(isset($_REQUEST['logout']))
     {
@@ -252,6 +253,7 @@ class User
 
   public function getDisplayName($index)
   {
+    // TODO: Pull from connections or custom data. Never pull from email.
     return $index;
   }
 
@@ -269,60 +271,5 @@ class User
     $result['permissions'] = ["ANON"];
     $result['custom_data'] = [];
     return $result;
-  }
-  
-  /** @var string[] Stores the last result of {@see User::get_subclasses()} so that it won't be run more than once per page load. */
-  protected static $subclasses;
-  
-  /**
-   * @param MeLeeCMS $cms A reference to the MeLeeCMS object.
-   * @return string[] A list of all includeable classes that extend User, and thus can be selected as user systems via the control panel.
-   */
-  public static function get_subclasses($cms=null)
-  {
-    if(is_array(self::$subclasses))
-      return self::$subclasses;
-    if(is_object($cms) && is_array($cms->class_paths))
-      $dirs = array_unique($cms->class_paths);
-    else
-    {
-      $dirs = [__DIR__];
-      trigger_error("User has been loaded without MeLeeCMS.", E_USER_NOTICE);
-    }
-    $ignore_classes = [];
-    self::$subclasses = [];
-    $regex_list = "User";
-    do{
-      $changed = false;
-      foreach($dirs as $dir)
-      {
-        $dirobj = dir($dir);
-        while($file = $dirobj->read())
-        {
-          if(substr($file, 0, 1) != ".")
-          {
-            $filepath = $dirobj->path ."/". $file;
-            $class = substr($file, 0, -4);
-            if(is_dir($filepath))
-            {
-              $dirs[] = $filepath;
-            }
-            else if(is_file($filepath) && substr($file, -4) == ".php" && !in_array($class, self::$subclasses) && !in_array($class, $ignore_classes))
-            {
-              $read = file_get_contents($filepath);
-              if(preg_match("/\\bclass\\s+". $class ."\\s+extends\\s+(". $regex_list .")\\b/i", $read))
-              {
-                self::$subclasses[] = $class;
-                $regex_list = "User|". implode("|", self::$subclasses);
-                $changed = true;
-              }
-            }
-          }
-        }
-      }
-    }while($changed);
-    self::$subclasses = array_unique(self::$subclasses);
-    sort(self::$subclasses);
-    return self::$subclasses;
   }
 }

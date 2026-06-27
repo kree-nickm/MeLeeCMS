@@ -1,5 +1,5 @@
 <?php
-namespace MeLeeCMS;
+namespace MeLeeCMS\Content;
 
 class Form extends Content
 {

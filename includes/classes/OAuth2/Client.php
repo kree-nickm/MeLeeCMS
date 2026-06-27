@@ -8,10 +8,10 @@ An additional wrapper class for the CURLWrapper class, to make cURL requests eve
 This class should theoretically work for any OAuth 2.0 API, but only a small number are fully supported by MeLeeCMS.
 APIs currently supported:
 - Twitch
+- YouTube (still testing)
 
 APIs with support pending:
 - Discord
-- YouTube
 - Salesforce (maybe)
 @uses \MeLeeCMS\CURLWrapper Server-to-server API requests are done through the cURL wrapper.
 @uses ClientRateLimit Separate class for handling rate limits imposed by certain APIs.
@@ -23,28 +23,49 @@ class Client
   
   public $curl;
   public $auth_url;
+  public $token_url;
   public $api_url;
   public $client_id;
   protected $client_secret;
+  public $client_session;
   public $grant_type;
   public $parameters = [];
-  public $login_attempted = false;
-  public $login_succeeded = false;
   public $token;
   public $implicit_token;
-  public $error = [];
   public $rate_limit;
   public $get_implicit;
+  public $login_attempted = false;
+  public $login_succeeded = false;
+  public $error = [];
   
-  public function __construct($url, $client_id, $client_secret, $grant_type, $parameters=[], $rate_limit=null, $get_implicit=false)
+  public function __construct($url, $client_id, $client_secret, $grant_type, $parameters=[], $options=[])
   {
     // Setup the properties that we'll need.
-    if(is_array($url))
-      $this->auth_url = implode("/", $url);
-    else
+    if(is_array($url) && count($url))
+    {
+      if(!empty($url[0]))
+        $this->auth_url = $url[0];
+      else
+        $this->auth_url = current($url);
+      if(!empty($url[1]))
+        $this->token_url = $url[1];
+      else
+        $this->token_url = current($url);
+      if(!empty($url[2]))
+        $this->api_url = $url[2];
+      else
+        $this->api_url = current($url);
+    }
+    else if(is_string($url))
+    {
       $this->auth_url = $url;
-    $this->api_url = $this->auth_url;
+      $this->token_url = $url;
+      $this->api_url = $url;
+    }
+    else
+      throw new InvalidArgumentException("Invalid URL(s) specified: ". print_r($urls, true));
     $this->client_id = $client_id;
+    $this->client_session = md5($this->client_id);
     $this->client_secret = $client_secret;
     $this->grant_type = $grant_type;
     if($this->grant_type === "authorization_code")
@@ -67,9 +88,9 @@ class Client
       }
       // state is not usually required but we are going to use it
       if(!empty($parameters['state']))
-        $this->parameters['state'] = $parameters['state'];
+        $this->parameters['state'] = $this->client_session .":". $parameters['state'];
       else
-        $this->parameters['state'] = md5(session_id());
+        $this->parameters['state'] = $this->client_session .":". md5(session_id());
       $implicit_relog_state = "implicit_relog";
     }
     else if($this->grant_type === "password")
@@ -77,13 +98,21 @@ class Client
       $this->parameters['username'] = $parameters['username'];
       $this->parameters['password'] = $parameters['password'];
     }
+    else
+    {
+      throw new InvalidArgumentException("Unknown grant_type '{$this->grant_type}'");
+    }
+    $unknown_params = array_diff(array_keys($parameters), array_keys($this->parameters));
+    if(count($unknown_params))
+      trigger_error("Unknown parameters given:". implode(", ", $unknown_params), E_USER_NOTICE);
     
-    if(empty($rate_limit))
+    // Load in any provided options.
+    if(empty($options['rate_limit']))
       $this->rate_limit = new ClientRateLimit();
     else
-      $this->rate_limit = $rate_limit;
+      $this->rate_limit = $options['rate_limit'];
     
-    $this->get_implicit = $get_implicit;
+    $this->get_implicit = !empty($options['get_implicit']);
     
     // Begin the login process.
     $this->curl = new CURLWrapper([], true, false);
@@ -103,55 +132,64 @@ class Client
       }
     }
     // Check if this request is redirected from a successful authentication.
-    else if(!empty($_REQUEST['code']) && $_REQUEST['state'] == $this->parameters['state'])
-    {
-      if($this->login($_REQUEST['code']))
-      {
-        // Note: MeLeeCMS has its own method for requesting a page "refresh", but I think it's fine to do this here.
-        if($get_implicit)
-        {
-          header("Location: ". $this->auth_url ."/oauth2/authorize?response_type=token&client_id=". urlencode($this->client_id) ."&scope=". urlencode(implode(" ", $this->parameters['scope'])) ."&redirect_uri=". urlencode($this->parameters['redirect_uri']) . "&state=". urlencode($this->parameters['state']));
-        }
-        else
-          // Reload to get rid of the REQUEST stuff.
-          header("Location: ". $this->parameters['redirect_uri']);
-      }
-      else
-      {
-        // We get a login code and everything seems ok, but OAuth2 API rejects the login.
-        $this->error = [
-          'code' => self::E_FAILED_LOGIN,
-          'last_reponse' => $this->curl->getLastHeaders(),
-          'last_request' => $this->curl->getLastRequestInfo(),
-          'token' => $this->token,
-        ];
-      }
-    }
     else if(!empty($_REQUEST['code']))
     {
-      // Someone tried to log in, but there was a state mismatch.
-      $this->error = [
-        'code' => self::E_STATE_MISMATCH,
-        'expected' => $this->parameters['state'],
-        'got' => $_REQUEST['state'],
-      ];
+      $myState = explode(":", $this->parameters['state']);
+      $sentState = explode(":", $_REQUEST['state']);
+      if($myState[0] == $sentState[0])
+      {
+        if($myState[1] == $sentState[1])
+        {
+          if($this->login($_REQUEST['code']))
+          {
+            // Note: MeLeeCMS has its own method for requesting a page "refresh", but I think it's fine to do this here.
+            if($this->get_implicit)
+            {
+              header("Location: ". $this->auth_url ."?response_type=token&client_id=". urlencode($this->client_id) ."&scope=". urlencode(implode(" ", $this->parameters['scope'])) ."&redirect_uri=". urlencode($this->parameters['redirect_uri']) . "&state=". urlencode($this->parameters['state']));
+            }
+            else
+              // Reload to get rid of the REQUEST stuff.
+              header("Location: ". $this->parameters['redirect_uri']);
+          }
+          else
+          {
+            // We get a login code and everything seems ok, but OAuth2 API rejects the login.
+            $this->error = [
+              'code' => self::E_FAILED_LOGIN,
+              'last_reponse' => $this->curl->getLastHeaders(),
+              'last_request' => $this->curl->getLastRequestInfo(),
+              'token' => $this->token,
+            ];
+          }
+        }
+        else
+        {
+          // Someone tried to log in, but there was a state mismatch.
+          $this->error = [
+            'code' => self::E_STATE_MISMATCH,
+            'expected' => $this->parameters['state'],
+            'got' => $_REQUEST['state'],
+          ];
+        }
+      }
+      // else: this is an authentication response, but not for this client, so ignore it
     }
     // TODO: We can have a session var update on every page load with a new state and send it to JavaScript for implicit grant relog states
-    else if($get_implicit && !empty($_REQUEST['implicit_grant']) && !empty($_REQUEST['access_token']) && !empty($_REQUEST['token_type']) && ($_REQUEST['state'] == $this->parameters['state'] || substr($_REQUEST['state'], 0, strlen($implicit_relog_state)) == $implicit_relog_state))
+    else if($this->get_implicit && !empty($_REQUEST['implicit_grant']) && !empty($_REQUEST['access_token']) && !empty($_REQUEST['token_type']) && ($_REQUEST['state'] == $this->parameters['state'] || substr($_REQUEST['state'], 0, strlen($implicit_relog_state)) == $implicit_relog_state))
     {
       // Implicit code granted.
       $this->implicit_token = [
         'access_token' => $_REQUEST['access_token'],
         'token_type' => $_REQUEST['token_type'],
       ];
-      $_SESSION[$this->client_id."_implicit_token"] = $this->implicit_token;
+      $_SESSION[$this->client_session."_implicit_token"] = $this->implicit_token;
       // Reload to get rid of the REQUEST stuff.
       if(substr($_REQUEST['state'], 0, strlen($implicit_relog_state)) == $implicit_relog_state)
         header("Location: ". substr($_REQUEST['state'], strlen($implicit_relog_state)));
       else
         header("Location: ". $this->parameters['redirect_uri']);
     }
-    else if($get_implicit && !empty($_REQUEST['implicit_grant']) && !empty($_REQUEST['access_token']) && !empty($_REQUEST['token_type']))
+    else if($this->get_implicit && !empty($_REQUEST['implicit_grant']) && !empty($_REQUEST['access_token']) && !empty($_REQUEST['token_type']))
     {
       // Someone tried to log in, but there was a state mismatch.
       $this->error = [
@@ -160,12 +198,13 @@ class Client
         'got' => $_REQUEST['state'],
       ];
     }
+    // else: just a normal page load that isn't trying to authenticate, proceed
     
-    if(isset($_SESSION[$this->client_id."_token"]) && is_object($_SESSION[$this->client_id."_token"]))
-      $this->token = $_SESSION[$this->client_id."_token"];
+    if(isset($_SESSION[$this->client_session."_token"]) && is_object($_SESSION[$this->client_session."_token"]))
+      $this->token = $_SESSION[$this->client_session."_token"];
     
-    if($get_implicit && isset($_SESSION[$this->client_id."_implicit_token"]) && is_array($_SESSION[$this->client_id."_implicit_token"]))
-      $this->implicit_token = $_SESSION[$this->client_id."_implicit_token"];
+    if($this->get_implicit && isset($_SESSION[$this->client_session."_implicit_token"]) && is_array($_SESSION[$this->client_session."_implicit_token"]))
+      $this->implicit_token = $_SESSION[$this->client_session."_implicit_token"];
     
     if(!empty($this->token->instance_url))
     {
@@ -180,9 +219,9 @@ class Client
   public function logout()
   {
     $this->token = null;
-    unset($_SESSION[$this->client_id."_token"]);
-    unset($_SESSION[$this->client_id."_token_time"]);
-    unset($_SESSION[$this->client_id."_implicit_token"]);
+    unset($_SESSION[$this->client_session."_token"]);
+    unset($_SESSION[$this->client_session."_token_time"]);
+    unset($_SESSION[$this->client_session."_implicit_token"]);
     $this->login_attempted = false;
     $this->login_succeeded = false;
   }
@@ -213,21 +252,22 @@ class Client
     }
     else
     {
+      trigger_error("Invalid grant type '{$this->grant_type}', no code, and/or no access token", E_USER_WARNING);
       return false;
     }
-    $raw = $this->curl->request($this->auth_url ."/oauth2/token", [CURLOPT_POSTFIELDS => $post]);
+    $raw = $this->curl->request($this->token_url, [CURLOPT_POSTFIELDS => $post]);
     if(is_object($this->token = json_decode($raw)))
     {
       if(!empty($this->token->access_token))
       {
-        $_SESSION[$this->client_id."_token"] = $this->token;
-        $_SESSION[$this->client_id."_token_time"] = time();
+        $_SESSION[$this->client_session."_token"] = $this->token;
+        $_SESSION[$this->client_session."_token_time"] = time();
         $this->login_succeeded = true;
       }
       else
       {
-        unset($_SESSION[$this->client_id."_token"]);
-        unset($_SESSION[$this->client_id."_token_time"]);
+        unset($_SESSION[$this->client_session."_token"]);
+        unset($_SESSION[$this->client_session."_token_time"]);
         $this->login_succeeded = false;
       }
       $this->login_attempted = true;
@@ -236,8 +276,8 @@ class Client
     else
     {
       $this->token = $raw;
-      unset($_SESSION[$this->client_id."_token"]);
-      unset($_SESSION[$this->client_id."_token_time"]);
+      unset($_SESSION[$this->client_session."_token"]);
+      unset($_SESSION[$this->client_session."_token_time"]);
       $this->login_attempted = true;
       $this->login_succeeded = false;
       return $this->login_succeeded;
@@ -254,7 +294,7 @@ class Client
       'client_id' => $this->client_id,
       'client_secret' => $this->client_secret,
     ];
-    $raw = $this->curl->request($this->auth_url ."/oauth2/token", [CURLOPT_POSTFIELDS => $post]);
+    $raw = $this->curl->request($this->token_url, [CURLOPT_POSTFIELDS => $post]);
     if(is_object($json = json_decode($raw)))
     {
       if(!empty($json->access_token))
@@ -263,14 +303,14 @@ class Client
         {
           $this->token->$prop = $json->$prop;
         }
-        $_SESSION[$this->client_id."_token"] = $this->token;
-        $_SESSION[$this->client_id."_token_time"] = time();
+        $_SESSION[$this->client_session."_token"] = $this->token;
+        $_SESSION[$this->client_session."_token_time"] = time();
         $this->login_succeeded = true;
       }
       else
       {
-        unset($_SESSION[$this->client_id."_token"]);
-        unset($_SESSION[$this->client_id."_token_time"]);
+        unset($_SESSION[$this->client_session."_token"]);
+        unset($_SESSION[$this->client_session."_token_time"]);
         $this->login_succeeded = false;
       }
       $this->login_attempted = true;
@@ -279,8 +319,8 @@ class Client
     else
     {
       $this->token = $raw;
-      unset($_SESSION[$this->client_id."_token"]);
-      unset($_SESSION[$this->client_id."_token_time"]);
+      unset($_SESSION[$this->client_session."_token"]);
+      unset($_SESSION[$this->client_session."_token_time"]);
       $this->login_attempted = true;
       $this->login_succeeded = false;
       return $this->login_succeeded;
@@ -289,10 +329,14 @@ class Client
   
   public function api_request($url="", $request="GET", $data="", $headers=[])
   {
-    if(!empty($this->token->expires_in) && ($_SESSION[$this->client_id."_token_time"] + $this->token->expires_in) <= time())
+    if(!empty($this->token->expires_in) && ($_SESSION[$this->client_session."_token_time"] + $this->token->expires_in) <= time())
       $this->refresh();
+    //$this->login(); // TODO: We never needed to do this before the Connections implementation. Check why?
     if($this->login_attempted && !$this->login_succeeded) // If we failed to login, let's not send more failed API queries.
+    {
+      trigger_error("Unable to authenticate with the OAuth2 API", E_USER_ERROR);
       return $this->token;
+    }
     if(!empty($this->token->access_token))
     {
       $response = $this->perform_api_request($url, $request, $data, $headers);
@@ -312,7 +356,10 @@ class Client
       return $response;
     }
     else
+    {
+      trigger_error("Invalid access token from the OAuth2 API. <pre>".print_r($_SESSION,true)."</pre>", E_USER_ERROR);
       return null; //TODO: Might be more useful to return the error response here, but also save it so you don't keep making API queries with the same error.
+    }
   }
   
   protected function perform_api_request($url="", $request="GET", $data="", $headers=[])
@@ -349,76 +396,9 @@ class Client
     return json_decode($raw);
   }
   
-  public function getPagedResponse($endpoint="/", $containerKey="data")
-  {
-    // For a typical API query where the API returns up to some number of results, and gives you a pagination identifier to retreive additional results if there are more than that.
-    $hasParams = (strpos($endpoint, "?") !== false);
-    $results = [];
-    $currentCount = 0;
-    $total = null;
-    $loops = 0;
-    $looplimit = 20;
-    do
-    {
-      $previousCount = $currentCount;
-      if(!empty($response) && !empty($response->pagination) && !empty($response->pagination->cursor))
-      {
-        $after = ($hasParams?"&":"?") ."after={$response->pagination->cursor}";
-      }
-      else if(!empty($response) && empty($response->pagination))
-      {
-        $after = ($hasParams?"&":"?") ."offset={$currentCount}";
-      }
-      else
-      {
-        $after = "";
-      }
-      $response = $this->request("{$endpoint}{$after}");
-      if(!empty($response) && is_object($response) && isset($response->$containerKey) && is_array($response->$containerKey))
-      {
-        if(!empty($response->total))
-          $total = $response->total;
-        $results = array_merge($results, $response->$containerKey);
-      }
-      else
-      {
-        trigger_error("Error retreiving results for endpoint '{$endpoint}{$after}'. Response from server: ". print_r($response,true), E_USER_WARNING);
-        break;
-      }
-      $loops++;
-      $currentCount = count($results);
-      $hasNextPage = !empty($response) && ($currentCount>$previousCount) && ($total==null || $currentCount<$total) && (empty($response->pagination) || !empty($response->pagination->cursor));
-    }while(
-      $hasNextPage &&
-      $loops < $looplimit
-    );
-    return $results;
-  }
-  
-  public function getMultiPagedResponse($endpoint="/", $repeatedParam="", $paramValues=[], $paramLimit=100)
-  {
-    // For a more advanced Twitch API query where you need to specify a huge list of parameters, and must split them between multiple different queries because of the parameter limit. Additionally, each one of those queries could potentially return multiple pages as above.
-    $hasParams = (strpos($endpoint, "?") !== false);
-    $results = [];
-    $paramBlocks = [];
-    for($i=0; $i<count($paramValues); $i+=$paramLimit)
-    {
-      $paramBlocks[] = array_slice($paramValues, $i, $paramLimit);
-    }
-    foreach($paramBlocks as $block)
-    {
-      if($hasParams)
-        $after = "&{$repeatedParam}=". implode("&{$repeatedParam}=", $block);
-      else
-        $after = "?{$repeatedParam}=". implode("&{$repeatedParam}=", $block);
-      $results = array_merge($results, $this->getPagedResponse("{$endpoint}{$after}"));
-    }
-    return $results;
-  }
-  
   public function getCodeURL()
   {
-    return $this->auth_url ."/oauth2/authorize?response_type=code&client_id=". urlencode($this->client_id) ."&scope=". urlencode(implode(" ", $this->parameters['scope'])) ."&redirect_uri=". urlencode($this->parameters['redirect_uri']) . "&state=". urlencode($this->parameters['state']);
+    return $this->auth_url ."?response_type=code&client_id=". urlencode($this->client_id) ."&scope=". urlencode(implode(" ", $this->parameters['scope'])) ."&redirect_uri=". urlencode($this->parameters['redirect_uri']) . "&state=". urlencode($this->parameters['state']);
   }
   
   public function getReport()
@@ -435,6 +415,7 @@ class Client
   {
     return [
       'auth_url' => $this->auth_url,
+      'token_url' => $this->token_url,
       'api_url' => $this->api_url,
       'client_id' => $this->client_id,
       'scope' => $this->parameters['scope'],

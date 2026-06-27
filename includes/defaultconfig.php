@@ -63,6 +63,7 @@ $GlobalConfig['cookie_prefix'] = "melee_";
 
 // This is what will appear in the title bar of your website. Each page has its own title, followed by a hyphen, followed by whatever you specify here. This value can be overwritten by the MeLeeCMS control panel.
 $GlobalConfig['site_title'] = $_SERVER['HTTP_HOST'];
+$GlobalConfig['title_format'] = "%PT% - %ST%";
 
 // This is the default theme that will be loaded on your site if no other theme is specified for a page or if the specified theme isn't valid. This value can be overwritten by the MeLeeCMS control panel.
 $GlobalConfig['default_theme'] = "bootstrap4";

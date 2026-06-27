@@ -86,14 +86,14 @@ if($page >= $page_count-1)
 	$pages['page'][count($pages['page'])-1]['__attr:disabled'] = "1";
 
 // Build content.
-$container = $builder->addContent(new Container("Errors"));
-$table = $container->addContent(new Container("Error Log", ['format'=>"table"]));
-$table->addContent(new Text("List of recent errors that occurred during page load for any user."), "subtitle");
-$row = $table->addContent(new Container("", ['type'=>"header"]));
-$row->addContent(new Text("Time", ['raw'=>true]));
-$row->addContent(new Text("Type", ['raw'=>true]));
-$row->addContent(new Text("Message", ['raw'=>true]));
-$row->addContent(new Text("File", ['raw'=>true]));
+$container = $builder->addContent(new Content\Container("Errors"));
+$table = $container->addContent(new Content\Container("Error Log", ['format'=>"table"]));
+$table->addContent(new Content\Text("List of recent errors that occurred during page load for any user."), "subtitle");
+$row = $table->addContent(new Content\Container("", ['type'=>"header"]));
+$row->addContent(new Content\Text("Time", ['raw'=>true]));
+$row->addContent(new Content\Text("Type", ['raw'=>true]));
+$row->addContent(new Content\Text("Message", ['raw'=>true]));
+$row->addContent(new Content\Text("File", ['raw'=>true]));
 foreach($errorlog as $error)
 {
 	$blame = $error['user'];
@@ -110,12 +110,12 @@ foreach($errorlog as $error)
       $location = $error['file'];
    $location .= " line ". $error['line'];
          
-	$row = $table->addContent(new Container("", ['index'=>$error['index'],'type'=>"body"]));
-	$row->addContent(new Text(date("j M Y @ g:ia T", $error['time']), ['raw'=>true]));
-	$row->addContent(new Text($error['type'], ['raw'=>true]));
-	$row->addContent(new Text($error['message'], ['raw'=>true]));
-	$row->addContent(new Text($location, ['raw'=>true]));
+	$row = $table->addContent(new Content\Container("", ['index'=>$error['index'],'type'=>"body"]));
+	$row->addContent(new Content\Text(date("j M Y @ g:ia T", $error['time']), ['raw'=>true]));
+	$row->addContent(new Content\Text($error['type'], ['raw'=>true]));
+	$row->addContent(new Content\Text($error['message'], ['raw'=>true]));
+	$row->addContent(new Content\Text($location, ['raw'=>true]));
 }
-$container->addContent(new Text($pages, ['type'=>"pagination"]));
+$container->addContent(new Content\Text($pages, ['type'=>"pagination"]));
 
 $builder->attachXSL("cpanel.xsl", "", true);

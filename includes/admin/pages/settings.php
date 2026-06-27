@@ -18,22 +18,22 @@ foreach($db_settings as $dbset)
   }
 }
 
-$container = $builder->addContent(new Container("Site Settings"));
+$container = $builder->addContent(new Content\Container("Site Settings"));
 
 $tables = [];
-$tables['main'] = $container->addContent(new Container("Main Settings", ['format'=>"table"]));
-$tables['main']->addContent(new Text("General settings that apply to any site."), "subtitle");
+$tables['main'] = $container->addContent(new Content\Container("Main Settings", ['format'=>"table"]));
+$tables['main']->addContent(new Content\Text("General settings that apply to any site."), "subtitle");
 if(!empty($GlobalConfig['twitch_enabled']))
 {
-  $tables['twitch'] = $container->addContent(new Container("Twitch Settings", ['format'=>"table"]));
-  $tables['twitch']->addContent(new Text("Settings that apply to sites with Twitch.tv integration."), "subtitle");
+  $tables['twitch'] = $container->addContent(new Content\Container("Twitch Settings", ['format'=>"table"]));
+  $tables['twitch']->addContent(new Content\Text("Settings that apply to sites with Twitch.tv integration."), "subtitle");
 }
 foreach($tables as $section=>$container)
 {
-  $row = $container->addContent(new Container("", ['type'=>"header"]));
-  $row->addContent(new Text("Setting", ['raw'=>true]));
-  $row->addContent(new Text("Value", ['raw'=>true]));
-  $row->addContent(new Text("Description", ['raw'=>true]));
+  $row = $container->addContent(new Content\Container("", ['type'=>"header"]));
+  $row->addContent(new Content\Text("Setting", ['raw'=>true]));
+  $row->addContent(new Content\Text("Value", ['raw'=>true]));
+  $row->addContent(new Content\Text("Description", ['raw'=>true]));
 }
 foreach($settings as $name=>$setting)
 {
@@ -73,8 +73,8 @@ foreach($settings as $name=>$setting)
     if($setting['type'] == "datetime")
       $textattrs['subtype'] = "datetime";
   }
-  $row = $tables[$setting['section']]->addContent(new Container("", ['type'=>"body"]));
-  $row->addContent(new Text($name, ['raw'=>true]));
-  $row->addContent(new Text($textprops, $textattrs), "cpanel-setting");
-  $row->addContent(new Text($setting['description'], ['raw'=>true]));
+  $row = $tables[$setting['section']]->addContent(new Content\Container("", ['type'=>"body"]));
+  $row->addContent(new Content\Text($name, ['raw'=>true]));
+  $row->addContent(new Content\Text($textprops, $textattrs), "cpanel-setting");
+  $row->addContent(new Content\Text($setting['description'], ['raw'=>true]));
 }

@@ -9,11 +9,14 @@ Consolodates the handling of rate limits to a separate class in order to keep th
 */
 class ClientRateLimit
 {
+   const RESET_TIMESTAMP = 1;
+   const RESET_COUNTDOWN = 2;
+  
    /** @var string The name of the response header containing the number of remaining requests in the current bucket for this API. */
    public $remaining_header;
    /** @var string The name of the response header containing the time at which the request count will reset for this API. */
    public $reset_header;
-   /** @var string What kind of time the reset response header is returning. Valid values are "timestamp" if it's a UNIX epoch timestamp, or "countdown" if it's the number of second until the reset. */
+   /** @var string What kind of time the reset response header is returning. Valid values are ClientRateLimit::RESET_TIMESTAMP if it's a UNIX epoch timestamp, or ClientRateLimit::RESET_COUNTDOWN if it's the number of second until the reset. */
    public $reset_type;
    /** @var string The name of the response header containing the maximum number of requests in this bucket for this API. */
    public $limit_header;
@@ -38,10 +41,10 @@ class ClientRateLimit
    
    @param string $remaining_header The name of the response header containing the number of remaining requests in the current bucket for this API.
    @param string $reset_header The name of the response header containing the time at which the request count will reset for this API.
-   @param string $reset_type What kind of time the reset response header is returning. Valid values are "timestamp" if it's a UNIX epoch timestamp, or "countdown" if it's the number of second until the reset.
+   @param string $reset_type What kind of time the reset response header is returning. Valid values are ClientRateLimit::RESET_TIMESTAMP if it's a UNIX epoch timestamp, or ClientRateLimit::RESET_COUNTDOWN if it's the number of second until the reset.
    @param string $limit_header The name of the response header containing the maximum number of requests in this bucket for this API.
    */
-   function __construct($remaining_header=null, $reset_header=null, $reset_type="timestamp", $limit_header=null)
+   function __construct($remaining_header=null, $reset_header=null, $reset_type=ClientRateLimit::RESET_TIMESTAMP, $limit_header=null)
    {
       if($remaining_header === null)
       {
@@ -79,12 +82,12 @@ class ClientRateLimit
       if(!empty($headers[$this->remaining_header]) && !empty($headers[$this->reset_header]) && !empty($headers[$this->limit_header]))
       {
          $this->requests_remaining = $headers[$this->remaining_header];
-         if($this->reset_type == "timestamp")
+         if($this->reset_type == static::RESET_TIMESTAMP)
          {
             $this->reset_timestamp = $headers[$this->reset_header];
             $this->reset_countdown = $headers[$this->reset_header] - time();
          }
-         else if($this->reset_type == "countdown")
+         else if($this->reset_type == static::RESET_COUNTDOWN)
          {
             $this->reset_timestamp = $headers[$this->reset_header] + time();
             $this->reset_countdown = $headers[$this->reset_header];

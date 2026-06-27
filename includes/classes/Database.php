@@ -743,7 +743,7 @@ class Database
       case "integer":
         return (int)$v;
       case "decimal":
-        return (real)$v;
+        return (float)$v;
       case "binary":
         if($v == "" || ctype_print($v))
           return $this->quote($v);

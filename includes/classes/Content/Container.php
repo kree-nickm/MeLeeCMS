@@ -1,5 +1,5 @@
 <?php
-namespace MeLeeCMS;
+namespace MeLeeCMS\Content;
 
 class Container extends Content
 {
@@ -87,7 +87,7 @@ class Container extends Content
 			$x = "__". $x;
 		else if($x == "")
 			$x = "__". count($this->content);
-		if(is_a($content, "MeLeeCMS\\Content"))
+		if(is_a($content, "MeLeeCMS\\Content\\Content"))
 		{
 			return $this->content[$x] = $content->set_cms($this->cms);
 		}

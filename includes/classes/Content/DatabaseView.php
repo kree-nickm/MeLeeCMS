@@ -1,5 +1,6 @@
 <?php
-namespace MeLeeCMS;
+namespace MeLeeCMS\Content;
+use MeLeeCMS\Database;
 
 class DatabaseView extends Content
 {

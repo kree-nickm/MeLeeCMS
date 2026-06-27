@@ -141,11 +141,17 @@ class CURLWrapper
   
   public function getLastRequestInfo()
   {
-    return $this->log[count($this->log)-1]['request_info'];
+    if(count($this->log))
+      return $this->log[count($this->log)-1]['request_info'];
+    else
+      return null;
   }
   
   public function getLastHeaders()
   {
-    return $this->log[count($this->log)-1]['response_headers'];
+    if(count($this->log))
+      return $this->log[count($this->log)-1]['response_headers'];
+    else
+      return null;
   }
 }

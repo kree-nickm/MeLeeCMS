@@ -1,15 +1,19 @@
 <?php
 namespace MeLeeCMS\Connection;
 use MeLeeCMS\OAuth2\Client;
+use MeLeeCMS\OAuth2\ClientRateLimit;
 use MeLeeCMS\Database;
 
-class Base
+abstract class Connection
 {
   const NAME = "";
   const AUTH_URL = "";
+  const TOKEN_URL = "";
   const API_URL = "";
-  
-  protected $rate_limit;
+  const RATELIMIT_REMAINING = "";
+  const RATELIMIT_LIMIT = "";
+  const RATELIMIT_RESET = "";
+  const RATELIMIT_TYPE = 0;
   
   public $user;
   public $user_id;
@@ -36,7 +40,7 @@ class Base
     
     // Create a client object, which logs into the API.
     $this->api = new Client(
-      static::AUTH_URL,
+      [static::AUTH_URL, static::TOKEN_URL, static::API_URL],
       $GlobalConfig[strtolower(static::NAME)."_client_id"],
       $GlobalConfig[strtolower(static::NAME)."_client_secret"],
       "authorization_code",
@@ -44,11 +48,11 @@ class Base
         'scope' => empty($scope) ? [] : $scope,
         'redirect_uri' => empty($redirect_uri) ? (empty($_SERVER['HTTPS'])?"http://":"https://").$_SERVER['SERVER_NAME'] : $redirect_uri
       ],
-      $this->rate_limit,
-      !empty($GlobalConfig[strtolower(static::NAME)."_implicit_enabled"])
+      [
+        'rate_limit' => !empty(static::RATELIMIT_REMAINING) ? new ClientRateLimit(static::RATELIMIT_REMAINING, static::RATELIMIT_RESET, static::RATELIMIT_TYPE, static::RATELIMIT_LIMIT) : null,
+        'get_implicit' => !empty($GlobalConfig[strtolower(static::NAME)."_implicit_enabled"]),
+      ]
     );
-    if(!empty(static::API_URL))
-      $this->api->api_url = static::API_URL;
     
     // Check if we have a valid access token from the API.
     if(!empty($this->api->token->access_token))
@@ -111,7 +115,9 @@ class Base
         $this->loaded = true;
         $this->user_id = $this->user->getProperty('index');
         $this->api_id = $result['id'];
-        $this->api_data = json_decode($result['data']);
+        $data = json_decode($result['data']);
+        $this->api_self = $data->self;
+        $this->api_data = $data->data;
         return true;
       }
     }
@@ -124,7 +130,9 @@ class Base
         $this->loaded = true;
         $this->user_id = $result['user'];
         $this->api_id = $id;
-        $this->api_data = json_decode($result['data']);
+        $data = json_decode($result['data']);
+        $this->api_self = $data->self;
+        $this->api_data = $data->data;
         return true;
       }
     }
@@ -133,13 +141,14 @@ class Base
   
   public function save($log=false)
   {
+    // TODO: add api_self to this alingside api_data
     if(!empty($this->user->getProperty('index')) && !empty(static::NAME) && !empty($this->api_id))
     {
       $this->user->cms->database->insert("connections", [
         'user' => $this->user->getProperty('index'),
         'api' => static::NAME,
         'id' => $this->api_id,
-        'data' => json_encode($this->api_data)
+        'data' => json_encode(['self'=>$this->api_self, 'data'=>$this->api_data])
       ], true, ['id','api'], $log);
       return true;
     }
@@ -173,6 +182,14 @@ class Base
       $this->connect();
     $headers = array_merge($headers, ["{$id_header}: {$this->api->client_id}"]);
     return $this->api->api_request($url, $request, $data, $headers);
+  }
+  
+  public function getDisplayName()
+  {
+    if(!empty($this->api_id))
+      return static::NAME.":".$this->api_id;
+    else
+      return null;
   }
   
   // TODO: Could maybe move the below paged queries to OAuth2\Client
@@ -215,7 +232,7 @@ class Base
       }
       else
       {
-        trigger_error("Error retreiving results for endpoint '{$endpoint}{$after}'. Response from server: ". print_r($response,true) ."\n Header from that response: \n". $this->api->curl->lastheader, E_USER_WARNING);
+        trigger_error("Error retreiving results for endpoint '{$endpoint}{$after}'. Request:". print_r($this->api->curl->getLastRequestInfo(),true) ."\n Response from server: ". print_r($response,true) ."\n Header from that response: \n". print_r($this->api->curl->getLastHeaders(),true), E_USER_WARNING);
         break;
       }
       $loops++;

@@ -1,5 +1,5 @@
 <?php
-namespace MeLeeCMS;
+namespace MeLeeCMS\Content;
 
 /**
 A collection of content that is not specific to a single page.

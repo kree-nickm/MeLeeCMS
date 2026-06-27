@@ -17,19 +17,19 @@ class MeLeeSessionHandler implements \SessionHandlerInterface
 		ini_set("session.use_strict_mode", true);
 	}
 	
-	public function open($save_path, $session_name)
+	public function open($save_path, $session_name): bool
 	{
 		// This is only useful for file sessions, which this handler doesn't use.
 		return true;
 	}
 	
-	public function read($session_id)
+	public function read($session_id): string|false
 	{
 		$session_data = $this->cms->database->query("SELECT `session_data` FROM sessions WHERE `session_id`=". $this->cms->database->quote($session_id) ." ORDER BY `time` DESC LIMIT 0,1", Database::RETURN_FIELD);
 		return empty($session_data) ? "" : $session_data;
 	}
 	
-	public function write($session_id, $session_data)
+	public function write($session_id, $session_data): bool
 	{
 		$mysql_data = [
 			'session_id' => $session_id,
@@ -45,12 +45,12 @@ class MeLeeSessionHandler implements \SessionHandlerInterface
 		return true;
 	}
 	
-	public function close()
+	public function close(): bool
 	{
 		return true;
 	}
 	
-	public function destroy($session_id)
+	public function destroy($session_id): bool
 	{
 		$_SESSION = [];
 		if(ini_get("session.use_cookies"))
@@ -70,7 +70,7 @@ class MeLeeSessionHandler implements \SessionHandlerInterface
 		return true;
 	}
 	
-	public function gc($maxlifetime)
+	public function gc($maxlifetime): int|false
 	{
 		$count = $this->cms->database->query("DELETE FROM sessions WHERE `time`<". (int)(time()-$maxlifetime) ." AND (`user`=0 OR `session_indefinite`=0)", Database::RETURN_COUNT);
 		return $count;
